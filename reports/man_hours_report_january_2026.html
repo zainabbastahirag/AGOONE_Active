@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monthly Man-Hours Report — January 2026</title>
+<style>
+  :root {
+    --primary: #1a365d;
+    --primary-light: #2b6cb0;
+    --accent: #3182ce;
+    --bg: #f7fafc;
+    --card-bg: #ffffff;
+    --border: #e2e8f0;
+    --text: #2d3748;
+    --text-light: #718096;
+    --success: #38a169;
+    --warning: #d69e2e;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 2rem;
+  }
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: white;
+    padding: 2rem 2.5rem;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+  }
+  .header .meta {
+    text-align: right;
+    font-size: 0.875rem;
+    opacity: 0.9;
+  }
+  .header .meta .period {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-top: none;
+    padding: 2rem 2.5rem;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  }
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .summary-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    text-align: center;
+  }
+  .summary-box .label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-light);
+    margin-bottom: 0.25rem;
+  }
+  .summary-box .value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+  }
+  .summary-box.grand .value {
+    color: var(--success);
+    font-size: 1.75rem;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+  thead th {
+    background: var(--primary);
+    color: white;
+    padding: 0.875rem 1rem;
+    text-align: center;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+  }
+  thead th:first-child {
+    text-align: left;
+    border-radius: 8px 0 0 0;
+  }
+  thead th:last-child {
+    border-radius: 0 8px 0 0;
+  }
+  tbody td {
+    padding: 0.875rem 1rem;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.95rem;
+  }
+  tbody td:first-child {
+    text-align: left;
+    font-weight: 600;
+    color: var(--primary);
+  }
+  tbody tr:hover {
+    background: #edf2f7;
+  }
+  tbody tr:nth-child(even) {
+    background: #f8fafc;
+  }
+  tbody tr:nth-child(even):hover {
+    background: #edf2f7;
+  }
+  tfoot td {
+    padding: 1rem;
+    text-align: center;
+    font-weight: 700;
+    background: #edf2f7;
+    border-top: 2px solid var(--primary);
+    font-size: 1rem;
+  }
+  tfoot td:first-child {
+    text-align: left;
+    border-radius: 0 0 0 8px;
+  }
+  tfoot td:last-child {
+    border-radius: 0 0 8px 0;
+    color: var(--success);
+  }
+  .zero { color: var(--text-light); }
+  .has-hours { color: var(--text); font-weight: 600; }
+  .section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--accent);
+    display: inline-block;
+  }
+  .notes {
+    margin-top: 2rem;
+    padding: 1.25rem;
+    background: #fffff0;
+    border: 1px solid #fefcbf;
+    border-left: 4px solid var(--warning);
+    border-radius: 0 8px 8px 0;
+    font-size: 0.875rem;
+  }
+  .notes h3 {
+    color: var(--warning);
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+  }
+  .notes ul {
+    margin-left: 1.25rem;
+    color: var(--text-light);
+  }
+  .notes li {
+    margin-bottom: 0.25rem;
+  }
+  .footer {
+    margin-top: 1.5rem;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--text-light);
+  }
+  @media print {
+    body { padding: 0; background: white; }
+    .card { box-shadow: none; border: none; }
+    .header { border-radius: 0; }
+    tbody tr:hover { background: inherit; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div>
+      <h1>Monthly Man-Hours Report</h1>
+      <p style="opacity:0.85; margin-top:0.25rem; font-size:0.9rem;">Resource Allocation &amp; P&amp;L Analysis</p>
+    </div>
+    <div class="meta">
+      <div class="period">January 2026</div>
+      <div>Generated: Feb 06, 2026 07:06</div>
+    </div>
+  </div>
+  <div class="card">
+    <!-- Summary Cards -->
+    <div class="summary-grid">
+      <div class="summary-box">
+        <div class="label">Product Hours</div>
+        <div class="value">0.0</div>
+      </div>
+      <div class="summary-box">
+        <div class="label">UI/UX Hours</div>
+        <div class="value">0.0</div>
+      </div>
+      <div class="summary-box">
+        <div class="label">Dev Hours</div>
+        <div class="value">0.0</div>
+      </div>
+      <div class="summary-box">
+        <div class="label">QA Hours</div>
+        <div class="value">0.0</div>
+      </div>
+      <div class="summary-box grand">
+        <div class="label">Grand Total</div>
+        <div class="value">0.0</div>
+      </div>
+    </div>
+
+    <!-- Main Data Table -->
+    <div class="section-title">Man-Hours by Project &amp; Resource Type</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Project</th>
+          <th>Product</th>
+          <th>UI/UX</th>
+          <th>Dev</th>
+          <th>QA</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>AGONEWorkj</td>
+          <td class="zero">0.0</td>
+          <td class="zero">0.0</td>
+          <td class="zero">0.0</td>
+          <td class="zero">0.0</td>
+          <td class="zero">0.0</td>
+        </tr>
+        <tr>
+          <td>OJE Safe</td>
+          <td class="zero">0.0</td>
+          <td class="zero">0.0</td>
+          <td class="zero">0.0</td>
+          <td class="zero">0.0</td>
+          <td class="zero">0.0</td>
+        </tr>
+        <tr>
+          <td>ONe Learn</td>
+          <td class="zero">0.0</td>
+          <td class="zero">0.0</td>
+          <td class="zero">0.0</td>
+          <td class="zero">0.0</td>
+          <td class="zero">0.0</td>
+        </tr>
+        <tr>
+          <td>Ne Pulse</td>
+          <td class="zero">0.0</td>
+          <td class="zero">0.0</td>
+          <td class="zero">0.0</td>
+          <td class="zero">0.0</td>
+          <td class="zero">0.0</td>
+        </tr>
+        <tr>
+          <td>AGONE</td>
+          <td class="zero">0.0</td>
+          <td class="zero">0.0</td>
+          <td class="zero">0.0</td>
+          <td class="zero">0.0</td>
+          <td class="zero">0.0</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td>TOTAL</td>
+          <td>0.0</td>
+          <td>0.0</td>
+          <td>0.0</td>
+          <td>0.0</td>
+          <td>0.0</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <!-- Instructions / Notes -->
+    <div class="notes">
+      <h3>Action Items &amp; Notes</h3>
+      <ul>
+        <li><strong>Team Leads:</strong> Please fill in actual man-hours for each resource type per project.</li>
+        <li><strong>Accuracy:</strong> Ensure hours reflect actual effort, even if resources moved between projects mid-month.</li>
+        <li><strong>Validation:</strong> Each team lead must validate their section before final submission.</li>
+        <li><strong>Deadline:</strong> January 2026 data must be finalized and submitted by the next Thursday.</li>
+        <li><strong>Purpose:</strong> This data feeds into P&amp;L analysis — accuracy is critical.</li>
+        <li><strong>Cadence:</strong> Monthly reporting starts January 2026 and continues each month.</li>
+      </ul>
+    </div>
+
+    <div class="footer">
+      <p>Prepared for P&amp;L Analysis &bull; Confidential</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,66 @@
+{
+  "report_title": "Monthly Man-Hours Report \u2014 January 2026",
+  "generated_at": "2026-02-06T07:06:46.586881",
+  "reporting_period": "January 2026",
+  "projects": [
+    "AGONEWorkj",
+    "OJE Safe",
+    "ONe Learn",
+    "Ne Pulse",
+    "AGONE"
+  ],
+  "resource_types": [
+    "Product",
+    "UI/UX",
+    "Dev",
+    "QA"
+  ],
+  "data": {
+    "AGONEWorkj": {
+      "Product": 0.0,
+      "UI/UX": 0.0,
+      "Dev": 0.0,
+      "QA": 0.0
+    },
+    "OJE Safe": {
+      "Product": 0.0,
+      "UI/UX": 0.0,
+      "Dev": 0.0,
+      "QA": 0.0
+    },
+    "ONe Learn": {
+      "Product": 0.0,
+      "UI/UX": 0.0,
+      "Dev": 0.0,
+      "QA": 0.0
+    },
+    "Ne Pulse": {
+      "Product": 0.0,
+      "UI/UX": 0.0,
+      "Dev": 0.0,
+      "QA": 0.0
+    },
+    "AGONE": {
+      "Product": 0.0,
+      "UI/UX": 0.0,
+      "Dev": 0.0,
+      "QA": 0.0
+    }
+  },
+  "summary": {
+    "project_totals": {
+      "AGONEWorkj": 0.0,
+      "OJE Safe": 0.0,
+      "ONe Learn": 0.0,
+      "Ne Pulse": 0.0,
+      "AGONE": 0.0
+    },
+    "resource_type_totals": {
+      "Product": 0.0,
+      "UI/UX": 0.0,
+      "Dev": 0.0,
+      "QA": 0.0
+    },
+    "grand_total": 0.0
+  }
+}
