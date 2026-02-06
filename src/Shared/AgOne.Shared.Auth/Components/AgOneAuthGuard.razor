@@ -1,0 +1,72 @@
+@using AgOne.Shared.Auth.Services
+@using Microsoft.AspNetCore.Components.Authorization
+
+@* 
+    AG ONE Auth Guard Component
+    Wrap your entire app content with this component to enforce authentication.
+    Unauthenticated users will be redirected to the AG ONE Portal or login page.
+    
+    Usage in App.razor or MainLayout.razor:
+    <AgOneAuthGuard>
+        <Authenticated>
+            <!-- Your app content here -->
+            @context.User.Identity?.Name
+        </Authenticated>
+        <Loading>
+            <p>Loading...</p>
+        </Loading>
+    </AgOneAuthGuard>
+*@
+
+<CascadingAuthenticationState>
+    <AuthorizeView>
+        <Authorized>
+            @if (Authenticated != null)
+            {
+                @Authenticated(context)
+            }
+            else
+            {
+                @ChildContent
+            }
+        </Authorized>
+        <Authorizing>
+            @if (Loading != null)
+            {
+                @Loading
+            }
+            else
+            {
+                <div class="agone-auth-loading">
+                    <p>Verifying your identity...</p>
+                </div>
+            }
+        </Authorizing>
+        <NotAuthorized>
+            @if (_attemptingSilentLogin)
+            {
+                @if (Loading != null)
+                {
+                    @Loading
+                }
+                else
+                {
+                    <div class="agone-auth-loading">
+                        <p>Signing you in...</p>
+                    </div>
+                }
+            }
+            else
+            {
+                @if (NotAuthenticated != null)
+                {
+                    @NotAuthenticated
+                }
+                else
+                {
+                    <AgOneRedirectToLogin />
+                }
+            }
+        </NotAuthorized>
+    </AuthorizeView>
+</CascadingAuthenticationState>

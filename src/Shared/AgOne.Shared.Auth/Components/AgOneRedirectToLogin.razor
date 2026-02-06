@@ -1,0 +1,17 @@
+@using AgOne.Shared.Auth.Services
+
+@inject IAgOneSsoService SsoService
+@inject NavigationManager Navigation
+
+@* 
+    Redirect to Login Component
+    Automatically redirects unauthenticated users to the AG ONE login page.
+    Place this in your NotAuthorized template or on pages that require auth.
+*@
+
+@code {
+    protected override void OnInitialized()
+    {
+        SsoService.Login(Navigation.Uri);
+    }
+}

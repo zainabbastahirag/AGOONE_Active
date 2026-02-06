@@ -1,0 +1,29 @@
+@* ============================================================================
+   AG ONE PORTAL - MainLayout.razor Example
+   ============================================================================
+   Update your existing MainLayout to include the login display
+   and product navigator components.
+   ============================================================================ *@
+
+@inherits LayoutComponentBase
+@using AgOne.Shared.Auth.Components
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row px-4">
+            @* Add the product navigator for cross-product navigation *@
+            <AgOneProductNavigator />
+
+            @* Add the login display (shows user name + logout button) *@
+            <AgOneLoginDisplay />
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>

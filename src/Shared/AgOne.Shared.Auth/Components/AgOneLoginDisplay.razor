@@ -1,0 +1,44 @@
+@using AgOne.Shared.Auth.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+
+@inject IAgOneSsoService SsoService
+
+@* 
+    AG ONE Login Display Component
+    Shows the current user's name and a logout button when authenticated,
+    or a login button when not authenticated.
+    
+    Usage in your MainLayout.razor or NavBar:
+    <AgOneLoginDisplay />
+*@
+
+<AuthorizeView>
+    <Authorized>
+        <div class="agone-user-display">
+            <span class="agone-user-name">@context.User.Identity?.Name</span>
+            <button class="agone-logout-btn" @onclick="BeginLogout">
+                Log out
+            </button>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <div class="agone-login-display">
+            <button class="agone-login-btn" @onclick="BeginLogin">
+                Log in
+            </button>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private void BeginLogin()
+    {
+        SsoService.Login();
+    }
+
+    private void BeginLogout()
+    {
+        SsoService.Logout();
+    }
+}

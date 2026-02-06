@@ -1,0 +1,46 @@
+@* ============================================================================
+   AG ONE LEARN (and all Products) - App.razor Example
+   ============================================================================
+   IDENTICAL to the Portal's App.razor.
+   The SSO behavior difference comes from the appsettings.json configuration,
+   NOT from different code.
+   ============================================================================ *@
+
+@using AgOne.Shared.Auth.Components
+@using Microsoft.AspNetCore.Components.Authorization
+
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                <NotAuthorized>
+                    @if (context.User.Identity?.IsAuthenticated != true)
+                    {
+                        @* 
+                            For Products: This will redirect to AG ONE Portal
+                            because RedirectToPortalOnUnauthenticated=true in appsettings.
+                            For Portal: This will show the MSAL login page directly.
+                        *@
+                        <AgOneRedirectToLogin />
+                    }
+                    else
+                    {
+                        <p>You are not authorized to access this resource.</p>
+                    }
+                </NotAuthorized>
+                <Authorizing>
+                    <div class="agone-auth-loading">
+                        <p>Checking authorization...</p>
+                    </div>
+                </Authorizing>
+            </AuthorizeRouteView>
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+        <NotFound>
+            <PageTitle>Not found</PageTitle>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <p role="alert">Sorry, there's nothing at this address.</p>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>

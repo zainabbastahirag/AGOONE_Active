@@ -1,0 +1,47 @@
+@page "/authentication/{action}"
+
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+
+@* 
+    Authentication Page Component
+    Handles MSAL authentication callbacks (login, logout, register).
+    
+    *** IMPORTANT ***
+    Copy this file to your product's Pages folder:
+    YourProduct.Client/Pages/Authentication.razor
+    
+    This page handles the redirect callbacks from Azure Entra ID.
+    The URL /authentication/login-callback and /authentication/logout-callback
+    must be registered as redirect URIs in your Azure App Registration.
+*@
+
+<RemoteAuthenticatorView Action="@Action">
+    <LogInFailed>
+        <div class="agone-auth-error">
+            <h3>Login Failed</h3>
+            <p>There was an error signing you in. Please try again.</p>
+            <a href="/">Return to Home</a>
+        </div>
+    </LogInFailed>
+    <LogOutSucceeded>
+        <div class="agone-auth-logout">
+            <h3>Signed Out</h3>
+            <p>You have been signed out successfully.</p>
+            <a href="/">Return to Home</a>
+        </div>
+    </LogOutSucceeded>
+    <CompletingLoggingIn>
+        <div class="agone-auth-loading">
+            <p>Completing sign in...</p>
+        </div>
+    </CompletingLoggingIn>
+    <CompletingLogOut>
+        <div class="agone-auth-loading">
+            <p>Completing sign out...</p>
+        </div>
+    </CompletingLogOut>
+</RemoteAuthenticatorView>
+
+@code {
+    [Parameter] public string? Action { get; set; }
+}
