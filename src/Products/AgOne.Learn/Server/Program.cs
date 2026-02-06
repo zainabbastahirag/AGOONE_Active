@@ -12,16 +12,24 @@ using AgOne.Shared.Auth.Api.Middleware;
 var builder = WebApplication.CreateBuilder(args);
 
 // ============================================================================
-// AG ONE SSO AUTHENTICATION & AUTHORIZATION - SAME 3 lines as Portal
+// AG ONE SSO AUTHENTICATION & AUTHORIZATION - SAME lines as Portal
 // ============================================================================
 builder.Services.AddAgOneSsoApiAuthentication(builder.Configuration);
 builder.Services.AddAgOneSsoApiAuthorization(builder.Configuration);
 builder.Services.AddAgOneSsoCors(builder.Configuration);
 
 // ============================================================================
+// AG ONE TOKEN STORAGE (DB) - Enable token persistence
+// ============================================================================
+builder.Services.AddAgOneTokenStorage(builder.Configuration);
+builder.Services.AddAgOneTokenCleanup();
+
+// ============================================================================
 // Your existing service registrations (keep these as-is)
 // ============================================================================
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddApplicationPart(typeof(AgOne.Shared.Auth.Api.Controllers.AgOneAuthController).Assembly);
+
 // builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 // builder.Services.AddScoped<ILessonService, LessonService>();
 // ... your other services ...
@@ -40,12 +48,13 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 // ============================================================================
-// AG ONE SSO MIDDLEWARE - SAME 4 lines as Portal, SAME order
+// AG ONE SSO MIDDLEWARE - SAME order as Portal
 // ============================================================================
 app.UseCors(CorsExtensions.AgOneCorsPolicy);
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAgOneSsoValidation();
+app.UseTokenCapture();                            // Saves tokens to DB
 
 // ============================================================================
 // Your existing middleware and endpoints (keep these as-is)

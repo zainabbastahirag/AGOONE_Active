@@ -78,6 +78,9 @@ public static class ServiceCollectionExtensions
         // Register SSO service
         services.AddScoped<IAgOneSsoService, AgOneSsoService>();
 
+        // Register token sync service (syncs tokens to backend DB)
+        services.AddScoped<ITokenSyncService, TokenSyncService>();
+
         // Register the authorization message handler
         services.AddScoped<AgOneAuthorizationMessageHandler>();
 
