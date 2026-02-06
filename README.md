@@ -1,102 +1,157 @@
-# Monthly Man-Hours Report
+# Monthly Man-Hours Report — Full Year 2026
 
-A professional monthly man-hours reporting tool for tracking resource allocation across 5 projects for P&L analysis.
+A complete man-hours tracking and reporting system for 5 projects, designed for Technical Managers reporting to Product Owners with P&L accuracy.
+
+---
 
 ## Projects Covered
 
-| # | Project |
-|---|---------|
-| 1 | AGONEWorkj |
-| 2 | OJE Safe |
-| 3 | ONe Learn |
-| 4 | Ne Pulse |
-| 5 | AGONE |
+| # | Project      |
+|---|--------------|
+| 1 | AGONEWorkj   |
+| 2 | OJE Safe     |
+| 3 | ONe Learn    |
+| 4 | Ne Pulse     |
+| 5 | AGONE        |
 
 ## Resource Types Tracked
 
-- **Product** — Product management hours
-- **UI/UX** — Design and user experience hours
-- **Dev** — Development/engineering hours
-- **QA** — Quality assurance and testing hours
+| Type      | Description                           |
+|-----------|---------------------------------------|
+| Product   | Product management hours              |
+| UI/UX     | Design and user experience hours      |
+| Dev       | Development / engineering hours       |
+| QA        | Quality assurance and testing hours   |
+
+---
+
+## Best Way to Use This (Recommended Workflow)
+
+### Your Monthly Routine (5 minutes)
+
+```
+STEP 1  →  Open yearly_man_hours_data.json
+STEP 2  →  Fill in the current month's hours
+STEP 3  →  Run: python3 generate_yearly_report.py
+STEP 4  →  Send the HTML dashboard to the Product Owner
+```
+
+That's it. Every month, same 4 steps. The dashboard auto-calculates totals, YTD, trends, and per-project breakdowns.
+
+---
 
 ## Quick Start
 
-### 1. Distribute the Input Template
+### 1. Edit the Data File
 
-Share `reports/input_template_man_hours.csv` with each team lead. They fill in:
+Open `yearly_man_hours_data.json` and fill in actual hours. Example for January:
 
-| Column | Description |
-|--------|-------------|
-| Project | Pre-filled project name |
-| Resource Type | Pre-filled: Product, UI/UX, Dev, QA |
-| Man-Hours | **Actual hours worked** (team lead fills this in) |
-| Team Lead Name | Name of the person reporting |
-| Validated (Y/N) | Confirmation the data is accurate |
-| Notes | Any context (e.g., "resource moved from AGONE mid-month") |
-
-### 2. Update the Script with Actual Data
-
-Open `monthly_man_hours_report.py` and update the `JANUARY_2026_DATA` dictionary with the collected hours:
-
-```python
-JANUARY_2026_DATA = {
-    "AGONEWorkj": {
-        "Product": 160.0,   # Replace with actual hours
-        "UI/UX": 80.0,
-        "Dev": 320.0,
-        "QA": 120.0,
-    },
-    # ... repeat for all 5 projects
+```json
+"January": {
+    "AGONEWorkj":  { "Product": 40, "UI/UX": 60, "Dev": 320, "QA": 80 },
+    "OJE Safe":    { "Product": 30, "UI/UX": 40, "Dev": 240, "QA": 60 },
+    "ONe Learn":   { "Product": 20, "UI/UX": 80, "Dev": 160, "QA": 40 },
+    "Ne Pulse":    { "Product": 25, "UI/UX": 30, "Dev": 200, "QA": 50 },
+    "AGONE":       { "Product": 35, "UI/UX": 50, "Dev": 280, "QA": 70 }
 }
 ```
 
-### 3. Generate Reports
+### 2. Generate Reports
+
+```bash
+python3 generate_yearly_report.py
+```
+
+### 3. Share with Product Owner
+
+| File | Best For |
+|------|----------|
+| `reports/annual_dashboard_2026.html` | **Product Owner** — open in browser, professional dashboard with tabs |
+| `reports/annual_man_hours_2026.csv` | **Excel** — full year, all sections, ready for spreadsheet |
+| `reports/annual_man_hours_2026_flat.csv` | **Pivot Tables / Power BI** — one row per data point, ideal for analysis |
+
+---
+
+## What the Dashboard Shows
+
+The HTML dashboard has **5 tabs** the Product Owner can click through:
+
+| Tab | What It Shows |
+|-----|---------------|
+| **Annual Overview** | KPI cards, bar charts by project & resource type, 12-month summary table |
+| **Month-by-Month** | Detailed breakdown for each month (Project x Resource Type) |
+| **Per Project** | Each project's resource allocation across all 12 months |
+| **By Resource Type** | Product, UI/UX, Dev, QA hours across all projects for the year |
+| **YTD Running Total** | Cumulative year-to-date hours — great for budget tracking |
+
+Plus:
+- Monthly trend mini-bar chart at the top
+- KPI summary cards (total hours, active months, averages)
+- Print-ready — works great as PDF via browser print
+
+---
+
+## Also Available: Single-Month Reports
+
+If you need a standalone report for just one month:
 
 ```bash
 python3 monthly_man_hours_report.py
 ```
 
-This produces the following files in the `reports/` folder:
+This generates per-month outputs: CSV, JSON, HTML, and Markdown (good for Teams/Slack).
 
-| File | Format | Best For |
-|------|--------|----------|
-| `input_template_man_hours.csv` | CSV | Team leads to fill in hours |
-| `man_hours_report_january_2026.csv` | CSV | Excel / Google Sheets import |
-| `man_hours_report_january_2026.json` | JSON | Dashboard / system integration |
-| `man_hours_report_january_2026.html` | HTML | Management presentations (print-ready) |
-| `man_hours_report_january_2026.md` | Markdown | Teams / Slack sharing |
+---
 
-## Monthly Workflow
+## Collecting Data from Team Leads
 
-1. **Start of month:** Distribute `input_template_man_hours.csv` to team leads
-2. **Collection:** Team leads fill in actual man-hours per project per resource type
-3. **Validation:** Each team lead confirms data accuracy (even if resources moved between projects)
-4. **Update script:** Enter validated data into `monthly_man_hours_report.py`
-5. **Generate:** Run the script to produce all report formats
-6. **Share:** Distribute HTML report to management, JSON to dashboards, Markdown to Teams
+Share `reports/input_template_man_hours.csv` with each team lead. They fill in:
 
-## Key Requirements
+| Column         | Who Fills It   | Description                                      |
+|----------------|----------------|--------------------------------------------------|
+| Project        | Pre-filled     | Project name                                     |
+| Resource Type  | Pre-filled     | Product, UI/UX, Dev, or QA                       |
+| Man-Hours      | **Team Lead**  | Actual hours worked that month                   |
+| Team Lead Name | **Team Lead**  | Person reporting                                 |
+| Validated (Y/N)| **Team Lead**  | Confirms data is accurate                        |
+| Notes          | **Team Lead**  | Context (e.g. "resource moved mid-month")        |
 
-- Hours must be **accurate per product**, even if resources moved between projects mid-month
-- Each team lead must **validate** their data before submission
-- Monthly reporting cadence starting **January 2026**
-- Data feeds into **P&L analysis** — accuracy is critical
-- **January 2026 data** must be ready by next Thursday
+Generate the template:
+```bash
+python3 monthly_man_hours_report.py
+```
+
+---
 
 ## File Structure
 
 ```
 .
-├── monthly_man_hours_report.py    # Main report generator script
-├── README.md                      # This file
+├── yearly_man_hours_data.json       ← EDIT THIS (single source of truth)
+├── generate_yearly_report.py        ← Run this to produce annual reports
+├── monthly_man_hours_report.py      ← Run this for single-month reports
+├── README.md                        ← You are here
 └── reports/
-    ├── input_template_man_hours.csv
+    ├── annual_dashboard_2026.html   ← Share with Product Owner (HTML)
+    ├── annual_man_hours_2026.csv    ← Share with Product Owner (Excel)
+    ├── annual_man_hours_2026_flat.csv ← For Pivot Tables / Power BI
+    ├── input_template_man_hours.csv ← For team leads to fill in
     ├── man_hours_report_january_2026.csv
     ├── man_hours_report_january_2026.html
     ├── man_hours_report_january_2026.json
     └── man_hours_report_january_2026.md
 ```
 
+---
+
+## Key Rules
+
+- Hours must be **accurate per product**, even if resources moved between projects mid-month
+- Each team lead must **validate** their numbers before you enter them
+- Monthly cadence starting **January 2026**
+- Data feeds into **P&L analysis** — accuracy is critical
+- **January 2026 data** must be ready by next Thursday
+
 ## Requirements
 
-- Python 3.6+ (no external dependencies required — uses only standard library)
+- Python 3.6+ (no external packages needed — standard library only)
