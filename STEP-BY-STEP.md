@@ -265,6 +265,21 @@ Copy the `AgOneSso` section from `Appsettings/UI/Portal.json`. Replace all YOUR-
 
 ---
 
+## IMPORTANT: About the database migration
+
+The migration creates only **2 tables**: `UserTokens` and `UserSessions`.
+These tables are **shared by ALL products**. Each row has a `ProductName` column
+that tells which product it belongs to. You do NOT get separate tables per product.
+
+**If all products use the SAME database** (most common):
+- Run the migration **ONCE from Portal only**. That's it.
+- Do NOT run migration from Learn, Safe, Work, Pulse. Tables already exist.
+
+**If each product has its OWN separate database**:
+- Run the migration once per database (from whichever product uses that DB).
+
+---
+
 ## Step 3 — Repeat Step 2 for Learn
 
 **Exact same files.** Copy the same `Auth/` folders to:
@@ -274,11 +289,7 @@ Copy the `AgOneSso` section from `Appsettings/UI/Portal.json`. Replace all YOUR-
 
 Same code changes to Program.cs, App.razor, _Imports.razor, DbContext.
 
-**Run migration for Learn too:**
-```bash
-dotnet ef migrations add AddAgOneSsoTokenTables --project AgOne.Learn/Infrastructure/ --startup-project AgOne.Learn/API/
-dotnet ef database update --project AgOne.Learn/Infrastructure/ --startup-project AgOne.Learn/API/
-```
+**Do NOT run migration again** if Learn uses the same database as Portal.
 
 **Only config difference:** Use `Appsettings/UI/Learn.json` (which has `"RedirectToPortalOnUnauthenticated": true`).
 
@@ -288,19 +299,7 @@ dotnet ef database update --project AgOne.Learn/Infrastructure/ --startup-projec
 
 Exact same. Use the matching appsettings from `Appsettings/UI/Safe.json`, `Work.json`, `Pulse.json`.
 
-Run migration for each:
-```bash
-dotnet ef migrations add AddAgOneSsoTokenTables --project AgOne.Safe/Infrastructure/ --startup-project AgOne.Safe/API/
-dotnet ef database update --project AgOne.Safe/Infrastructure/ --startup-project AgOne.Safe/API/
-
-dotnet ef migrations add AddAgOneSsoTokenTables --project AgOne.Work/Infrastructure/ --startup-project AgOne.Work/API/
-dotnet ef database update --project AgOne.Work/Infrastructure/ --startup-project AgOne.Work/API/
-
-dotnet ef migrations add AddAgOneSsoTokenTables --project AgOne.Pulse/Infrastructure/ --startup-project AgOne.Pulse/API/
-dotnet ef database update --project AgOne.Pulse/Infrastructure/ --startup-project AgOne.Pulse/API/
-```
-
-NOTE: If all products share the SAME database, you only need to run the migration ONCE (from Portal). The tables are the same for all products.
+**Do NOT run migration again** if they share the same database as Portal.
 
 ---
 
@@ -322,8 +321,7 @@ For EACH product (Portal, Learn, Safe, Work, Pulse):
       + Add DbSets to your existing DbContext
       + Add ApplyConfiguration() to OnModelCreating
       + Register ITokenStorageService in DI
-      + Run: dotnet ef migrations add AddAgOneSsoTokenTables
-      + Run: dotnet ef database update
+      + Migration: ONCE from Portal only (if same DB). NOT per product.
       + NuGet: Microsoft.EntityFrameworkCore, System.IdentityModel.Tokens.Jwt
 
   API/                                 ← ADD Auth/ folder
