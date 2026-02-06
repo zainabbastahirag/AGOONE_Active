@@ -1,6 +1,4 @@
 {
-  "// INSTRUCTIONS": "Merge this into your AG ONE Learn API's appsettings.json",
-
   "AzureAd": {
     "Instance": "https://YOUR-TENANT.ciamlogin.com/",
     "TenantId": "YOUR-TENANT-ID",
@@ -9,13 +7,11 @@
     "Domain": "YOUR-TENANT.onmicrosoft.com",
     "SignUpSignInPolicyId": "B2C_1_SignUpSignIn"
   },
-
   "AgOneSso": {
     "ProductName": "Learn",
     "ValidateIssuer": true,
     "ValidIssuers": [
-      "https://YOUR-TENANT.ciamlogin.com/YOUR-TENANT-ID/v2.0",
-      "https://login.microsoftonline.com/YOUR-TENANT-ID/v2.0"
+      "https://YOUR-TENANT.ciamlogin.com/YOUR-TENANT-ID/v2.0"
     ],
     "AllowedOrigins": [
       "https://portal.yourdomain.com",
@@ -24,5 +20,8 @@
       "https://work.yourdomain.com",
       "https://pulse.yourdomain.com"
     ]
+  },
+  "ConnectionStrings": {
+    "AgOneTokenDb": "Server=YOUR-SERVER;Database=YOUR-DB;Trusted_Connection=True;TrustServerCertificate=True;"
   }
 }

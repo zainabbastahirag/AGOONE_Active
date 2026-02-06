@@ -1,31 +1,22 @@
 {
   "AgOneSso": {
-    "// INSTRUCTIONS": "Copy this section into your AG ONE Pulse's wwwroot/appsettings.json",
-
     "Authority": "https://YOUR-TENANT.ciamlogin.com/",
-    "ClientId": "YOUR-PULSE-CLIENT-ID-FROM-AZURE-APP-REGISTRATION",
-
+    "ClientId": "YOUR-WORK-CLIENT-ID",
     "SignUpSignInPolicyId": "B2C_1_SignUpSignIn",
-
     "PostLogoutRedirectUri": "/",
     "LoginCallbackPath": "/authentication/login-callback",
     "LogoutCallbackPath": "/authentication/logout-callback",
-
     "DefaultScopes": [
       "openid",
       "profile",
       "email",
-      "api://YOUR-PULSE-API-CLIENT-ID/access_as_user"
+      "api://YOUR-WORK-API-CLIENT-ID/access_as_user"
     ],
-
     "AdditionalScopes": [],
-
     "AgOnePortalUrl": "https://portal.yourdomain.com",
-    "ProductName": "Pulse",
+    "ProductName": "Work",
     "RedirectToPortalOnUnauthenticated": true,
-
-    "ApiBaseUrl": "https://pulse-api.yourdomain.com",
-
+    "ApiBaseUrl": "https://work-api.yourdomain.com",
     "Products": {
       "Portal": "https://portal.yourdomain.com",
       "Learn": "https://learn.yourdomain.com",
@@ -33,7 +24,6 @@
       "Work": "https://work.yourdomain.com",
       "Pulse": "https://pulse.yourdomain.com"
     },
-
     "TokenCacheMinutes": 60,
     "EnableMsalLogging": false
   }

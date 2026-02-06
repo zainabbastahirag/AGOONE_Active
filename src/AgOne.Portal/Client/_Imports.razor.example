@@ -1,9 +1,0 @@
-@* ============================================================================
-   Add these using statements to your existing _Imports.razor file
-   ============================================================================ *@
-
-@using Microsoft.AspNetCore.Authorization
-@using Microsoft.AspNetCore.Components.Authorization
-@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
-@using AgOne.Shared.Auth.Components
-@using AgOne.Shared.Auth.Services

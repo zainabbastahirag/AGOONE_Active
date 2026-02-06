@@ -1,31 +1,22 @@
 {
   "AgOneSso": {
-    "// INSTRUCTIONS": "Copy this section into your AG ONE Work's wwwroot/appsettings.json",
-
     "Authority": "https://YOUR-TENANT.ciamlogin.com/",
-    "ClientId": "YOUR-WORK-CLIENT-ID-FROM-AZURE-APP-REGISTRATION",
-
+    "ClientId": "YOUR-SAFE-CLIENT-ID",
     "SignUpSignInPolicyId": "B2C_1_SignUpSignIn",
-
     "PostLogoutRedirectUri": "/",
     "LoginCallbackPath": "/authentication/login-callback",
     "LogoutCallbackPath": "/authentication/logout-callback",
-
     "DefaultScopes": [
       "openid",
       "profile",
       "email",
-      "api://YOUR-WORK-API-CLIENT-ID/access_as_user"
+      "api://YOUR-SAFE-API-CLIENT-ID/access_as_user"
     ],
-
     "AdditionalScopes": [],
-
     "AgOnePortalUrl": "https://portal.yourdomain.com",
-    "ProductName": "Work",
+    "ProductName": "Safe",
     "RedirectToPortalOnUnauthenticated": true,
-
-    "ApiBaseUrl": "https://work-api.yourdomain.com",
-
+    "ApiBaseUrl": "https://safe-api.yourdomain.com",
     "Products": {
       "Portal": "https://portal.yourdomain.com",
       "Learn": "https://learn.yourdomain.com",
@@ -33,7 +24,6 @@
       "Work": "https://work.yourdomain.com",
       "Pulse": "https://pulse.yourdomain.com"
     },
-
     "TokenCacheMinutes": 60,
     "EnableMsalLogging": false
   }
