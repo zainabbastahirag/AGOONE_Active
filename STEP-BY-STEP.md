@@ -42,15 +42,9 @@ No NuGet packages needed. These are plain C# files.
 
 ---
 
-## Step 2 — Run SQL script once
+## Step 2 — Add to AG ONE Portal (do Portal first, then repeat for others)
 
-Run `AddTo_EachProduct_Infrastructure/Auth/Migrations/001_CreateTokenTables.sql` against your database. Creates `UserTokens` and `UserSessions` tables.
-
----
-
-## Step 3 — Add to AG ONE Portal (do Portal first, then repeat for others)
-
-### 3A — Portal Infrastructure project
+### 2A — Portal Infrastructure project
 
 Copy `Auth/` folder from `AddTo_EachProduct_Infrastructure/` into your `AgOne.Portal/Infrastructure/`:
 
@@ -60,6 +54,8 @@ AgOne.Portal/Infrastructure/
     ├── Entities/
     │   ├── UserToken.cs               ← copy
     │   └── UserSession.cs             ← copy
+    ├── UserTokenConfiguration.cs      ← copy (EF Fluent API config)
+    ├── UserSessionConfiguration.cs    ← copy (EF Fluent API config)
     └── TokenStorageService.cs         ← copy
 ```
 
@@ -71,18 +67,45 @@ dotnet add AgOne.Portal/Infrastructure/ package Microsoft.EntityFrameworkCore
 dotnet add AgOne.Portal/Infrastructure/ package System.IdentityModel.Tokens.Jwt
 ```
 
-**Open your existing DbContext** and add these 2 lines:
+**Open your existing DbContext** and add these 2 DbSet properties:
 ```csharp
-public DbSet<UserToken> UserTokens => Set<UserToken>();
-public DbSet<UserSession> UserSessions => Set<UserSession>();
+using AgOne.Infrastructure.Auth.Entities;  // ← adjust to your namespace
+
+public class YourAppDbContext : DbContext
+{
+    // ... your existing DbSets ...
+
+    // ADD THESE 2 LINES:
+    public DbSet<UserToken> UserTokens => Set<UserToken>();
+    public DbSet<UserSession> UserSessions => Set<UserSession>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        // ... your existing configurations ...
+
+        // ADD THESE 2 LINES:
+        modelBuilder.ApplyConfiguration(new UserTokenConfiguration());
+        modelBuilder.ApplyConfiguration(new UserSessionConfiguration());
+    }
+}
 ```
 
-**Open `TokenStorageService.cs`** and change the constructor:
+**Open `TokenStorageService.cs`** and change `DbContext` to your actual type:
 ```csharp
 // Change this:
 public TokenStorageService(DbContext db, ...
-// To your actual DbContext:
+// To your actual DbContext name:
 public TokenStorageService(YourAppDbContext db, ...
+```
+
+And change the field type at the top:
+```csharp
+// Change this:
+private readonly DbContext _db;
+// To:
+private readonly YourAppDbContext _db;
 ```
 
 **Register in your DI** (in `Program.cs` or wherever you register Infrastructure services):
@@ -90,9 +113,31 @@ public TokenStorageService(YourAppDbContext db, ...
 builder.Services.AddScoped<ITokenStorageService, TokenStorageService>();
 ```
 
+### 2B — Create EF Core Migration
+
+Now run the migration command from your API project directory (the project that has the EF tools and startup):
+
+```bash
+dotnet ef migrations add AddAgOneSsoTokenTables --project AgOne.Portal/Infrastructure/ --startup-project AgOne.Portal/API/
+```
+
+Then apply it:
+
+```bash
+dotnet ef database update --project AgOne.Portal/Infrastructure/ --startup-project AgOne.Portal/API/
+```
+
+This creates the `UserTokens` and `UserSessions` tables with all indexes automatically.
+
+If you want to verify what it will generate before applying, run:
+
+```bash
+dotnet ef migrations script --project AgOne.Portal/Infrastructure/ --startup-project AgOne.Portal/API/
+```
+
 ---
 
-### 3B — Portal API project
+### 2C — Portal API project
 
 Copy `Auth/` folder from `AddTo_EachProduct_API/` into your `AgOne.Portal/API/`:
 
@@ -133,7 +178,7 @@ Copy the `AzureAd`, `AgOneSso`, and `ConnectionStrings` sections from `Appsettin
 
 ---
 
-### 3C — Portal UI project
+### 2D — Portal UI project
 
 Copy files from `AddTo_EachProduct_UI/` into your `AgOne.Portal/UI/`:
 
@@ -220,22 +265,42 @@ Copy the `AgOneSso` section from `Appsettings/UI/Portal.json`. Replace all YOUR-
 
 ---
 
-## Step 4 — Repeat Step 3 for Learn
+## Step 3 — Repeat Step 2 for Learn
 
 **Exact same files.** Copy the same `Auth/` folders to:
 - `AgOne.Learn/Infrastructure/Auth/`
 - `AgOne.Learn/API/Auth/`
 - `AgOne.Learn/UI/Auth/` + `Pages/Authentication.razor`
 
-Same code changes to Program.cs, App.razor, _Imports.razor.
+Same code changes to Program.cs, App.razor, _Imports.razor, DbContext.
 
-**Only difference:** Use `Appsettings/UI/Learn.json` (which has `"RedirectToPortalOnUnauthenticated": true`).
+**Run migration for Learn too:**
+```bash
+dotnet ef migrations add AddAgOneSsoTokenTables --project AgOne.Learn/Infrastructure/ --startup-project AgOne.Learn/API/
+dotnet ef database update --project AgOne.Learn/Infrastructure/ --startup-project AgOne.Learn/API/
+```
+
+**Only config difference:** Use `Appsettings/UI/Learn.json` (which has `"RedirectToPortalOnUnauthenticated": true`).
 
 ---
 
-## Step 5 — Repeat for Safe, Work, Pulse
+## Step 4 — Repeat for Safe, Work, Pulse
 
 Exact same. Use the matching appsettings from `Appsettings/UI/Safe.json`, `Work.json`, `Pulse.json`.
+
+Run migration for each:
+```bash
+dotnet ef migrations add AddAgOneSsoTokenTables --project AgOne.Safe/Infrastructure/ --startup-project AgOne.Safe/API/
+dotnet ef database update --project AgOne.Safe/Infrastructure/ --startup-project AgOne.Safe/API/
+
+dotnet ef migrations add AddAgOneSsoTokenTables --project AgOne.Work/Infrastructure/ --startup-project AgOne.Work/API/
+dotnet ef database update --project AgOne.Work/Infrastructure/ --startup-project AgOne.Work/API/
+
+dotnet ef migrations add AddAgOneSsoTokenTables --project AgOne.Pulse/Infrastructure/ --startup-project AgOne.Pulse/API/
+dotnet ef database update --project AgOne.Pulse/Infrastructure/ --startup-project AgOne.Pulse/API/
+```
+
+NOTE: If all products share the SAME database, you only need to run the migration ONCE (from Portal). The tables are the same for all products.
 
 ---
 
@@ -251,9 +316,14 @@ For EACH product (Portal, Learn, Safe, Work, Pulse):
   └── Auth/
       ├── Entities/UserToken.cs
       ├── Entities/UserSession.cs
+      ├── UserTokenConfiguration.cs      (EF Fluent API)
+      ├── UserSessionConfiguration.cs    (EF Fluent API)
       └── TokenStorageService.cs
       + Add DbSets to your existing DbContext
+      + Add ApplyConfiguration() to OnModelCreating
       + Register ITokenStorageService in DI
+      + Run: dotnet ef migrations add AddAgOneSsoTokenTables
+      + Run: dotnet ef database update
       + NuGet: Microsoft.EntityFrameworkCore, System.IdentityModel.Tokens.Jwt
 
   API/                                 ← ADD Auth/ folder
