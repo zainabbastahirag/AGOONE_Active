@@ -1,0 +1,17 @@
+{
+  "AgOneSso": {
+    "Authority": "https://YOUR-TENANT.ciamlogin.com/",
+    "ClientId": "YOUR-SAFE-CLIENT-ID",
+    "SignUpSignInPolicyId": "B2C_1_SignUpSignIn",
+    "PostLogoutRedirectUri": "/",
+    "LoginCallbackPath": "/authentication/login-callback",
+    "LogoutCallbackPath": "/authentication/logout-callback",
+    "DefaultScopes": [ "openid", "profile", "email", "api://YOUR-SAFE-API-CLIENT-ID/access_as_user" ],
+    "AdditionalScopes": [],
+    "AgOnePortalUrl": "https://portal.yourdomain.com",
+    "ProductName": "Safe",
+    "RedirectToPortalOnUnauthenticated": true,
+    "ApiBaseUrl": "https://safe-api.yourdomain.com",
+    "Products": { "Portal": "https://portal.yourdomain.com", "Learn": "https://learn.yourdomain.com", "Safe": "https://safe.yourdomain.com", "Work": "https://work.yourdomain.com", "Pulse": "https://pulse.yourdomain.com" }
+  }
+}

@@ -1,150 +1,187 @@
-# AG ONE SSO - Step by Step Integration
+# AG ONE SSO — Straight Step-by-Step
 
-Your existing solution structure (for each product):
+Your existing solution:
 
 ```
-YourProduct/
-├── UI/              ← Blazor WebAssembly frontend
-├── API/             ← .NET Web API backend
-├── Infrastructure/
-├── Domain/
-└── Shared/
+YourSolution/
+├── AgOne.Shared/           ← existing class library (global, used by all products)
+│
+├── AgOne.Portal/
+│   ├── UI/                 ← existing Blazor WASM
+│   ├── API/                ← existing .NET Web API
+│   ├── Infrastructure/     ← existing class library
+│   ├── Domain/             ← existing class library
+│   └── Shared/             ← existing class library
+│
+├── AgOne.Learn/            ← same structure
+├── AgOne.Safe/             ← same structure
+├── AgOne.Work/             ← same structure
+└── AgOne.Pulse/            ← same structure
 ```
 
-Products: **Portal**, **Learn**, **Safe**, **Work**, **Pulse**
-
-Below is the exact order. Do steps 1-4 first. Then repeat steps 5-6 for each product.
+No new projects. Files go INTO your existing projects.
 
 ---
 
-## STEP 1: Add the two shared auth projects to your solution
+## Step 1 — Add 4 files to AgOne.Shared (your existing global shared project)
 
-Copy the entire `Step1_SharedAuthLibraries/` folder contents into your solution's Shared folder.
-
-**What to copy:**
+Copy the `Auth/` folder from `AddTo_AgOneShared/` into your `AgOne.Shared/` project:
 
 ```
-Step1_SharedAuthLibraries/
-├── AgOne.Shared.Auth/           → Copy to:  YourSolution/Shared/AgOne.Shared.Auth/
-└── AgOne.Shared.Auth.Api/       → Copy to:  YourSolution/Shared/AgOne.Shared.Auth.Api/
+AgOne.Shared/
+└── Auth/                          ← NEW folder
+    ├── AgOneSsoSettings.cs        ← copy from AddTo_AgOneShared/Auth/
+    ├── AgOneApiAuthSettings.cs    ← copy from AddTo_AgOneShared/Auth/
+    ├── IAgOneSsoService.cs        ← copy from AddTo_AgOneShared/Auth/
+    └── ITokenStorageService.cs    ← copy from AddTo_AgOneShared/Auth/
 ```
 
-**Then add them to your .sln file:**
+**Fix namespaces:** Open each file and change `namespace AgOne.Shared.Auth` to match your actual namespace if different.
 
+No NuGet packages needed. These are plain C# files.
+
+---
+
+## Step 2 — Run SQL script once
+
+Run `AddTo_EachProduct_Infrastructure/Auth/Migrations/001_CreateTokenTables.sql` against your database. Creates `UserTokens` and `UserSessions` tables.
+
+---
+
+## Step 3 — Add to AG ONE Portal (do Portal first, then repeat for others)
+
+### 3A — Portal Infrastructure project
+
+Copy `Auth/` folder from `AddTo_EachProduct_Infrastructure/` into your `AgOne.Portal/Infrastructure/`:
+
+```
+AgOne.Portal/Infrastructure/
+└── Auth/                              ← NEW folder
+    ├── Entities/
+    │   ├── UserToken.cs               ← copy
+    │   └── UserSession.cs             ← copy
+    └── TokenStorageService.cs         ← copy
+```
+
+**Fix namespaces** to match your project.
+
+**Add NuGet packages** to Infrastructure .csproj:
 ```bash
-dotnet sln add Shared/AgOne.Shared.Auth/AgOne.Shared.Auth.csproj
-dotnet sln add Shared/AgOne.Shared.Auth.Api/AgOne.Shared.Auth.Api.csproj
+dotnet add AgOne.Portal/Infrastructure/ package Microsoft.EntityFrameworkCore
+dotnet add AgOne.Portal/Infrastructure/ package System.IdentityModel.Tokens.Jwt
+```
+
+**Open your existing DbContext** and add these 2 lines:
+```csharp
+public DbSet<UserToken> UserTokens => Set<UserToken>();
+public DbSet<UserSession> UserSessions => Set<UserSession>();
+```
+
+**Open `TokenStorageService.cs`** and change the constructor:
+```csharp
+// Change this:
+public TokenStorageService(DbContext db, ...
+// To your actual DbContext:
+public TokenStorageService(YourAppDbContext db, ...
+```
+
+**Register in your DI** (in `Program.cs` or wherever you register Infrastructure services):
+```csharp
+builder.Services.AddScoped<ITokenStorageService, TokenStorageService>();
 ```
 
 ---
 
-## STEP 2: Create the database tables
+### 3B — Portal API project
 
-Run the SQL script against your database:
+Copy `Auth/` folder from `AddTo_EachProduct_API/` into your `AgOne.Portal/API/`:
 
+```
+AgOne.Portal/API/
+└── Auth/                                      ← NEW folder
+    ├── SsoApiServiceCollectionExtensions.cs    ← copy
+    ├── TokenCaptureMiddleware.cs               ← copy
+    └── AgOneAuthController.cs                  ← copy
+```
+
+**Fix namespaces** to match your project.
+
+**Add NuGet packages** to API .csproj:
 ```bash
-sqlcmd -S YOUR-SERVER -d YOUR-DATABASE -i Step4_DatabaseSetup/001_CreateTokenTables.sql
+dotnet add AgOne.Portal/API/ package Microsoft.Identity.Web
+dotnet add AgOne.Portal/API/ package System.IdentityModel.Tokens.Jwt
 ```
 
-Or open it in SSMS and execute it. It creates two tables: `UserTokens` and `UserSessions`.
-
----
-
-## STEP 3: Set up Azure Entra ID redirect URIs
-
-Go to Azure Portal → Entra ID → App Registrations → Your App → Authentication.
-
-Under **Single-page application** platform, add these redirect URIs:
-
-```
-https://portal.yourdomain.com/authentication/login-callback
-https://learn.yourdomain.com/authentication/login-callback
-https://safe.yourdomain.com/authentication/login-callback
-https://work.yourdomain.com/authentication/login-callback
-https://pulse.yourdomain.com/authentication/login-callback
-```
-
-Under **Logout URL** add:
-
-```
-https://portal.yourdomain.com/authentication/logout-callback
-https://learn.yourdomain.com/authentication/logout-callback
-https://safe.yourdomain.com/authentication/logout-callback
-https://work.yourdomain.com/authentication/logout-callback
-https://pulse.yourdomain.com/authentication/logout-callback
-```
-
----
-
-## STEP 4: Do this for AG ONE PORTAL first (then repeat for each product)
-
-### 4A — Portal UI project (Blazor WASM)
-
-**4A-1.** Add project reference:
-
-```bash
-dotnet add AgOne.Portal/UI/AgOne.Portal.UI.csproj reference Shared/AgOne.Shared.Auth/AgOne.Shared.Auth.csproj
-```
-
-**4A-2.** Open `AgOne.Portal/UI/Program.cs` and add ONE line:
+**Open `AgOne.Portal/API/Program.cs`** and add these lines:
 
 ```csharp
-using AgOne.Shared.Auth.Extensions;  // ← add this using
+using AgOne.API.Auth;  // ← adjust to your namespace
 
-var builder = WebAssemblyHostBuilder.CreateDefault(args);
+// ──────────── ADD BEFORE builder.Build() ────────────
+builder.Services.AddAgOneSsoApi(builder.Configuration);
 
-// ... your existing code ...
-
-builder.Services.AddAgOneSso(builder.Configuration);  // ← ADD THIS LINE
-
-// ... rest of your existing code ...
-
-await builder.Build().RunAsync();
+// ──────────── ADD BEFORE app.MapControllers() ────────────
+app.UseCors("AgOneCors");
+app.UseAuthentication();
+app.UseAuthorization();
+app.UseTokenCapture();
 ```
 
-**4A-3.** Copy `Step2_AddToEachProduct_UI/Pages/Authentication.razor` into your UI project:
+**Merge config** into `AgOne.Portal/API/appsettings.json`:
+
+Copy the `AzureAd`, `AgOneSso`, and `ConnectionStrings` sections from `Appsettings/API/AllProducts.json` into your existing appsettings. Set `"ProductName": "Portal"` and use Portal's API ClientId.
+
+---
+
+### 3C — Portal UI project
+
+Copy files from `AddTo_EachProduct_UI/` into your `AgOne.Portal/UI/`:
 
 ```
-Copy to:  AgOne.Portal/UI/Pages/Authentication.razor
+AgOne.Portal/UI/
+├── Auth/                                       ← NEW folder
+│   ├── SsoServiceCollectionExtensions.cs       ← copy
+│   ├── AgOneSsoService.cs                      ← copy
+│   ├── AgOneAuthorizationMessageHandler.cs     ← copy
+│   ├── AgOneRedirectToLogin.razor              ← copy
+│   └── AgOneLoginDisplay.razor                 ← copy
+└── Pages/
+    └── Authentication.razor                    ← NEW file, copy
 ```
 
-**4A-4.** Open your `AgOne.Portal/UI/wwwroot/appsettings.json` and MERGE the `AgOneSso` section from:
+**Fix namespaces** to match your project.
 
+**Add NuGet packages** to UI .csproj:
+```bash
+dotnet add AgOne.Portal/UI/ package Microsoft.Authentication.WebAssembly.Msal
+dotnet add AgOne.Portal/UI/ package Microsoft.AspNetCore.Components.WebAssembly.Authentication
 ```
-Step2_AddToEachProduct_UI/wwwroot/appsettings.json.PORTAL
+
+**Open `AgOne.Portal/UI/Program.cs`** and add 1 line:
+
+```csharp
+using AgOne.UI.Auth;  // ← adjust to your namespace
+
+// ADD THIS ONE LINE (anywhere before builder.Build().RunAsync())
+builder.Services.AddAgOneSso(builder.Configuration);
 ```
 
-Replace all `YOUR-TENANT`, `YOUR-PORTAL-CLIENT-ID`, `yourdomain.com` with your real values.
-
-**4A-5.** Open `AgOne.Portal/UI/_Imports.razor` and add these lines at the bottom:
+**Open `AgOne.Portal/UI/_Imports.razor`** and add:
 
 ```razor
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
-@using AgOne.Shared.Auth.Components
-@using AgOne.Shared.Auth.Services
 ```
 
-**4A-6.** Open `AgOne.Portal/UI/App.razor` and change `RouteView` to `AuthorizeRouteView`:
+**Open `AgOne.Portal/UI/App.razor`** and change:
 
-**BEFORE (your current code):**
+FROM:
 ```razor
-<Router AppAssembly="@typeof(App).Assembly">
-    <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
-        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
-    </Found>
-    <NotFound>
-        <PageTitle>Not found</PageTitle>
-        <LayoutView Layout="@typeof(MainLayout)">
-            <p>Sorry, there's nothing at this address.</p>
-        </LayoutView>
-    </NotFound>
-</Router>
+<RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
 ```
 
-**AFTER (replace with this):**
+TO:
 ```razor
 <CascadingAuthenticationState>
     <Router AppAssembly="@typeof(App).Assembly">
@@ -157,7 +194,7 @@ Replace all `YOUR-TENANT`, `YOUR-PORTAL-CLIENT-ID`, `yourdomain.com` with your r
                     }
                     else
                     {
-                        <p>You are not authorized to access this resource.</p>
+                        <p>Not authorized.</p>
                     }
                 </NotAuthorized>
                 <Authorizing>
@@ -167,252 +204,84 @@ Replace all `YOUR-TENANT`, `YOUR-PORTAL-CLIENT-ID`, `yourdomain.com` with your r
             <FocusOnNavigate RouteData="@routeData" Selector="h1" />
         </Found>
         <NotFound>
-            <PageTitle>Not found</PageTitle>
             <LayoutView Layout="@typeof(MainLayout)">
-                <p>Sorry, there's nothing at this address.</p>
+                <p>Not found.</p>
             </LayoutView>
         </NotFound>
     </Router>
 </CascadingAuthenticationState>
 ```
 
-**4A-7.** (Optional) Add login display to your `MainLayout.razor`:
+**Merge config** into `AgOne.Portal/UI/wwwroot/appsettings.json`:
 
-```razor
-@using AgOne.Shared.Auth.Components
+Copy the `AgOneSso` section from `Appsettings/UI/Portal.json`. Replace all YOUR- placeholders with real values.
 
-<!-- Add this wherever you want the login/logout button -->
-<AgOneLoginDisplay />
-
-<!-- Add this wherever you want product navigation links -->
-<AgOneProductNavigator />
-```
+**Add `[Authorize]` to your existing API controllers.**
 
 ---
 
-### 4B — Portal API project (.NET Web API)
+## Step 4 — Repeat Step 3 for Learn
 
-**4B-1.** Add project reference:
+**Exact same files.** Copy the same `Auth/` folders to:
+- `AgOne.Learn/Infrastructure/Auth/`
+- `AgOne.Learn/API/Auth/`
+- `AgOne.Learn/UI/Auth/` + `Pages/Authentication.razor`
 
-```bash
-dotnet add AgOne.Portal/API/AgOne.Portal.API.csproj reference Shared/AgOne.Shared.Auth.Api/AgOne.Shared.Auth.Api.csproj
-```
+Same code changes to Program.cs, App.razor, _Imports.razor.
 
-**4B-2.** Open `AgOne.Portal/API/Program.cs` and add these lines:
-
-```csharp
-using AgOne.Shared.Auth.Api.Extensions;    // ← add
-using AgOne.Shared.Auth.Api.Middleware;     // ← add
-
-var builder = WebApplication.CreateBuilder(args);
-
-// ========================================
-// ADD THESE 4 LINES (before builder.Build())
-// ========================================
-builder.Services.AddAgOneSsoApiAuthentication(builder.Configuration);
-builder.Services.AddAgOneSsoApiAuthorization(builder.Configuration);
-builder.Services.AddAgOneSsoCors(builder.Configuration);
-builder.Services.AddAgOneTokenStorage(builder.Configuration);
-
-// ... your existing services ...
-
-// IMPORTANT: Add this to your existing AddControllers() call:
-builder.Services.AddControllers()
-    .AddApplicationPart(typeof(AgOne.Shared.Auth.Api.Controllers.AgOneAuthController).Assembly);
-
-var app = builder.Build();
-
-// ... your existing middleware ...
-
-// ========================================
-// ADD THESE 5 LINES (before app.MapControllers())
-// ========================================
-app.UseCors(CorsExtensions.AgOneCorsPolicy);
-app.UseAuthentication();
-app.UseAuthorization();
-app.UseAgOneSsoValidation();
-app.UseTokenCapture();
-
-// ... your existing app.MapControllers() etc ...
-```
-
-**4B-3.** Open your `AgOne.Portal/API/appsettings.json` and MERGE the `AzureAd`, `AgOneSso`, and `ConnectionStrings` sections from:
-
-```
-Step3_AddToEachProduct_API/appsettings.json.PORTAL
-```
-
-Replace all `YOUR-TENANT`, `YOUR-TENANT-ID`, `YOUR-PORTAL-API-CLIENT-ID`, etc. with your real values.
-
-**4B-4.** Add `[Authorize]` to your existing controllers:
-
-```csharp
-using Microsoft.AspNetCore.Authorization;
-
-[ApiController]
-[Route("api/[controller]")]
-[Authorize]                    // ← ADD THIS to require login
-public class YourExistingController : ControllerBase
-{
-    // All your existing code stays the same
-    // Now it requires a valid token to access
-}
-```
+**Only difference:** Use `Appsettings/UI/Learn.json` (which has `"RedirectToPortalOnUnauthenticated": true`).
 
 ---
 
-## STEP 5: Repeat for Learn
+## Step 5 — Repeat for Safe, Work, Pulse
 
-Exact same changes as Step 4, but for the Learn project:
-
-### 5A — Learn UI
-
-- **5A-1.** `dotnet add AgOne.Learn/UI/AgOne.Learn.UI.csproj reference Shared/AgOne.Shared.Auth/AgOne.Shared.Auth.csproj`
-- **5A-2.** Add `builder.Services.AddAgOneSso(builder.Configuration);` to Learn UI `Program.cs`
-- **5A-3.** Copy `Authentication.razor` to `AgOne.Learn/UI/Pages/`
-- **5A-4.** Merge `appsettings.json.LEARN` into Learn UI `wwwroot/appsettings.json`
-- **5A-5.** Add usings to Learn UI `_Imports.razor`
-- **5A-6.** Change `RouteView` to `AuthorizeRouteView` in Learn UI `App.razor`
-- **5A-7.** (Optional) Add `<AgOneLoginDisplay />` to Learn's `MainLayout.razor`
-
-### 5B — Learn API
-
-- **5B-1.** `dotnet add AgOne.Learn/API/AgOne.Learn.API.csproj reference Shared/AgOne.Shared.Auth.Api/AgOne.Shared.Auth.Api.csproj`
-- **5B-2.** Add the 4 service lines + 5 middleware lines to Learn API `Program.cs`
-- **5B-3.** Merge `appsettings.json.LEARN` into Learn API `appsettings.json`
-- **5B-4.** Add `[Authorize]` to Learn's controllers
+Exact same. Use the matching appsettings from `Appsettings/UI/Safe.json`, `Work.json`, `Pulse.json`.
 
 ---
 
-## STEP 6: Repeat for Safe, Work, Pulse
-
-Exact same as Step 5. For each product:
-
-| Product | UI appsettings to use | API appsettings to use |
-|---------|----------------------|----------------------|
-| Safe    | `appsettings.json.SAFE` | `appsettings.json.SAFE` |
-| Work    | `appsettings.json.WORK` | `appsettings.json.WORK` |
-| Pulse   | `appsettings.json.PULSE` | `appsettings.json.PULSE` |
-
-The code changes (Program.cs, App.razor, _Imports.razor, Authentication.razor) are **IDENTICAL** for every product. Only the `appsettings.json` values are different.
-
----
-
-## DONE. What works now:
-
-1. User goes to `portal.yourdomain.com` → sees login page → logs in
-2. User clicks "Learn" → goes to `learn.yourdomain.com` → **automatically logged in (SSO)**
-3. User clicks "Safe" → goes to `safe.yourdomain.com` → **automatically logged in (SSO)**
-4. User types `work.yourdomain.com` in browser directly → **redirected to Portal to login first**
-5. User clicks Logout → **logged out of ALL products**
-6. All tokens saved in database automatically
-
----
-
-## CHECKLIST: Changes per product
+## Summary: What you add to each project
 
 ```
+AgOne.Shared/                          ← ADD ONCE (shared by all)
+└── Auth/  (4 files: settings, interfaces, DTOs)
+
 For EACH product (Portal, Learn, Safe, Work, Pulse):
 
-UI PROJECT:
-  □ Add project reference to AgOne.Shared.Auth
-  □ Add 1 line to Program.cs
-  □ Add Authentication.razor to Pages/
-  □ Merge AgOneSso section into wwwroot/appsettings.json
-  □ Add 5 usings to _Imports.razor
-  □ Change RouteView → AuthorizeRouteView in App.razor
-  □ (Optional) Add AgOneLoginDisplay to MainLayout.razor
+  Infrastructure/                      ← ADD Auth/ folder
+  └── Auth/
+      ├── Entities/UserToken.cs
+      ├── Entities/UserSession.cs
+      └── TokenStorageService.cs
+      + Add DbSets to your existing DbContext
+      + Register ITokenStorageService in DI
+      + NuGet: Microsoft.EntityFrameworkCore, System.IdentityModel.Tokens.Jwt
 
-API PROJECT:
-  □ Add project reference to AgOne.Shared.Auth.Api
-  □ Add 4 service lines to Program.cs
-  □ Add 5 middleware lines to Program.cs
-  □ Add .AddApplicationPart() to AddControllers()
-  □ Merge AzureAd + AgOneSso + ConnectionStrings into appsettings.json
-  □ Add [Authorize] to controllers
+  API/                                 ← ADD Auth/ folder
+  └── Auth/
+      ├── SsoApiServiceCollectionExtensions.cs
+      ├── TokenCaptureMiddleware.cs
+      └── AgOneAuthController.cs
+      + Add 1 line to Program.cs: builder.Services.AddAgOneSsoApi(...)
+      + Add 4 middleware lines to Program.cs
+      + Merge AzureAd + AgOneSso into appsettings.json
+      + Add [Authorize] to controllers
+      + NuGet: Microsoft.Identity.Web, System.IdentityModel.Tokens.Jwt
 
-ONLY DIFFERENCE between Portal and other products:
-  → Portal:  "RedirectToPortalOnUnauthenticated": false
-  → Others:  "RedirectToPortalOnUnauthenticated": true
-```
+  UI/                                  ← ADD Auth/ folder + 1 page
+  ├── Auth/
+  │   ├── SsoServiceCollectionExtensions.cs
+  │   ├── AgOneSsoService.cs
+  │   ├── AgOneAuthorizationMessageHandler.cs
+  │   ├── AgOneRedirectToLogin.razor
+  │   └── AgOneLoginDisplay.razor
+  └── Pages/Authentication.razor
+      + Add 1 line to Program.cs: builder.Services.AddAgOneSso(...)
+      + Add 3 @using to _Imports.razor
+      + Change RouteView → AuthorizeRouteView in App.razor
+      + Merge AgOneSso into wwwroot/appsettings.json
+      + NuGet: Microsoft.Authentication.WebAssembly.Msal
 
----
-
-## FILE MAP: What this repo contains
-
-```
-This Repo/
-│
-├── STEP-BY-STEP.md                      ← YOU ARE HERE
-│
-├── Step1_SharedAuthLibraries/           ← Copy these 2 projects into your Shared/ folder
-│   ├── AgOne.Shared.Auth/              ← For UI projects (Blazor WASM)
-│   │   ├── AgOne.Shared.Auth.csproj
-│   │   ├── _Imports.razor
-│   │   ├── Configuration/
-│   │   │   └── AgOneSsoSettings.cs
-│   │   ├── Extensions/
-│   │   │   └── ServiceCollectionExtensions.cs
-│   │   ├── Handlers/
-│   │   │   └── AgOneAuthorizationMessageHandler.cs
-│   │   ├── Providers/
-│   │   │   └── AgOneAuthStateProvider.cs
-│   │   ├── Components/
-│   │   │   ├── AgOneAuthGuard.razor + .razor.cs
-│   │   │   ├── AgOneRedirectToLogin.razor
-│   │   │   ├── AgOneLoginDisplay.razor
-│   │   │   ├── AgOneProductNavigator.razor
-│   │   │   └── Authentication.razor
-│   │   └── Services/
-│   │       ├── IAgOneSsoService.cs
-│   │       ├── AgOneSsoService.cs
-│   │       └── TokenSyncService.cs
-│   │
-│   └── AgOne.Shared.Auth.Api/          ← For API projects (.NET Web API)
-│       ├── AgOne.Shared.Auth.Api.csproj
-│       ├── Configuration/
-│       │   └── AgOneApiAuthSettings.cs
-│       ├── Extensions/
-│       │   ├── AuthenticationExtensions.cs
-│       │   ├── AuthorizationExtensions.cs
-│       │   ├── CorsExtensions.cs
-│       │   └── TokenStorageExtensions.cs
-│       ├── Middleware/
-│       │   ├── AgOneSsoValidationMiddleware.cs
-│       │   └── TokenCaptureMiddleware.cs
-│       ├── Handlers/
-│       │   └── ProductAccessRequirementHandler.cs
-│       ├── Controllers/
-│       │   └── AgOneAuthController.cs
-│       ├── Services/
-│       │   ├── ITokenStorageService.cs
-│       │   ├── TokenStorageService.cs
-│       │   └── TokenCleanupBackgroundService.cs
-│       └── Data/
-│           ├── AgOneTokenDbContext.cs
-│           ├── Entities/
-│           │   ├── UserToken.cs
-│           │   └── UserSession.cs
-│           └── Migrations/
-│               └── 001_CreateTokenTables.sql
-│
-├── Step2_AddToEachProduct_UI/           ← Files to add to each UI project
-│   ├── Pages/
-│   │   └── Authentication.razor         ← Copy to each UI's Pages/ folder
-│   └── wwwroot/
-│       ├── appsettings.json.PORTAL      ← Merge into Portal UI appsettings
-│       ├── appsettings.json.LEARN       ← Merge into Learn UI appsettings
-│       ├── appsettings.json.SAFE        ← Merge into Safe UI appsettings
-│       ├── appsettings.json.WORK        ← Merge into Work UI appsettings
-│       └── appsettings.json.PULSE       ← Merge into Pulse UI appsettings
-│
-├── Step3_AddToEachProduct_API/          ← Config to merge into each API project
-│   ├── appsettings.json.PORTAL         ← Merge into Portal API appsettings
-│   ├── appsettings.json.LEARN          ← Merge into Learn API appsettings
-│   ├── appsettings.json.SAFE           ← Merge into Safe API appsettings
-│   ├── appsettings.json.WORK           ← Merge into Work API appsettings
-│   └── appsettings.json.PULSE          ← Merge into Pulse API appsettings
-│
-└── Step4_DatabaseSetup/
-    └── 001_CreateTokenTables.sql        ← Run once against your database
+ONLY config difference:
+  Portal → "RedirectToPortalOnUnauthenticated": false
+  Learn/Safe/Work/Pulse → "RedirectToPortalOnUnauthenticated": true
 ```

@@ -1,0 +1,13 @@
+@using AgOne.Shared.Auth
+@using Microsoft.AspNetCore.Components.Authorization
+@inject IAgOneSsoService SsoService
+
+<AuthorizeView>
+    <Authorized>
+        <span>@context.User.Identity?.Name</span>
+        <button @onclick="() => SsoService.Logout()">Log out</button>
+    </Authorized>
+    <NotAuthorized>
+        <button @onclick="() => SsoService.Login()">Log in</button>
+    </NotAuthorized>
+</AuthorizeView>
