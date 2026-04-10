@@ -1,9 +1,10 @@
 # Manpower, KPI & Man-Hours Reporting System — 2026
 
-A complete reporting toolkit for Technical Managers managing multiple teams and projects. Two integrated tools:
+A complete reporting toolkit for Technical Managers managing multiple teams and projects. Three integrated tools:
 
-1. **Team KPI Tracker** — Track every person's KPIs, errors, feedback, achievements, and hours
-2. **Man-Hours Report** — Monthly/annual man-hours for P&L and Product Owner reporting
+1. **Excel Daily Tracker** — One .xlsx file you open daily to log work, track progress, KPIs, and feedback
+2. **Team KPI Dashboard** — HTML dashboard for KPI scorecards, errors, feedback, achievements
+3. **Man-Hours Report** — Monthly/annual man-hours for P&L and Product Owner reporting
 
 ---
 
@@ -25,7 +26,44 @@ A complete reporting toolkit for Technical Managers managing multiple teams and 
 
 ---
 
-## TOOL 1: Team KPI & Manpower Tracker
+## TOOL 1: Excel Daily Tracker (One File — Use Every Day)
+
+The single most important file. Open it daily, log work, track everything.
+
+```
+python3 generate_excel_tracker.py
+```
+
+Opens: `reports/team_daily_tracker_january_2026.xlsx`
+
+### What's Inside (6 Sheets)
+
+| Sheet | Purpose | How Often |
+|-------|---------|-----------|
+| **Daily Log** | Log each person's daily work — task, hours, project, status | **Every day** |
+| **Team Roster** | All 21 people, teams, projects, roles at a glance | Reference |
+| **Monthly KPI** | KPI scorecard with auto-formulas (completion %, bug ratio, grade) | **Weekly** |
+| **Progress & Feedback** | Achievements, errors, Tech Lead + Manager feedback | **Weekly / Monthly** |
+| **Project Summary** | Hours and tasks rolled up per project | Reference |
+| **Instructions** | How to use this file | Reference |
+
+### Daily Log Features
+- **Dropdowns** for Name, Team, Project, Status (no typos)
+- **Status options:** Not Started, In Progress, In Review, Blocked, Completed, Carry Forward
+- **Auto-coloring:** Green = Completed, Red = Blocked, Blue = In Progress, Yellow = Carry Forward
+- **500 pre-formatted rows** — just start typing
+- **Filter by person** to see all of someone's work history
+- **Filter by project** to see all work on one project
+
+### Monthly KPI Auto-Formulas
+- **Completion %** = Tasks Completed / Tasks Assigned (auto)
+- **Bug Ratio** = Bugs in Work / Tasks Completed (auto)
+- **Overall Grade** = Weighted A/B/C/D/F (auto — based on completion, on-time, quality, bugs)
+- Green/Red conditional formatting on grades and completion rates
+
+---
+
+## TOOL 2: Team KPI HTML Dashboard
 
 ### What It Tracks Per Person
 
@@ -159,12 +197,15 @@ Product, UI/UX, Dev, QA
 ```
 .
 ├── team_kpi_data.json                ← EDIT THIS (people, KPIs, feedback, errors)
-├── generate_team_kpi_report.py       ← Run for team KPI dashboard
+├── generate_excel_tracker.py         ← Run for the Excel daily tracker (.xlsx)
+├── generate_team_kpi_report.py       ← Run for team KPI HTML dashboard
 ├── yearly_man_hours_data.json        ← EDIT THIS (monthly hours per project)
 ├── generate_yearly_report.py         ← Run for annual man-hours dashboard
 ├── monthly_man_hours_report.py       ← Run for single-month man-hours report
+├── requirements.txt                  ← Python dependencies
 ├── README.md
 └── reports/
+    ├── team_daily_tracker_*.xlsx     ← THE EXCEL FILE (daily use)
     ├── team_kpi_dashboard_*.html     ← Team KPI dashboard (open in browser)
     ├── team_kpi_master_*.csv         ← Team KPI master spreadsheet
     ├── team_kpi_input_template_*.csv ← Template for Tech Leads
@@ -177,6 +218,13 @@ Product, UI/UX, Dev, QA
 
 ---
 
+## Setup
+
+```bash
+pip install -r requirements.txt
+```
+
 ## Requirements
 
-- Python 3.6+ (no external packages — standard library only)
+- Python 3.6+
+- `openpyxl` (for Excel generation — installed via requirements.txt)
