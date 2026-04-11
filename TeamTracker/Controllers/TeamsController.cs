@@ -10,30 +10,25 @@ public class TeamsController : BaseOrgController
 {
     public TeamsController(AppDbContext db, UserManager<AppUser> um) : base(db, um) { }
 
-    public async Task<IActionResult> Index()
-    {
-        var orgId = await GetOrgId();
-        if (orgId == null) return RedirectToAction("Setup", "Auth");
-
-        var teams = await OrgTeams(orgId.Value).Include(t => t.Members).OrderBy(t => t.Name).ToListAsync();
-        return View(teams);
-    }
-
-    public IActionResult Create() => View(new Team());
-
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(Team team)
+    public async Task<IActionResult> Create(string Name, string Project, string TechLead)
     {
         var user = await GetCurrentUser();
-        if (!CanEdit(user!)) return Forbid();
+        if (user?.OrganizationId == null || !CanEdit(user)) return Forbid();
 
-        team.OrganizationId = user!.OrganizationId!.Value;
-
-        if (!ModelState.IsValid) return View(team);
+        var team = new Team
+        {
+            Name = Name ?? "",
+            Project = Project ?? "",
+            TechLead = TechLead ?? "",
+            OrganizationId = user.OrganizationId.Value
+        };
 
         Db.Teams.Add(team);
         await Db.SaveChangesAsync();
-        return RedirectToAction(nameof(Index));
+
+        TempData["Message"] = $"Team \"{team.Name}\" created!";
+        return RedirectToAction("Index", "Home");
     }
 
     public async Task<IActionResult> Edit(int id)
@@ -45,19 +40,21 @@ public class TeamsController : BaseOrgController
     }
 
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, Team team)
+    public async Task<IActionResult> Edit(int id, string Name, string Project, string TechLead)
     {
-        if (id != team.Id) return NotFound();
         var user = await GetCurrentUser();
-        if (!CanEdit(user!)) return Forbid();
+        if (user?.OrganizationId == null || !CanEdit(user)) return Forbid();
 
-        team.OrganizationId = user!.OrganizationId!.Value;
+        var team = await Db.Teams.FirstOrDefaultAsync(t => t.Id == id && t.OrganizationId == user.OrganizationId);
+        if (team == null) return NotFound();
 
-        if (!ModelState.IsValid) return View(team);
+        team.Name = Name ?? team.Name;
+        team.Project = Project ?? team.Project;
+        team.TechLead = TechLead ?? team.TechLead;
 
-        Db.Update(team);
         await Db.SaveChangesAsync();
-        return RedirectToAction(nameof(Index));
+        TempData["Message"] = $"Team \"{team.Name}\" updated!";
+        return RedirectToAction("Index", "Home");
     }
 
     [HttpPost, ValidateAntiForgeryToken]
@@ -66,7 +63,7 @@ public class TeamsController : BaseOrgController
         var user = await GetCurrentUser();
         if (!CanEdit(user!)) return Forbid();
         var team = await Db.Teams.FirstOrDefaultAsync(t => t.Id == id && t.OrganizationId == user!.OrganizationId);
-        if (team != null) { Db.Teams.Remove(team); await Db.SaveChangesAsync(); }
-        return RedirectToAction(nameof(Index));
+        if (team != null) { Db.Teams.Remove(team); await Db.SaveChangesAsync(); TempData["Message"] = "Team deleted."; }
+        return RedirectToAction("Index", "Home");
     }
 }

@@ -55,7 +55,8 @@ public class KpiController : BaseOrgController
 
         Db.Update(kpi);
         await Db.SaveChangesAsync();
-        return RedirectToAction(nameof(Index), new { month = kpi.Month, year = kpi.Year });
+        TempData["Message"] = $"KPI updated for {kpi.Member?.Name ?? "member"}.";
+        return RedirectToAction("Index", "Home", new { month = kpi.Month, year = kpi.Year });
     }
 
     public async Task<IActionResult> Generate(int? month, int? year)
@@ -87,6 +88,6 @@ public class KpiController : BaseOrgController
         if (created > 0) await Db.SaveChangesAsync();
 
         TempData["Message"] = $"Generated KPI records for {created} members for {new DateTime(y, m, 1):MMMM yyyy}.";
-        return RedirectToAction(nameof(Index), new { month = m, year = y });
+        return RedirectToAction("Index", "Home", new { month = m, year = y });
     }
 }

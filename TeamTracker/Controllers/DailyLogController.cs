@@ -84,7 +84,8 @@ public class DailyLogController : BaseOrgController
 
         Db.DailyLogs.Add(vm.Log);
         await Db.SaveChangesAsync();
-        return RedirectToAction(nameof(Index));
+        TempData["Message"] = "Daily log entry added!";
+        return RedirectToAction("Index", "Home");
     }
 
     public async Task<IActionResult> Edit(int id)
@@ -120,7 +121,8 @@ public class DailyLogController : BaseOrgController
 
         Db.Update(vm.Log);
         await Db.SaveChangesAsync();
-        return RedirectToAction(nameof(Index));
+        TempData["Message"] = "Daily log updated!";
+        return RedirectToAction("Index", "Home");
     }
 
     [HttpPost, ValidateAntiForgeryToken]
@@ -129,7 +131,7 @@ public class DailyLogController : BaseOrgController
         var user = await GetCurrentUser();
         if (!CanEdit(user!)) return Forbid();
         var log = await Db.DailyLogs.FindAsync(id);
-        if (log != null) { Db.DailyLogs.Remove(log); await Db.SaveChangesAsync(); }
-        return RedirectToAction(nameof(Index));
+        if (log != null) { Db.DailyLogs.Remove(log); await Db.SaveChangesAsync(); TempData["Message"] = "Entry deleted."; }
+        return RedirectToAction("Index", "Home");
     }
 }
