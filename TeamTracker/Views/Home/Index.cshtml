@@ -1,6 +1,6 @@
 ﻿@model TeamTracker.ViewModels.DashboardViewModel
 @{
-    ViewData["Title"]="KpiPulse";
+    ViewData["Title"]="PulseBoard";
     var u=ViewBag.CurrentUser as TeamTracker.Models.AppUser;
     var canEdit=(bool)(ViewBag.CanEdit??false);
     var ai=ViewBag.AiReport as TeamTracker.Services.AiInsightEngine.AiReport;
@@ -9,13 +9,17 @@
     var noteCounts=ViewBag.NoteCounts as Dictionary<int,int>??new();
     var pc=new[]{"#6366f1","#dc2626","#059669","#d97706","#7c3aed","#ea580c","#0d9488"};
     var allMembers=Model.Teams.SelectMany(t=>t.Members.Select(m=>new{m,t})).GroupBy(x=>x.m.Name).Select(g=>g.First()).ToList();
+    var projects=Model.Teams.Select(t=>t.Project).Distinct().ToList();
 }
 
 <!-- TOPNAV -->
 <nav class="topnav">
-    <a href="/" class="brand">Kpi<span>Pulse</span></a>
+    <div style="display:flex;align-items:center;gap:.5rem;">
+        <a href="/" class="brand">Pulse<span>Board</span></a>
+        <span style="font-size:.5rem;color:rgba(255,255,255,.3);font-weight:500;display:none;" class="d-md-inline">See your team. Know your people.</span>
+    </div>
     <div class="right">
-        <a href="/Export/FullReport?month=@Model.SelectedMonth&year=@Model.SelectedYear" class="btn-exp" title="Director Report"><i class="bi bi-download"></i><span class="d-none d-md-inline"> Report</span></a>
+        <a href="/Export/FullReport?month=@Model.SelectedMonth&year=@Model.SelectedYear" class="btn-exp" title="Export Full Report"><i class="bi bi-download"></i><span class="d-none d-md-inline"> Report</span></a>
         <div class="user-pill">
             @if(u?.AvatarUrl!=null){<img src="@u.AvatarUrl" referrerpolicy="no-referrer"/>}
             <span class="uname d-none d-sm-inline">@(u?.DisplayName?.Split(' ').FirstOrDefault())</span>
@@ -24,244 +28,180 @@
     </div>
 </nav>
 
-<!-- MOBILE BOTTOM NAV -->
+<!-- MOBILE BOTTOM NAV (2 tabs only) -->
 <nav class="bottom-nav"><div class="bnav-inner">
     <div class="bnav-item active" onclick="sw(0);mNav(this)"><i class="bi bi-people"></i>People</div>
-    <div class="bnav-item" onclick="sw(1);mNav(this)"><i class="bi bi-folder"></i>Projects</div>
-    <div class="bnav-item" onclick="sw(2);mNav(this)"><i class="bi bi-journal"></i>Log</div>
-    <div class="bnav-item" onclick="sw(3);mNav(this)"><i class="bi bi-share"></i>Share</div>
+    <div class="bnav-item" onclick="sw(1);mNav(this)"><i class="bi bi-share"></i>Share</div>
 </div></nav>
+
+<!-- LIGHTBOX (image popup) -->
+<div class="lightbox" id="lightbox" onclick="this.classList.remove('show')">
+    <span class="lb-close"><i class="bi bi-x-lg"></i></span>
+    <img id="lb-img" src="" alt=""/>
+</div>
+
+<!-- FULLSCREEN CHAT -->
+<div class="fs-chat" id="fschat">
+    <div class="fs-head">
+        <i class="bi bi-arrow-left fs-back" onclick="closeChat()"></i>
+        <div><div class="fs-name" id="fs-name"></div><div class="fs-role" id="fs-role"></div></div>
+        <div style="margin-left:auto;display:flex;gap:.3rem;">
+            <a id="fs-export" href="#" class="btn-exp" style="font-size:.6rem;"><i class="bi bi-download"></i> Excel</a>
+            <button class="btn-a" style="font-size:.6rem;padding:.2rem .45rem;background:linear-gradient(135deg,#4f46e5,#7c3aed);" onclick="aiReportFS()"><i class="bi bi-stars"></i> AI</button>
+        </div>
+    </div>
+    <div class="fs-msgs" id="fs-msgs"></div>
+    <div id="fs-ai-out" style="display:none;padding:.5rem .75rem;background:var(--pri3);border-top:1px solid var(--brd);">
+        <div style="font-size:.6rem;font-weight:700;color:var(--pri);margin-bottom:.15rem;"><i class="bi bi-stars"></i> AI Report</div>
+        <div id="fs-ai-text" style="font-size:.7rem;color:var(--txt2);line-height:1.5;"></div>
+    </div>
+    @if(canEdit){
+    <div class="fs-input">
+        <input type="text" id="fs-input" class="form-control form-control-sm" placeholder="Write a note..." onkeydown="if(event.key==='Enter')fsSend()"/>
+        <select id="fs-type" style="font-size:.55rem;border:1px solid var(--brd);border-radius:6px;padding:.15rem .2rem;color:var(--txt3);">
+            <option value="Chat">Chat</option><option value="Note">Note</option><option value="Review">Review</option><option value="Achievement">Win</option><option value="Concern">Flag</option><option value="Goal">Goal</option>
+        </select>
+        <label style="cursor:pointer;color:var(--pri);font-size:.9rem;"><i class="bi bi-image"></i><input type="file" accept="image/*" style="display:none;" onchange="fsUploadImg(this)"/></label>
+        <button class="btn-a" style="padding:.2rem .4rem;" onclick="fsSend()"><i class="bi bi-send"></i></button>
+    </div>}
+</div>
 
 <div class="app-c">
 
 @if(TempData["Message"]!=null){<div class="toast-msg alert-dismissible fade show" role="alert"><i class="bi bi-check-circle-fill"></i> @TempData["Message"]<button type="button" class="btn-close" data-bs-dismiss="alert" style="font-size:.5rem;filter:brightness(0) invert(1);"></button></div>}
 
-<!-- MONTH + HEALTH -->
+<!-- TOOLBAR: Month + Search + Stats -->
 <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.85rem;flex-wrap:wrap;">
-    <form method="get" style="display:flex;gap:.2rem;"><select name="month" class="form-select form-select-sm" style="width:110px;font-size:.76rem;" onchange="this.form.submit()">@for(int m=1;m<=12;m++){<option value="@m" selected="@(m==Model.SelectedMonth)">@(new DateTime(2026,m,1).ToString("MMM yyyy"))</option>}</select><input type="hidden" name="year" value="@Model.SelectedYear"/></form>
-    <span style="font-size:.62rem;color:var(--txt3);background:var(--pri3);padding:.15rem .45rem;border-radius:10px;font-weight:600;">@ViewBag.OrgName</span>
-    @if(ai!=null&&ai.TeamHealthScore>0){<span style="font-size:.62rem;font-weight:700;padding:.15rem .45rem;border-radius:10px;background:@(ai.TeamHealthColor)15;color:@(ai.TeamHealthColor);"><i class="bi bi-heart-pulse"></i> @ai.TeamHealthScore</span>}
-    <span style="font-size:.62rem;color:var(--txt4);">@allMembers.Count people · @Model.Teams.Count teams · @Model.Teams.Select(t=>t.Project).Distinct().Count() projects</span>
+    <form method="get" style="flex-shrink:0;"><select name="month" class="form-select form-select-sm" style="width:105px;font-size:.74rem;" onchange="this.form.submit()">@for(int m=1;m<=12;m++){<option value="@m" selected="@(m==Model.SelectedMonth)">@(new DateTime(2026,m,1).ToString("MMM yyyy"))</option>}</select><input type="hidden" name="year" value="@Model.SelectedYear"/></form>
+    <div class="search-bar" style="flex:1;min-width:150px;max-width:350px;">
+        <i class="bi bi-search search-icon"></i>
+        <input type="text" class="form-control form-control-sm" id="searchBox" placeholder="Search people, projects, roles..." oninput="filterCards(this.value)"/>
+    </div>
+    <span style="font-size:.58rem;color:var(--txt4);white-space:nowrap;">@allMembers.Count people · @Model.Teams.Count teams</span>
+    @if(ai!=null&&ai.TeamHealthScore>0){<span style="font-size:.58rem;font-weight:700;padding:.12rem .4rem;border-radius:10px;background:@(ai.TeamHealthColor)15;color:@(ai.TeamHealthColor);white-space:nowrap;"><i class="bi bi-heart-pulse"></i> @ai.TeamHealthScore</span>}
 </div>
 
-<!-- TABS -->
+<!-- TABS (desktop only — mobile uses bottom nav) -->
 <div class="tab-bar">
     <div class="tb active" onclick="sw(0,this)"><i class="bi bi-people-fill"></i> People</div>
-    <div class="tb" onclick="sw(1,this)"><i class="bi bi-folder-fill"></i> Projects</div>
-    <div class="tb" onclick="sw(2,this)"><i class="bi bi-journal-text"></i> Activity</div>
-    <div class="tb" onclick="sw(3,this)"><i class="bi bi-share-fill"></i> Share</div>
+    <div class="tb" onclick="sw(1,this)"><i class="bi bi-share-fill"></i> Share & Invite</div>
 </div>
 
 <!-- ══════════════════════════════════════════════
-     TAB 1: PEOPLE — each person is a card
+     TAB: PEOPLE — all in one
      ══════════════════════════════════════════════ -->
 <div class="tp active" id="v0">
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;flex-wrap:wrap;gap:.3rem;">
-    <span style="font-weight:700;font-size:.85rem;">People</span>
-    <div style="display:flex;gap:.3rem;">
-        @if(canEdit){<button class="btn-a" data-bs-toggle="modal" data-bs-target="#addMemberModal" onclick="document.getElementById('nmt').value=@(Model.Teams.FirstOrDefault()?.Id??0)"><i class="bi bi-person-plus"></i> Add</button>}
-        @if(canEdit){<a asp-controller="Kpi" asp-action="Generate" asp-route-month="@Model.SelectedMonth" asp-route-year="@Model.SelectedYear" class="btn-g"><i class="bi bi-plus"></i> Generate KPIs</a>}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;flex-wrap:wrap;gap:.3rem;">
+    <div style="display:flex;gap:.3rem;flex-wrap:wrap;">
+        <!-- Project filter pills -->
+        <button class="filter-pill active" onclick="filterProject('',this)">All</button>
+        @foreach(var proj in projects){var ci=projects.IndexOf(proj)%pc.Length;
+        <button class="filter-pill" onclick="filterProject('@proj',this)" style="--pill-c:@pc[ci];">@proj</button>}
+    </div>
+    <div style="display:flex;gap:.25rem;">
+        @if(canEdit){<button class="btn-a" data-bs-toggle="modal" data-bs-target="#addMemberModal" onclick="document.getElementById('nmt').value=@(Model.Teams.FirstOrDefault()?.Id??0)"><i class="bi bi-person-plus"></i><span class="d-none d-sm-inline"> Add</span></button>}
+        @if(canEdit){<a asp-controller="Kpi" asp-action="Generate" asp-route-month="@Model.SelectedMonth" asp-route-year="@Model.SelectedYear" class="btn-g"><i class="bi bi-plus"></i> KPIs</a>}
+        @if(canEdit){<button class="btn-a" data-bs-toggle="modal" data-bs-target="#addTeamModal"><i class="bi bi-folder-plus"></i></button>}
     </div>
 </div>
 
-<div class="row g-2">
+<div class="row g-2" id="people-grid">
 @foreach(var am in allMembers){
-    var m=am.m; var t=am.t;
+    var m=am.m;var t=am.t;
     var kpi=Model.Kpis.FirstOrDefault(k=>k.MemberId==m.Id);
     var pulse=kpi!=null&&kpi.TasksAssigned>0?(int)((kpi.CompletionPct*0.3)+(kpi.OnTimeDeliveryPct*0.3)+(kpi.QualityScore/5.0*100*0.25)+((1-Math.Min(kpi.BugRatio,1))*100*0.15)):0;
     var pColor=pulse>=75?"var(--g)":pulse>=50?"var(--a)":pulse>0?"var(--r)":"var(--txt4)";
     var dotC=m.Role switch{var r when r.Contains("Lead")=>"#dc2626",var r when r.Contains("QA")=>"#059669",var r when r.Contains("Design")||r.Contains("UI")=>"#7c3aed",var r when r.Contains("BA")||r.Contains("Product")=>"#d97706",_=>"#2563eb"};
     var nc=noteCounts.GetValueOrDefault(m.Id,0);
-    var ci=allMembers.IndexOf(am)%pc.Length;
+    var ci2=allMembers.IndexOf(am)%pc.Length;
 
-<div class="col-12 col-sm-6 col-lg-4">
-<div style="background:var(--card);border-radius:var(--rd);border:1px solid var(--brd);overflow:hidden;transition:box-shadow .15s;" id="pcard-@m.Id">
-    <!-- Card header — click to expand -->
-    <div style="padding:.6rem .75rem;cursor:pointer;display:flex;align-items:center;gap:.5rem;" onclick="togglePerson(@m.Id)">
-        <!-- Avatar -->
+<div class="col-12 col-sm-6 col-lg-4 person-card-col" data-name="@m.Name.ToLower()" data-project="@t.Project.ToLower()" data-role="@m.Role.ToLower()" data-projects="@m.ProjectsAssigned.ToLower()">
+<div style="background:var(--card);border-radius:var(--rd);border:1px solid var(--brd);overflow:hidden;transition:box-shadow .15s;">
+    <!-- Card head -->
+    <div style="padding:.55rem .7rem;cursor:pointer;display:flex;align-items:center;gap:.45rem;" onclick="toggleP(@m.Id)">
         <div style="position:relative;flex-shrink:0;">
-            @if(m.PhotoUrl!=null){<img src="@m.PhotoUrl" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid var(--brd);"/>}
-            else{<div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,@pc[ci],@pc[(ci+2)%pc.Length]);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:#fff;">@m.Name[0..2].ToUpper()</div>}
-            <div style="position:absolute;bottom:-1px;right:-1px;width:12px;height:12px;border-radius:50%;border:2px solid var(--card);background:@dotC;" title="@m.Role"></div>
+            @if(m.PhotoUrl!=null){<img src="@m.PhotoUrl" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid var(--brd);"/>}
+            else{<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,@pc[ci2],@pc[(ci2+2)%pc.Length]);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;color:#fff;">@m.Name[0..2].ToUpper()</div>}
+            <div style="position:absolute;bottom:-1px;right:-1px;width:11px;height:11px;border-radius:50%;border:2px solid var(--card);background:@dotC;"></div>
         </div>
-        <!-- Name + meta -->
         <div style="flex:1;min-width:0;">
-            <div style="font-weight:700;font-size:.8rem;color:var(--txt);display:flex;align-items:center;gap:.25rem;">
-                @m.Name
-                @if(m.ProjectsAssigned.Contains(",")){<i class="bi bi-arrow-left-right" style="font-size:.5rem;color:var(--pri);" title="Multi-project"></i>}
-            </div>
-            <div style="font-size:.58rem;color:var(--txt4);">@m.Role · @t.Project</div>
+            <div style="font-weight:700;font-size:.78rem;color:var(--txt);display:flex;align-items:center;gap:.2rem;">@m.Name @if(m.ProjectsAssigned.Contains(",")){<i class="bi bi-arrow-left-right" style="font-size:.45rem;color:var(--pri);"></i>}</div>
+            <div style="font-size:.55rem;color:var(--txt4);">@m.Role · @t.Project@if(t.StartDate!=null){ <text> · since @t.StartDate.Value.ToString("MMM yy")</text>}</div>
         </div>
-        <!-- Pulse ring -->
-        @if(pulse>0){
-        <div style="position:relative;width:32px;height:32px;flex-shrink:0;">
-            <svg viewBox="0 0 36 36" style="transform:rotate(-90deg);width:32px;height:32px;"><circle cx="18" cy="18" r="14" fill="none" stroke="#e2e8f0" stroke-width="3"/><circle cx="18" cy="18" r="14" fill="none" stroke="@pColor" stroke-width="3" stroke-dasharray="@(pulse*88/100) 88" stroke-linecap="round"/></svg>
-            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.52rem;font-weight:800;color:@pColor;">@pulse</div>
-        </div>}
-        <!-- Notes count -->
-        @if(nc>0){<span style="font-size:.55rem;background:var(--pri3);color:var(--pri);padding:.1rem .3rem;border-radius:8px;font-weight:700;">@nc</span>}
-        <i class="bi bi-chevron-down" style="font-size:.7rem;color:var(--txt4);transition:transform .2s;" id="pchev-@m.Id"></i>
+        @if(pulse>0){<div style="position:relative;width:30px;height:30px;flex-shrink:0;"><svg viewBox="0 0 36 36" style="transform:rotate(-90deg);width:30px;height:30px;"><circle cx="18" cy="18" r="14" fill="none" stroke="#e2e8f0" stroke-width="3"/><circle cx="18" cy="18" r="14" fill="none" stroke="@pColor" stroke-width="3" stroke-dasharray="@(pulse*88/100) 88" stroke-linecap="round"/></svg><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.5rem;font-weight:800;color:@pColor;">@pulse</div></div>}
+        @if(nc>0){<span style="font-size:.5rem;background:var(--pri3);color:var(--pri);padding:.08rem .25rem;border-radius:6px;font-weight:700;">@nc</span>}
+        <i class="bi bi-chevron-down" style="font-size:.65rem;color:var(--txt5);transition:transform .2s;" id="chev-@m.Id"></i>
     </div>
 
-    <!-- Expanded content (hidden by default) -->
-    <div style="display:none;border-top:1px solid var(--brd2);" id="pdetail-@m.Id">
-        <!-- Quick KPI strip -->
+    <!-- Expanded -->
+    <div style="display:none;border-top:1px solid var(--brd2);" id="det-@m.Id">
+        <!-- KPI strip -->
         @if(kpi!=null&&kpi.TasksAssigned>0){
-        <div style="display:flex;gap:.2rem;padding:.4rem .6rem;background:var(--bg2);flex-wrap:wrap;">
-            <span style="font-size:.55rem;background:var(--card);padding:.12rem .35rem;border-radius:6px;font-weight:600;">Tasks: @kpi.TasksCompleted/@kpi.TasksAssigned</span>
-            <span style="font-size:.55rem;background:var(--card);padding:.12rem .35rem;border-radius:6px;font-weight:600;">Quality: @for(int s=1;s<=5;s++){<span style="color:@(s<=kpi.QualityScore?"#d97706":"#e2e8f0");">★</span>}</span>
-            <span style="font-size:.55rem;background:var(--card);padding:.12rem .35rem;border-radius:6px;font-weight:600;">Hours: @kpi.TotalHoursWorked</span>
-            @if(kpi.ExtraHours>0){<span style="font-size:.55rem;background:var(--abg);padding:.12rem .35rem;border-radius:6px;font-weight:600;color:var(--a);">OT: @kpi.ExtraHours</span>}
-            @if(canEdit){<a asp-controller="Kpi" asp-action="Edit" asp-route-id="@kpi.Id" class="btn-g" style="margin-left:auto;padding:.08rem .2rem;font-size:.52rem;"><i class="bi bi-pencil"></i> Edit KPI</a>}
+        <div style="display:flex;gap:.15rem;padding:.35rem .55rem;background:var(--bg2);flex-wrap:wrap;align-items:center;">
+            <span style="font-size:.52rem;background:var(--card);padding:.1rem .3rem;border-radius:5px;font-weight:600;">@kpi.TasksCompleted/@kpi.TasksAssigned tasks</span>
+            <span style="font-size:.52rem;background:var(--card);padding:.1rem .3rem;border-radius:5px;font-weight:600;">@for(int s=1;s<=5;s++){<span style="color:@(s<=kpi.QualityScore?"#d97706":"#e2e8f0");font-size:.5rem;">★</span>}</span>
+            <span style="font-size:.52rem;background:var(--card);padding:.1rem .3rem;border-radius:5px;font-weight:600;">@kpi.TotalHoursWorked h</span>
+            @if(kpi.ExtraHours>0){<span style="font-size:.52rem;background:var(--abg);padding:.1rem .3rem;border-radius:5px;font-weight:600;color:var(--a);">+@kpi.ExtraHours OT</span>}
+            <span class="gr gr-@kpi.Grade" style="width:22px;height:22px;font-size:.65rem;margin-left:auto;">@kpi.Grade</span>
+            @if(canEdit){<a asp-controller="Kpi" asp-action="Edit" asp-route-id="@kpi.Id" class="btn-g" style="padding:.06rem .15rem;font-size:.48rem;"><i class="bi bi-pencil"></i></a>}
         </div>}
 
-        <!-- Projects assigned -->
-        <div style="padding:.4rem .6rem;">
-            <div style="font-size:.55rem;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem;">Projects</div>
-            <div style="display:flex;gap:.2rem;flex-wrap:wrap;">
-                @foreach(var proj in m.ProjectsAssigned.Split(',',StringSplitOptions.TrimEntries)){
-                    var pci=Model.Teams.Select(tt=>tt.Project).Distinct().ToList().IndexOf(proj);
-                    if(pci<0)pci=0;
-                    <span style="font-size:.58rem;font-weight:700;padding:.12rem .4rem;border-radius:6px;color:#fff;background:@pc[pci%pc.Length];">@proj</span>
-                }
-            </div>
+        <!-- Projects -->
+        <div style="padding:.3rem .55rem;display:flex;gap:.15rem;flex-wrap:wrap;">
+            @foreach(var proj in m.ProjectsAssigned.Split(',',StringSplitOptions.TrimEntries)){var pci=projects.IndexOf(proj);if(pci<0)pci=0;
+            <span style="font-size:.52rem;font-weight:700;padding:.1rem .35rem;border-radius:5px;color:#fff;background:@pc[pci%pc.Length];">@proj</span>}
         </div>
 
-        <!-- Notes/Chat timeline -->
-        <div style="padding:.3rem .6rem .5rem;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;">
-                <span style="font-size:.55rem;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;">Notes & Chat</span>
+        <!-- Notes preview + expand button -->
+        <div style="padding:.25rem .55rem .4rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.2rem;">
+                <span style="font-size:.52rem;font-weight:700;color:var(--txt3);text-transform:uppercase;">Notes (@nc)</span>
                 <div style="display:flex;gap:.2rem;">
-                    <button class="btn-g" style="font-size:.5rem;padding:.08rem .25rem;" onclick="aiReport(@m.Id)"><i class="bi bi-stars"></i> AI Report</button>
+                    <a href="/Export/PersonReport/@m.Id" class="btn-g" style="font-size:.48rem;padding:.06rem .2rem;"><i class="bi bi-download"></i> Excel</a>
+                    <button class="btn-g" style="font-size:.48rem;padding:.06rem .2rem;" onclick="openChat(@m.Id,'@m.Name','@m.Role · @t.Project')"><i class="bi bi-arrows-fullscreen"></i> Full</button>
                 </div>
             </div>
-            <div id="notes-@m.Id" style="max-height:200px;overflow-y:auto;margin-bottom:.3rem;">
-                <div style="text-align:center;padding:.5rem;font-size:.6rem;color:var(--txt4);">Loading...</div>
-            </div>
-            <!-- Chat input -->
+            <div id="notes-@m.Id" style="max-height:120px;overflow-y:auto;"><div style="text-align:center;font-size:.55rem;color:var(--txt4);padding:.3rem;">Click to load</div></div>
             @if(canEdit){
-            <div style="display:flex;gap:.25rem;align-items:center;">
-                <input type="text" id="chat-@m.Id" class="form-control form-control-sm" style="font-size:.7rem;flex:1;" placeholder="Write a note or review..." onkeydown="if(event.key==='Enter')sendNote(@m.Id)"/>
-                <select id="chattype-@m.Id" style="font-size:.58rem;border:1px solid var(--brd);border-radius:6px;padding:.15rem .25rem;color:var(--txt3);background:var(--card);">
-                    <option value="Chat">Chat</option><option value="Note">Note</option><option value="Review">Review</option><option value="Achievement">Win</option><option value="Concern">Flag</option><option value="Goal">Goal</option>
-                </select>
-                <label style="cursor:pointer;color:var(--pri);font-size:.85rem;" title="Attach image"><i class="bi bi-image"></i><input type="file" accept="image/*" style="display:none;" onchange="uploadImg(@m.Id,this)"/></label>
-                <button class="btn-a" style="padding:.2rem .4rem;font-size:.65rem;" onclick="sendNote(@m.Id)"><i class="bi bi-send"></i></button>
+            <div style="display:flex;gap:.2rem;align-items:center;margin-top:.2rem;">
+                <input type="text" id="chat-@m.Id" class="form-control form-control-sm" style="font-size:.66rem;flex:1;padding:.2rem .4rem;" placeholder="Write..." onkeydown="if(event.key==='Enter')sendN(@m.Id)"/>
+                <button class="btn-a" style="padding:.15rem .3rem;font-size:.6rem;" onclick="sendN(@m.Id)"><i class="bi bi-send"></i></button>
             </div>}
         </div>
-        <!-- AI Report output -->
-        <div id="aireport-@m.Id" style="display:none;padding:.4rem .6rem .5rem;">
-            <div style="font-size:.55rem;font-weight:700;color:var(--pri);text-transform:uppercase;margin-bottom:.2rem;"><i class="bi bi-stars"></i> AI Performance Report</div>
-            <div id="aireporttext-@m.Id" style="font-size:.68rem;color:var(--txt2);line-height:1.5;background:var(--pri3);padding:.4rem .5rem;border-radius:8px;"></div>
-        </div>
     </div>
 </div>
-</div>
-}
+</div>}
 </div>
 </div>
 
 <!-- ══════════════════════════════════════════════
-     TAB 2: PROJECTS
+     TAB: SHARE & INVITE
      ══════════════════════════════════════════════ -->
 <div class="tp" id="v1">
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;">
-    <span style="font-weight:700;font-size:.85rem;">Projects</span>
-    @if(canEdit){<button class="btn-a" data-bs-toggle="modal" data-bs-target="#addTeamModal"><i class="bi bi-plus"></i> Project</button>}
-</div>
-<div class="row g-2">
-@foreach(var t in Model.Teams){var ci=Model.Teams.IndexOf(t)%pc.Length;var mCount=t.Members.Count;
-<div class="col-12 col-md-6">
-<div style="background:var(--card);border-radius:var(--rd);border:1px solid var(--brd);overflow:hidden;">
-    <div style="padding:.6rem .75rem;cursor:pointer;display:flex;align-items:center;gap:.5rem;" onclick="document.getElementById('proj-@t.Id').style.display=document.getElementById('proj-@t.Id').style.display==='none'?'block':'none'">
-        <div style="width:6px;height:32px;border-radius:3px;background:@pc[ci];flex-shrink:0;"></div>
-        <div style="flex:1;">
-            <div style="font-weight:700;font-size:.82rem;">@t.Project</div>
-            <div style="font-size:.56rem;color:var(--txt4);">@t.Name · @mCount members · Since @(t.StartDate?.ToString("MMM yyyy")??"—")</div>
-        </div>
-        <span style="font-size:.55rem;font-weight:700;padding:.12rem .4rem;border-radius:8px;background:@(t.Status=="Active"?"var(--gbg)":t.Status=="Completed"?"var(--pri3)":"var(--abg)");color:@(t.Status=="Active"?"var(--g)":t.Status=="Completed"?"var(--pri)":"var(--a)");">@t.Status</span>
-        <i class="bi bi-chevron-down" style="font-size:.7rem;color:var(--txt4);"></i>
-    </div>
-    <div id="proj-@t.Id" style="display:none;border-top:1px solid var(--brd2);padding:.5rem .75rem;">
-        <div style="display:flex;gap:.5rem;margin-bottom:.4rem;flex-wrap:wrap;">
-            <div style="font-size:.6rem;"><span style="color:var(--txt4);">Lead:</span> <strong>★ @t.TechLead</strong></div>
-            <div style="font-size:.6rem;"><span style="color:var(--txt4);">Start:</span> <strong>@(t.StartDate?.ToString("dd MMM yyyy")??"—")</strong></div>
-            @if(t.EndDate!=null){<div style="font-size:.6rem;"><span style="color:var(--txt4);">End:</span> <strong>@t.EndDate.Value.ToString("dd MMM yyyy")</strong></div>}
-        </div>
-        <div style="font-size:.55rem;font-weight:700;color:var(--txt3);text-transform:uppercase;margin-bottom:.2rem;">Team Members</div>
-        @foreach(var mm in t.Members.OrderBy(x=>x.Role.Contains("Lead")?0:1).ThenBy(x=>x.Name)){
-            var dC=mm.Role switch{var r when r.Contains("Lead")=>"#dc2626",var r when r.Contains("QA")=>"#059669",_=>"#2563eb"};
-            <div style="display:flex;align-items:center;gap:.35rem;padding:.2rem 0;border-bottom:1px solid var(--brd2);">
-                <span style="width:6px;height:6px;border-radius:50%;background:@dC;flex-shrink:0;"></span>
-                <span style="font-weight:600;font-size:.72rem;flex:1;">@mm.Name</span>
-                <span style="font-size:.55rem;color:var(--txt4);">@mm.Role</span>
-            </div>
-        }
-        @if(canEdit){<div style="margin-top:.4rem;display:flex;gap:.25rem;">
-            <a asp-controller="Teams" asp-action="Edit" asp-route-id="@t.Id" class="btn-g" style="flex:1;justify-content:center;"><i class="bi bi-pencil"></i> Edit</a>
-            <button class="btn-g" style="flex:1;justify-content:center;" data-bs-toggle="modal" data-bs-target="#addMemberModal" onclick="document.getElementById('nmt').value=@t.Id"><i class="bi bi-person-plus"></i> Add Member</button>
-        </div>}
-    </div>
-</div>
-</div>
-}
-</div>
-</div>
-
-<!-- ══════════════════════════════════════════════
-     TAB 3: ACTIVITY LOG
-     ══════════════════════════════════════════════ -->
-<div class="tp" id="v2">
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;">
-    <span style="font-weight:700;font-size:.85rem;">Activity</span>
-    @if(canEdit){<a asp-controller="DailyLog" asp-action="Create" class="btn-a"><i class="bi bi-plus"></i> Log</a>}
-</div>
-@if(!Model.RecentLogs.Any()){<div class="es"><i class="bi bi-journal-text"></i><p><a asp-controller="DailyLog" asp-action="Create">Add first entry</a></p></div>}
-else{
-    DateTime? ld=null;
-    foreach(var l in Model.RecentLogs){
-    if(ld==null||l.Date.Date!=ld.Value.Date){ld=l.Date;<div style="font-size:.6rem;font-weight:700;color:var(--txt3);padding:.25rem 0;border-bottom:1px solid var(--brd);margin-top:.15rem;">@l.Date.ToString("ddd, dd MMM")</div>}
-    var sc=l.Status switch{"Completed"=>"sp-c","In Progress"=>"sp-p","Blocked"=>"sp-b","In Review"=>"sp-r","Carry Forward"=>"sp-f",_=>"sp-d"};
-    <div style="display:flex;align-items:center;gap:.4rem;padding:.3rem .2rem;border-bottom:1px solid var(--brd2);">
-        <div style="width:28px;height:28px;border-radius:8px;background:var(--pri3);display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:700;color:var(--pri);flex-shrink:0;">@l.Member.Name[0..2].ToUpper()</div>
-        <div style="flex:1;min-width:0;"><div style="display:flex;align-items:center;gap:.2rem;"><span style="font-weight:600;font-size:.72rem;">@l.Member.Name</span><span style="font-size:.52rem;color:var(--txt4);">@l.Project</span><span class="sp @sc" style="margin-left:auto;">@l.Status</span></div>
-        <div style="font-size:.64rem;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">@l.TaskDescription</div></div>
-        <span style="font-size:.6rem;font-weight:700;color:var(--txt3);flex-shrink:0;">@l.HoursWorked h</span>
-        @if(canEdit){<a asp-controller="DailyLog" asp-action="Edit" asp-route-id="@l.Id" class="btn-g" style="padding:.08rem .18rem;flex-shrink:0;"><i class="bi bi-pencil"></i></a>}
-    </div>
-}}
-</div>
-
-<!-- ══════════════════════════════════════════════
-     TAB 4: SHARE / INVITE
-     ══════════════════════════════════════════════ -->
-<div class="tp" id="v3">
-<div style="font-weight:700;font-size:.85rem;margin-bottom:.6rem;">Share with your Tech Leads</div>
-<div style="font-size:.7rem;color:var(--txt2);margin-bottom:.6rem;line-height:1.5;">Share a link — they sign in with Google and can add daily logs and notes for their team members.</div>
+<div style="font-weight:700;font-size:.85rem;margin-bottom:.5rem;">Share with Tech Leads & Managers</div>
+<div style="font-size:.68rem;color:var(--txt2);margin-bottom:.6rem;line-height:1.5;">Share a link — they sign in with Google and can add notes, logs, and feedback for their team. <strong>Managers</strong> edit, <strong>Viewers</strong> see only.</div>
 @if(canEdit){
-<div style="background:var(--pri3);border:1px solid #c7d2fe;border-radius:var(--rd);padding:.55rem;margin-bottom:.7rem;">
-    <form asp-controller="Invite" asp-action="Create" method="post" style="display:flex;gap:.35rem;align-items:end;flex-wrap:wrap;">@Html.AntiForgeryToken()
-        <div><label class="form-label">Role</label><select name="role" class="form-select form-select-sm" style="width:105px;"><option value="Manager">Manager</option><option value="Viewer">Viewer</option></select></div>
+<div style="background:var(--pri3);border-radius:var(--rd);padding:.55rem;margin-bottom:.7rem;">
+    <form asp-controller="Invite" asp-action="Create" method="post" style="display:flex;gap:.3rem;align-items:end;flex-wrap:wrap;">@Html.AntiForgeryToken()
+        <div><label class="form-label">Role</label><select name="role" class="form-select form-select-sm" style="width:100px;"><option value="Manager">Manager</option><option value="Viewer">Viewer</option></select></div>
         <button class="btn-a"><i class="bi bi-link-45deg"></i> Create Link</button>
     </form>
 </div>}
 @foreach(var lk in inviteLinks.Where(l=>l.IsValid)){var url=$"{Context.Request.Scheme}://{Context.Request.Host}/Auth/Join/{lk.Code}";
-<div class="ic"><div class="input-group input-group-sm"><span style="font-size:.55rem;font-weight:700;padding:.2rem .4rem;color:#fff;background:@(lk.Role=="Manager"?"var(--pri)":"var(--txt3)");border-radius:6px 0 0 6px;">@lk.Role</span><input type="text" class="form-control" value="@url" readonly id="lnk-@lk.Id" style="font-size:.64rem;"/><button class="btn btn-outline-primary" style="font-size:.58rem;" onclick="navigator.clipboard.writeText(document.getElementById('lnk-@lk.Id').value);this.textContent='Copied!';setTimeout(()=>this.innerHTML='<i class=\'bi bi-clipboard\'></i>',2000)"><i class="bi bi-clipboard"></i></button></div></div>}
-@if(orgMembers.Any()){
-<div style="font-weight:700;font-size:.78rem;margin:.7rem 0 .3rem;">Team (@orgMembers.Count)</div>
-@foreach(var om in orgMembers){
-<div style="display:flex;align-items:center;gap:.3rem;padding:.25rem 0;border-bottom:1px solid var(--brd2);">
-    @if(om.AvatarUrl!=null){<img src="@om.AvatarUrl" style="width:20px;height:20px;border-radius:50%;" referrerpolicy="no-referrer"/>}
-    <span style="font-weight:600;font-size:.72rem;flex:1;">@om.DisplayName</span>
+<div class="ic"><div class="input-group input-group-sm"><span style="font-size:.52rem;font-weight:700;padding:.18rem .35rem;color:#fff;background:@(lk.Role=="Manager"?"var(--pri)":"var(--txt3)");border-radius:6px 0 0 6px;">@lk.Role</span><input type="text" class="form-control" value="@url" readonly id="lnk-@lk.Id" style="font-size:.62rem;"/><button class="btn btn-outline-primary" style="font-size:.55rem;" onclick="navigator.clipboard.writeText(document.getElementById('lnk-@lk.Id').value);this.textContent='Copied!';setTimeout(()=>this.innerHTML='<i class=\'bi bi-clipboard\'></i>',2000)"><i class="bi bi-clipboard"></i></button></div></div>}
+@if(orgMembers.Any()){<div style="font-weight:700;font-size:.76rem;margin:.6rem 0 .25rem;">Team (@orgMembers.Count)</div>
+@foreach(var om in orgMembers){<div style="display:flex;align-items:center;gap:.3rem;padding:.2rem 0;border-bottom:1px solid var(--brd2);">
+    @if(om.AvatarUrl!=null){<img src="@om.AvatarUrl" style="width:18px;height:18px;border-radius:50%;" referrerpolicy="no-referrer"/>}
+    <span style="font-weight:600;font-size:.7rem;flex:1;">@om.DisplayName</span>
     <span style="font-size:.55rem;color:var(--txt4);">@om.Email</span>
-    <span style="font-size:.52rem;font-weight:700;padding:.08rem .25rem;border-radius:6px;background:@(om.OrgRole=="Owner"?"var(--rbg)":"var(--pri3)");color:@(om.OrgRole=="Owner"?"var(--r)":"var(--pri)");">@om.OrgRole</span>
+    <span style="font-size:.5rem;font-weight:700;padding:.06rem .22rem;border-radius:5px;background:@(om.OrgRole=="Owner"?"var(--rbg)":"var(--pri3)");color:@(om.OrgRole=="Owner"?"var(--r)":"var(--pri)");">@om.OrgRole</span>
 </div>}}
 </div>
 
 <!-- MODALS -->
 <div class="modal fade" id="addTeamModal"><div class="modal-dialog modal-dialog-centered modal-sm"><div class="modal-content"><div class="modal-header"><h6 class="modal-title"><i class="bi bi-folder-plus" style="color:var(--pri);"></i> Add Project</h6><button class="btn-close" data-bs-dismiss="modal" style="font-size:.5rem;"></button></div><div class="modal-body p-3"><form asp-controller="Teams" asp-action="Create" method="post">@Html.AntiForgeryToken()
-<div class="mb-2"><label class="form-label">Project</label><input name="Project" class="form-control form-control-sm" required placeholder="e.g. AGONEWorkj"/></div>
-<div class="mb-2"><label class="form-label">Team</label><input name="Name" class="form-control form-control-sm" required placeholder="e.g. Team Alpha"/></div>
+<div class="mb-2"><label class="form-label">Project</label><input name="Project" class="form-control form-control-sm" required/></div>
+<div class="mb-2"><label class="form-label">Team Name</label><input name="Name" class="form-control form-control-sm" required/></div>
 <div class="mb-3"><label class="form-label">Tech Lead</label><input name="TechLead" class="form-control form-control-sm" required/></div>
 <button class="btn-a" style="width:100%;justify-content:center;padding:.4rem;">Create</button></form></div></div></div></div>
 
@@ -272,81 +212,100 @@ else{
 <button class="btn-a" style="width:100%;justify-content:center;padding:.4rem;">Add</button></form></div></div></div></div>
 </div>
 
+<style>
+.filter-pill{font-size:.6rem;font-weight:600;padding:.18rem .5rem;border-radius:12px;border:1px solid var(--brd);background:var(--card);color:var(--txt3);cursor:pointer;transition:.15s;white-space:nowrap;}
+.filter-pill:hover{border-color:var(--pri);color:var(--pri);}
+.filter-pill.active{background:var(--pri);color:#fff;border-color:var(--pri);}
+</style>
+
 @section Scripts{
 <script>
+var currentChatMid=0;
+var typeIcons={Chat:'bi-chat-dots',Note:'bi-sticky',Review:'bi-star',Achievement:'bi-trophy-fill',Concern:'bi-exclamation-triangle-fill',Goal:'bi-bullseye'};
+var typeBg={Chat:'var(--bg2)',Note:'var(--pri3)',Review:'var(--abg)',Achievement:'var(--gbg)',Concern:'var(--rbg)',Goal:'var(--pbg)'};
+var typeColor={Chat:'var(--txt3)',Note:'var(--pri)',Review:'var(--a)',Achievement:'var(--g)',Concern:'var(--r)',Goal:'var(--p)'};
+
 function sw(i,el){document.querySelectorAll('.tp').forEach(p=>p.classList.remove('active'));document.getElementById('v'+i).classList.add('active');document.querySelectorAll('.tb').forEach(t=>t.classList.remove('active'));if(el)el.classList.add('active');else document.querySelectorAll('.tb')[i]?.classList.add('active');}
 function mNav(el){document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
 
-function togglePerson(id){
-    var d=document.getElementById('pdetail-'+id);
-    var c=document.getElementById('pchev-'+id);
-    if(d.style.display==='none'||!d.style.display||d.style.display===''){
-        d.style.display='block';c.style.transform='rotate(180deg)';
-        loadNotes(id);
-    } else {d.style.display='none';c.style.transform='rotate(0)';}
+// Toggle person card
+function toggleP(id){
+    var d=document.getElementById('det-'+id);var c=document.getElementById('chev-'+id);
+    if(!d.style.display||d.style.display==='none'){d.style.display='block';c.style.transform='rotate(180deg)';loadN(id);}
+    else{d.style.display='none';c.style.transform='rotate(0)';}
 }
 
-async function loadNotes(mid){
-    var box=document.getElementById('notes-'+mid);
+// Load notes
+async function loadN(mid,target){
+    var box=target||document.getElementById('notes-'+mid);
     try{
-        var res=await fetch('/api/notes/'+mid);
-        var notes=await res.json();
-        if(!notes.length){box.innerHTML='<div style="text-align:center;padding:.4rem;font-size:.6rem;color:var(--txt4);">No notes yet. Write one below.</div>';return;}
-        var html='';
-        var typeIcons={Chat:'bi-chat',Note:'bi-sticky',Review:'bi-star',Achievement:'bi-trophy',Concern:'bi-exclamation-triangle',Goal:'bi-bullseye'};
-        var typeBg={Chat:'var(--bg2)',Note:'var(--pri3)',Review:'var(--abg)',Achievement:'var(--gbg)',Concern:'var(--rbg)',Goal:'var(--pbg)'};
-        notes.reverse().forEach(n=>{
-            html+='<div style="margin-bottom:.3rem;padding:.3rem .4rem;border-radius:8px;background:'+(typeBg[n.type]||'var(--bg2)')+';font-size:.65rem;">';
-            html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.1rem;"><span style="font-weight:700;color:var(--txt);"><i class="bi '+(typeIcons[n.type]||'bi-chat')+'" style="font-size:.6rem;margin-right:.15rem;"></i>'+n.author+'</span><span style="font-size:.5rem;color:var(--txt4);">'+n.created+'</span></div>';
-            html+='<div style="color:var(--txt2);line-height:1.4;">'+n.content+'</div>';
-            if(n.imageUrl)html+='<img src="'+n.imageUrl+'" style="max-width:100%;max-height:150px;border-radius:6px;margin-top:.2rem;"/>';
+        var res=await fetch('/api/notes/'+mid);var notes=await res.json();
+        if(!notes.length){box.innerHTML='<div style="text-align:center;padding:.3rem;font-size:.55rem;color:var(--txt4);">No notes yet</div>';return;}
+        var html='';notes.reverse().forEach(n=>{
+            html+='<div style="margin-bottom:.25rem;padding:.25rem .35rem;border-radius:7px;background:'+(typeBg[n.type]||'var(--bg2)')+';font-size:.62rem;">';
+            html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.06rem;"><span style="font-weight:700;color:'+(typeColor[n.type]||'var(--txt3)')+';font-size:.58rem;"><i class="bi '+(typeIcons[n.type]||'bi-chat')+'" style="font-size:.55rem;margin-right:.1rem;"></i>'+n.author+'</span><span style="font-size:.45rem;color:var(--txt4);">'+n.created+'</span></div>';
+            html+='<div style="color:var(--txt2);line-height:1.35;">'+n.content+'</div>';
+            if(n.imageUrl)html+='<img src="'+n.imageUrl+'" style="max-width:100%;max-height:100px;border-radius:5px;margin-top:.15rem;cursor:zoom-in;" onclick="event.stopPropagation();showImg(\''+n.imageUrl+'\')"/>';
             html+='</div>';
         });
-        box.innerHTML=html;
-        box.scrollTop=box.scrollHeight;
-    }catch(e){box.innerHTML='<div style="color:var(--r);font-size:.6rem;">Error loading notes</div>';}
+        box.innerHTML=html;box.scrollTop=box.scrollHeight;
+    }catch(e){box.innerHTML='<div style="color:var(--r);font-size:.55rem;">Error</div>';}
 }
 
-async function sendNote(mid){
-    var input=document.getElementById('chat-'+mid);
-    var type=document.getElementById('chattype-'+mid);
+// Send note (inline)
+async function sendN(mid){
+    var input=document.getElementById('chat-'+mid);if(!input||!input.value.trim())return;
+    await fetch('/api/notes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({memberId:mid,content:input.value,type:'Chat'})});
+    input.value='';loadN(mid);
+}
+
+// Image lightbox
+function showImg(url){var lb=document.getElementById('lightbox');document.getElementById('lb-img').src=url;lb.classList.add('show');}
+
+// Fullscreen chat
+function openChat(mid,name,role){
+    currentChatMid=mid;
+    document.getElementById('fs-name').textContent=name;
+    document.getElementById('fs-role').textContent=role;
+    document.getElementById('fs-export').href='/Export/PersonReport/'+mid;
+    document.getElementById('fs-ai-out').style.display='none';
+    document.getElementById('fschat').classList.add('show');
+    loadN(mid,document.getElementById('fs-msgs'));
+}
+function closeChat(){document.getElementById('fschat').classList.remove('show');currentChatMid=0;}
+async function fsSend(){
+    var input=document.getElementById('fs-input');var type=document.getElementById('fs-type');
     if(!input.value.trim())return;
-    try{
-        await fetch('/api/notes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({memberId:mid,content:input.value,type:type.value})});
-        input.value='';loadNotes(mid);
-    }catch(e){}
+    await fetch('/api/notes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({memberId:currentChatMid,content:input.value,type:type.value})});
+    input.value='';loadN(currentChatMid,document.getElementById('fs-msgs'));
+}
+async function fsUploadImg(inp){
+    if(!inp.files[0])return;var fd=new FormData();fd.append('file',inp.files[0]);
+    var res=await fetch('/api/upload',{method:'POST',body:fd});var data=await res.json();
+    if(data.url){await fetch('/api/notes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({memberId:currentChatMid,content:'Shared an image',type:'Chat',imageUrl:data.url})});loadN(currentChatMid,document.getElementById('fs-msgs'));}
+    inp.value='';
+}
+async function aiReportFS(){
+    var out=document.getElementById('fs-ai-out');var txt=document.getElementById('fs-ai-text');
+    out.style.display='block';txt.innerHTML='<div class="spinner-border spinner-border-sm" style="width:10px;height:10px;border-width:2px;"></div> Generating...';
+    try{var res=await fetch('/api/ai/person-report/'+currentChatMid,{method:'POST'});var data=await res.json();
+    txt.innerHTML=data.text&&data.text.length>10?data.text.replace(/\n/g,'<br/>'):'Add Gemini API key';}catch(e){txt.textContent='Error';}
 }
 
-async function uploadImg(mid,input){
-    if(!input.files[0])return;
-    var fd=new FormData();fd.append('file',input.files[0]);
-    try{
-        var res=await fetch('/api/upload',{method:'POST',body:fd});
-        var data=await res.json();
-        if(data.url){
-            await fetch('/api/notes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({memberId:mid,content:'Shared an image',type:'Chat',imageUrl:data.url})});
-            loadNotes(mid);
-        }
-    }catch(e){}
-    input.value='';
+// Search
+function filterCards(q){
+    q=q.toLowerCase().trim();
+    document.querySelectorAll('.person-card-col').forEach(c=>{
+        var name=c.dataset.name,proj=c.dataset.project,role=c.dataset.role,projs=c.dataset.projects;
+        c.style.display=(!q||name.includes(q)||proj.includes(q)||role.includes(q)||projs.includes(q))?'':'none';
+    });
 }
 
-async function aiReport(mid){
-    var box=document.getElementById('aireport-'+mid);
-    var txt=document.getElementById('aireporttext-'+mid);
-    box.style.display='block';txt.innerHTML='<div class="spinner-border spinner-border-sm" style="width:12px;height:12px;border-width:2px;color:var(--pri);"></div> Generating...';
-    try{
-        var res=await fetch('/api/ai/person-report/'+mid,{method:'POST'});
-        var data=await res.json();
-        txt.innerHTML=data.text&&data.text.length>10?data.text.replace(/\n/g,'<br/>'):(data.ai?'No data.':'<a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--pri);">Add free Gemini API key</a>');
-    }catch(e){txt.textContent='Error.';}
-}
-
-function aiGenSummary(){
-    var box=document.getElementById('ai-out');if(!box)return;
-    var t=document.getElementById('ai-title');var b=document.getElementById('ai-body');
-    box.style.display='block';t.textContent='AI Summary';b.innerHTML='Generating...';
-    fetch('/api/ai/summary',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({month:@Model.SelectedMonth,year:@Model.SelectedYear})})
-    .then(r=>r.json()).then(d=>{b.innerHTML=d.text||'No data.';}).catch(()=>{b.textContent='Error.';});
+// Project filter pills
+function filterProject(proj,el){
+    document.querySelectorAll('.filter-pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');
+    document.querySelectorAll('.person-card-col').forEach(c=>{
+        c.style.display=(!proj||c.dataset.projects.includes(proj.toLowerCase()))?'':'none';
+    });
 }
 </script>}

@@ -211,4 +211,74 @@ public class ExportController : BaseOrgController
         }
         ws.Columns().AdjustToContents(); ws.SheetView.FreezeRows(1);
     }
+
+    // ── Export single person's full history ──
+    public async Task<IActionResult> PersonReport(int id)
+    {
+        var member = await Db.Members.Include(m => m.Team).FirstOrDefaultAsync(m => m.Id == id);
+        if (member == null) return NotFound();
+
+        var kpis = await Db.MonthlyKpis.Where(k => k.MemberId == id).OrderByDescending(k => k.Year).ThenByDescending(k => k.Month).ToListAsync();
+        var notes = await Db.Notes.Where(n => n.MemberId == id).OrderByDescending(n => n.CreatedAt).ToListAsync();
+        var logs = await Db.DailyLogs.Where(d => d.MemberId == id).OrderByDescending(d => d.Date).ToListAsync();
+
+        using var wb = new XLWorkbook();
+
+        // Sheet 1: Profile
+        var ws1 = wb.AddWorksheet("Profile");
+        Header(ws1, new[] { "Field", "Value" }, "#4f46e5");
+        var profile = new[] {
+            ("Name", member.Name), ("Role", member.Role), ("Team", member.Team.Name),
+            ("Project", member.Team.Project), ("All Projects", member.ProjectsAssigned),
+            ("Team Lead", member.Team.TechLead), ("Team Status", member.Team.Status),
+            ("Team Since", member.Team.StartDate?.ToString("dd MMM yyyy") ?? "—"),
+        };
+        int r1 = 2;
+        foreach (var (f, v) in profile) { ws1.Cell(r1, 1).Value = f; ws1.Cell(r1, 2).Value = v; r1++; }
+        ws1.Columns().AdjustToContents();
+
+        // Sheet 2: KPI History
+        var ws2 = wb.AddWorksheet("KPI History");
+        Header(ws2, new[] { "Month", "Assigned", "Completed", "%", "Bugs", "Quality", "OnTime%", "Hours", "Extra", "Grade" }, "#059669");
+        int r2 = 2;
+        foreach (var k in kpis) {
+            ws2.Cell(r2, 1).Value = $"{k.MonthName} {k.Year}";
+            ws2.Cell(r2, 2).Value = k.TasksAssigned; ws2.Cell(r2, 3).Value = k.TasksCompleted;
+            ws2.Cell(r2, 4).Value = k.CompletionPct; ws2.Cell(r2, 5).Value = k.BugsFoundInWork;
+            ws2.Cell(r2, 6).Value = k.QualityScore; ws2.Cell(r2, 7).Value = k.OnTimeDeliveryPct;
+            ws2.Cell(r2, 8).Value = k.TotalHoursWorked; ws2.Cell(r2, 9).Value = k.ExtraHours;
+            ws2.Cell(r2, 10).Value = k.Grade; r2++;
+        }
+        ws2.Columns().AdjustToContents(); ws2.SheetView.FreezeRows(1);
+
+        // Sheet 3: Notes & Chat
+        var ws3 = wb.AddWorksheet("Notes & Chat");
+        Header(ws3, new[] { "Date", "Type", "Author", "Content" }, "#7c3aed");
+        int r3 = 2;
+        foreach (var n in notes) {
+            ws3.Cell(r3, 1).Value = n.CreatedAt; ws3.Cell(r3, 1).Style.DateFormat.Format = "dd-MMM-yyyy HH:mm";
+            ws3.Cell(r3, 2).Value = n.Type; ws3.Cell(r3, 3).Value = n.Author;
+            ws3.Cell(r3, 4).Value = n.Content; r3++;
+        }
+        ws3.Columns().AdjustToContents(); ws3.SheetView.FreezeRows(1);
+
+        // Sheet 4: Daily Log
+        var ws4 = wb.AddWorksheet("Activity Log");
+        Header(ws4, new[] { "Date", "Project", "Ticket", "Task", "Status", "Hours", "Extra", "Notes" }, "#0d9488");
+        int r4 = 2;
+        foreach (var l in logs) {
+            ws4.Cell(r4, 1).Value = l.Date; ws4.Cell(r4, 1).Style.DateFormat.Format = "dd-MMM-yyyy";
+            ws4.Cell(r4, 2).Value = l.Project; ws4.Cell(r4, 3).Value = l.TaskTicket;
+            ws4.Cell(r4, 4).Value = l.TaskDescription; ws4.Cell(r4, 5).Value = l.Status;
+            ws4.Cell(r4, 6).Value = l.HoursWorked; ws4.Cell(r4, 7).Value = l.ExtraHours;
+            ws4.Cell(r4, 8).Value = l.Notes; r4++;
+        }
+        ws4.Columns().AdjustToContents(); ws4.SheetView.FreezeRows(1);
+
+        using var ms = new MemoryStream();
+        wb.SaveAs(ms);
+        return File(ms.ToArray(),
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            $"{member.Name.Replace(" ","_")}_Report.xlsx");
+    }
 }

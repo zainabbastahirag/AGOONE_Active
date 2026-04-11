@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=5.0"/>
-    <title>@ViewData["Title"] — KpiPulse</title>
-    <meta name="description" content="KpiPulse — Free project & people management with AI insights."/>
+    <title>@ViewData["Title"] — PulseBoard</title>
+    <meta name="description" content="PulseBoard — See your team. Know your people. Free forever."/>
     <meta name="theme-color" content="#0f172a"/>
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
@@ -277,6 +277,31 @@ a{text-decoration:none;}
     .tbl tbody td{padding:.3rem;}
     .subnav{padding:.4rem .6rem;}
 }
+
+/* ═══════ LIGHTBOX ═══════ */
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:none;align-items:center;justify-content:center;cursor:zoom-out;-webkit-tap-highlight-color:transparent;}
+.lightbox.show{display:flex;}
+.lightbox img{max-width:92vw;max-height:90vh;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+.lightbox .lb-close{position:absolute;top:12px;right:16px;color:#fff;font-size:1.5rem;cursor:pointer;opacity:.7;transition:.15s;}
+.lightbox .lb-close:hover{opacity:1;}
+
+/* ═══════ FULLSCREEN CHAT ═══════ */
+.fs-chat{position:fixed;inset:0;background:var(--bg);z-index:9000;display:none;flex-direction:column;}
+.fs-chat.show{display:flex;}
+.fs-chat .fs-head{background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;padding:.65rem 1rem;display:flex;align-items:center;gap:.5rem;flex-shrink:0;}
+.fs-chat .fs-head .fs-back{color:rgba(255,255,255,.7);font-size:1rem;cursor:pointer;padding:.25rem;transition:.15s;}
+.fs-chat .fs-head .fs-back:hover{color:#fff;}
+.fs-chat .fs-head .fs-name{font-weight:700;font-size:.95rem;}
+.fs-chat .fs-head .fs-role{font-size:.65rem;opacity:.5;}
+.fs-chat .fs-msgs{flex:1;overflow-y:auto;padding:.75rem;-webkit-overflow-scrolling:touch;}
+.fs-chat .fs-input{padding:.5rem .75rem;border-top:1px solid var(--brd);background:var(--card);display:flex;gap:.3rem;align-items:center;flex-shrink:0;}
+.fs-chat .fs-input input{flex:1;font-size:.78rem;}
+
+/* ═══════ SEARCH BAR ═══════ */
+.search-bar{position:relative;}
+.search-bar input{padding-left:2rem;font-size:.78rem;border-radius:10px;border:1px solid var(--brd);background:var(--card);transition:border-color .15s,box-shadow .15s;width:100%;}
+.search-bar input:focus{border-color:var(--pri);box-shadow:0 0 0 3px rgba(79,70,229,.1);outline:none;}
+.search-bar .search-icon{position:absolute;left:.65rem;top:50%;transform:translateY(-50%);color:var(--txt4);font-size:.8rem;}
 </style>
 </head>
 <body>
