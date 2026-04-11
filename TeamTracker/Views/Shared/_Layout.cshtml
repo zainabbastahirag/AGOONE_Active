@@ -208,6 +208,16 @@ a{text-decoration:none;}
 .mc-a{border-style:dashed;color:var(--pri);cursor:pointer;font-weight:600;background:transparent;}
 .mc-a:hover{background:var(--pri3);}
 
+/* ═══════ BOARD / DRAG-DROP ═══════ */
+.proj-col{background:var(--bg);border:1px solid var(--brd);border-radius:var(--rd);padding:.6rem;min-height:100px;transition:background .15s;}
+.member-card{
+    background:var(--card);border:1px solid var(--brd);border-radius:var(--rd2);
+    padding:.45rem .55rem;margin-bottom:.35rem;cursor:grab;
+    transition:box-shadow .15s,transform .15s;
+}
+.member-card:hover{box-shadow:var(--sh2);transform:translateY(-1px);}
+.member-card:active{cursor:grabbing;box-shadow:var(--sh3);transform:scale(1.02);}
+
 /* ═══════ FEEDBACK CARDS ═══════ */
 .fc{background:var(--card);border-radius:var(--rd);border:1px solid var(--brd);overflow:hidden;height:100%;}
 .fc-h{padding:.55rem .7rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--brd2);}
