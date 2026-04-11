@@ -1,101 +1,47 @@
 @model TeamTracker.Models.MonthlyKpi
-@{ ViewData["Title"] = $"Edit KPI — {Model.Member?.Name}"; }
+@{ViewData["Title"]=$"Edit KPI — {Model.Member?.Name}";}
 
-<div class="top-header">
-    <h3><i class="bi bi-pencil"></i> Edit KPI — @Model.Member?.Name</h3>
-    <a asp-action="Index" asp-route-month="@Model.Month" asp-route-year="@Model.Year" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+<nav class="topnav"><a href="/" class="brand">Kpi<span>Pulse</span></a><div class="right"><a href="/" class="btn-exp"><i class="bi bi-arrow-left"></i> Dashboard</a></div></nav>
+<div class="subnav">
+    <a href="/" class="back-btn"><i class="bi bi-chevron-left"></i> Back</a>
+    <div class="breadcrumb-trail"><a href="/">Dashboard</a><span class="sep">/</span><span>KPI</span><span class="sep">/</span><span>@Model.Member?.Name</span></div>
 </div>
 
-<div class="row">
-    <div class="col-lg-8">
-        <div class="card">
-            <div class="card-header bg-white">
-                <strong>@Model.Member?.Name</strong> — @Model.Member?.Team?.Name — @Model.Member?.Team?.Project
-                <span class="badge bg-secondary ms-2">@Model.MonthName @Model.Year</span>
-            </div>
-            <div class="card-body">
-                <form asp-action="Edit" method="post">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" asp-for="Id" />
-                    <input type="hidden" asp-for="MemberId" />
-                    <input type="hidden" asp-for="Year" />
-                    <input type="hidden" asp-for="Month" />
-
-                    <h6 class="text-primary fw-bold mb-3"><i class="bi bi-bar-chart"></i> Performance KPIs</h6>
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-4">
-                            <label class="form-label">Tasks Assigned</label>
-                            <input type="number" asp-for="TasksAssigned" class="form-control" min="0" />
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Tasks Completed</label>
-                            <input type="number" asp-for="TasksCompleted" class="form-control" min="0" />
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">On-Time Delivery %</label>
-                            <input type="number" asp-for="OnTimeDeliveryPct" class="form-control" min="0" max="100" />
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Bugs Found in Work</label>
-                            <input type="number" asp-for="BugsFoundInWork" class="form-control" min="0" />
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Bugs Fixed</label>
-                            <input type="number" asp-for="BugsFixed" class="form-control" min="0" />
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Code Reviews Done</label>
-                            <input type="number" asp-for="CodeReviewsDone" class="form-control" min="0" />
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Quality Score (1-5)</label>
-                            <select asp-for="QualityScore" class="form-select">
-                                <option value="0">Not Rated</option>
-                                <option value="1">1 — Poor</option>
-                                <option value="2">2 — Below Average</option>
-                                <option value="3">3 — Average</option>
-                                <option value="4">4 — Good</option>
-                                <option value="5">5 — Excellent</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Total Hours Worked</label>
-                            <input type="number" asp-for="TotalHoursWorked" class="form-control" step="0.5" min="0" />
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Extra / Overtime Hours</label>
-                            <input type="number" asp-for="ExtraHours" class="form-control" step="0.5" min="0" />
-                        </div>
-                    </div>
-
-                    <h6 class="text-primary fw-bold mb-3"><i class="bi bi-chat-dots"></i> Feedback & Notes</h6>
-                    <div class="row g-3 mb-4">
-                        <div class="col-12">
-                            <label class="form-label">Achievements</label>
-                            <textarea asp-for="Achievements" class="form-control" rows="2" placeholder="Notable accomplishments this month"></textarea>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Errors / Issues Log</label>
-                            <textarea asp-for="ErrorsLog" class="form-control" rows="2" placeholder="Specific errors or issues"></textarea>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Tech Lead Feedback</label>
-                            <textarea asp-for="TechLeadFeedback" class="form-control" rows="2" placeholder="Feedback from Tech Lead"></textarea>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Manager Feedback</label>
-                            <textarea asp-for="ManagerFeedback" class="form-control" rows="2" placeholder="Your feedback as manager"></textarea>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Progress Notes</label>
-                            <textarea asp-for="ProgressNotes" class="form-control" rows="2" placeholder="General progress notes"></textarea>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Save KPI</button>
-                    <a asp-action="Index" asp-route-month="@Model.Month" asp-route-year="@Model.Year" class="btn btn-light ms-2">Cancel</a>
-                </form>
-            </div>
+<div class="app-c" style="max-width:700px;">
+    <div style="background:var(--card);border-radius:var(--rd);box-shadow:var(--sh2);overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;padding:.85rem 1rem;">
+            <h5 style="font-weight:700;font-size:.95rem;margin:0;"><i class="bi bi-graph-up-arrow"></i> @Model.Member?.Name — @Model.Member?.Team?.Name</h5>
+            <div style="font-size:.7rem;opacity:.6;margin-top:.1rem;">@Model.MonthName @Model.Year &bull; @Model.Member?.Role</div>
+        </div>
+        <div style="padding:1rem;">
+            <form asp-action="Edit" method="post">@Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id"/><input type="hidden" asp-for="MemberId"/><input type="hidden" asp-for="Year"/><input type="hidden" asp-for="Month"/>
+                <div style="font-weight:700;font-size:.8rem;color:var(--pri);margin-bottom:.5rem;"><i class="bi bi-bar-chart"></i> Performance</div>
+                <div class="row g-2 mb-3">
+                    <div class="col-4"><label class="form-label">Assigned</label><input type="number" asp-for="TasksAssigned" class="form-control form-control-sm" min="0"/></div>
+                    <div class="col-4"><label class="form-label">Completed</label><input type="number" asp-for="TasksCompleted" class="form-control form-control-sm" min="0"/></div>
+                    <div class="col-4"><label class="form-label">On-Time %</label><input type="number" asp-for="OnTimeDeliveryPct" class="form-control form-control-sm" min="0" max="100"/></div>
+                    <div class="col-4"><label class="form-label">Bugs In Work</label><input type="number" asp-for="BugsFoundInWork" class="form-control form-control-sm" min="0"/></div>
+                    <div class="col-4"><label class="form-label">Bugs Fixed</label><input type="number" asp-for="BugsFixed" class="form-control form-control-sm" min="0"/></div>
+                    <div class="col-4"><label class="form-label">Reviews</label><input type="number" asp-for="CodeReviewsDone" class="form-control form-control-sm" min="0"/></div>
+                    <div class="col-4"><label class="form-label">Quality (1-5)</label>
+                        <select asp-for="QualityScore" class="form-select form-select-sm"><option value="0">—</option><option value="1">1 Poor</option><option value="2">2 Below</option><option value="3">3 Avg</option><option value="4">4 Good</option><option value="5">5 Excellent</option></select></div>
+                    <div class="col-4"><label class="form-label">Hours</label><input type="number" asp-for="TotalHoursWorked" class="form-control form-control-sm" step="0.5" min="0"/></div>
+                    <div class="col-4"><label class="form-label">Overtime</label><input type="number" asp-for="ExtraHours" class="form-control form-control-sm" step="0.5" min="0"/></div>
+                </div>
+                <div style="font-weight:700;font-size:.8rem;color:var(--pri);margin-bottom:.5rem;"><i class="bi bi-chat-dots"></i> Feedback</div>
+                <div class="row g-2 mb-3">
+                    <div class="col-12"><label class="form-label">Achievements</label><textarea asp-for="Achievements" class="form-control form-control-sm" rows="2" placeholder="Notable accomplishments"></textarea></div>
+                    <div class="col-12"><label class="form-label">Errors / Issues</label><textarea asp-for="ErrorsLog" class="form-control form-control-sm" rows="2" placeholder="Errors or issues"></textarea></div>
+                    <div class="col-12"><label class="form-label">Tech Lead Feedback</label><textarea asp-for="TechLeadFeedback" class="form-control form-control-sm" rows="2"></textarea></div>
+                    <div class="col-12"><label class="form-label">Manager Feedback</label><textarea asp-for="ManagerFeedback" class="form-control form-control-sm" rows="2"></textarea></div>
+                    <div class="col-12"><label class="form-label">Progress Notes</label><textarea asp-for="ProgressNotes" class="form-control form-control-sm" rows="2"></textarea></div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn-a" style="flex:1;justify-content:center;padding:.5rem;"><i class="bi bi-check-lg"></i> Save KPI</button>
+                    <a href="/" class="btn-g" style="padding:.5rem .7rem;">Cancel</a>
+                </div>
+            </form>
         </div>
     </div>
 </div>

@@ -1,464 +1,333 @@
 ﻿@model TeamTracker.ViewModels.DashboardViewModel
 @{
-    ViewData["Title"] = "Dashboard";
-    var u = ViewBag.CurrentUser as TeamTracker.Models.AppUser;
-    var canEdit = (bool)(ViewBag.CanEdit ?? false);
-    var ai = ViewBag.AiReport as TeamTracker.Services.AiInsightEngine.AiReport;
-    var inviteLinks = ViewBag.InviteLinks as List<TeamTracker.Models.InviteLink> ?? new();
-    var orgMembers = ViewBag.OrgMembers as List<TeamTracker.Models.AppUser> ?? new();
-    var teamColors = new[] { "#6366f1", "#dc2626", "#059669", "#d97706", "#7c3aed", "#ea580c", "#0d9488" };
+    ViewData["Title"]="Dashboard";
+    var u=ViewBag.CurrentUser as TeamTracker.Models.AppUser;
+    var canEdit=(bool)(ViewBag.CanEdit??false);
+    var ai=ViewBag.AiReport as TeamTracker.Services.AiInsightEngine.AiReport;
+    var inviteLinks=ViewBag.InviteLinks as List<TeamTracker.Models.InviteLink>??new();
+    var orgMembers=ViewBag.OrgMembers as List<TeamTracker.Models.AppUser>??new();
+    var tc=new[]{"#6366f1","#dc2626","#059669","#d97706","#7c3aed","#ea580c","#0d9488"};
 }
 
-<!-- ══════ TOP NAV ══════ -->
+<!-- ═══ TOP NAV ═══ -->
 <nav class="topnav">
-    <a href="/" class="brand" style="text-decoration:none;">Kpi<span>Pulse</span></a>
+    <div style="display:flex;align-items:center;">
+        <a href="/" class="brand">Kpi<span>Pulse</span></a>
+        <div class="nav-links">
+            <a href="#" class="active" onclick="go('tp-ai',this,0);return false;"><i class="bi bi-stars"></i> AI Insights</a>
+            <a href="#" onclick="go('tp-teams',this,1);return false;"><i class="bi bi-diagram-3"></i> Teams</a>
+            <a href="#" onclick="go('tp-kpi',this,2);return false;"><i class="bi bi-graph-up-arrow"></i> KPIs</a>
+            <a href="#" onclick="go('tp-log',this,3);return false;"><i class="bi bi-journal-text"></i> Daily Log</a>
+            <a href="#" onclick="go('tp-fb',this,4);return false;"><i class="bi bi-chat-dots"></i> Feedback</a>
+            <a href="#" onclick="go('tp-inv',this,5);return false;"><i class="bi bi-link-45deg"></i> Invite</a>
+        </div>
+    </div>
     <div class="right">
-        <a href="/Export/FullReport?month=@Model.SelectedMonth&year=@Model.SelectedYear" class="btn-export">
-            <i class="bi bi-file-earmark-excel"></i><span class="d-none d-sm-inline">Export</span>
-        </a>
+        <a href="/Export/FullReport?month=@Model.SelectedMonth&year=@Model.SelectedYear" class="btn-exp"><i class="bi bi-file-earmark-excel"></i><span class="d-none d-md-inline">Excel</span></a>
         <div class="user-pill">
-            @if (u?.AvatarUrl != null) { <img src="@u.AvatarUrl" referrerpolicy="no-referrer" alt=""/> }
-            else { <i class="bi bi-person-circle" style="font-size:1.1rem;color:rgba(255,255,255,.4);"></i> }
+            @if(u?.AvatarUrl!=null){<img src="@u.AvatarUrl" referrerpolicy="no-referrer" alt=""/>}
+            else{<i class="bi bi-person-circle" style="font-size:1rem;color:rgba(255,255,255,.4);"></i>}
             <span class="uname d-none d-sm-inline">@(u?.DisplayName?.Split(' ').FirstOrDefault())</span>
         </div>
-        <form asp-controller="Auth" asp-action="Logout" method="post" class="d-inline">
-            @Html.AntiForgeryToken()
-            <button class="logout-btn" title="Sign out"><i class="bi bi-box-arrow-right"></i></button>
-        </form>
+        <form asp-controller="Auth" asp-action="Logout" method="post" class="d-inline">@Html.AntiForgeryToken()<button class="logout-btn" title="Sign out"><i class="bi bi-box-arrow-right"></i></button></form>
     </div>
 </nav>
 
-<div class="app-container">
+<!-- ═══ MOBILE BOTTOM NAV ═══ -->
+<nav class="bottom-nav">
+    <div class="bnav-inner">
+        <div class="bnav-item active" onclick="go('tp-ai',null,0);mNav(this)"><i class="bi bi-stars"></i>AI</div>
+        <div class="bnav-item" onclick="go('tp-teams',null,1);mNav(this)"><i class="bi bi-diagram-3"></i>Teams</div>
+        <div class="bnav-item" onclick="go('tp-kpi',null,2);mNav(this)"><i class="bi bi-graph-up-arrow"></i>KPIs</div>
+        <div class="bnav-item" onclick="go('tp-log',null,3);mNav(this)"><i class="bi bi-journal-text"></i>Log</div>
+        <div class="bnav-item" onclick="go('tp-fb',null,4);mNav(this)"><i class="bi bi-chat-dots"></i>Feedback</div>
+        <div class="bnav-item" onclick="go('tp-inv',null,5);mNav(this)"><i class="bi bi-link-45deg"></i>Invite</div>
+    </div>
+</nav>
 
-@if (TempData["Message"] != null) {
-<div class="alert alert-success alert-dismissible fade show py-2" style="font-size:.82rem;border-radius:10px;" role="alert">
-    <i class="bi bi-check-circle me-1"></i> @TempData["Message"]
-    <button type="button" class="btn-close" data-bs-dismiss="alert" style="font-size:.6rem;"></button>
+<div class="app-c">
+
+@if(TempData["Message"]!=null){
+<div class="toast-msg alert-dismissible fade show" role="alert">
+    <i class="bi bi-check-circle-fill"></i> @TempData["Message"]
+    <button type="button" class="btn-close" data-bs-dismiss="alert" style="font-size:.5rem;filter:brightness(0) invert(1);"></button>
 </div>}
 
-<!-- ══════ MONTH SELECTOR ══════ -->
-<div class="month-bar">
-    <form method="get" class="d-flex align-items-center gap-1">
-        <select name="month" class="form-select form-select-sm" style="width:120px;font-size:.78rem;border-radius:8px;" onchange="this.form.submit()">
-            @for (int m = 1; m <= 12; m++) { <option value="@m" selected="@(m == Model.SelectedMonth)">@(new DateTime(2026, m, 1).ToString("MMMM"))</option> }
+<!-- ═══ MONTH + ORG BAR ═══ -->
+<div style="display:flex;align-items:center;gap:.55rem;margin-bottom:1.15rem;flex-wrap:wrap;">
+    <form method="get" class="d-flex align-items:center;gap:.25rem;">
+        <select name="month" class="form-select form-select-sm" style="width:115px;font-size:.76rem;" onchange="this.form.submit()">
+            @for(int m=1;m<=12;m++){<option value="@m" selected="@(m==Model.SelectedMonth)">@(new DateTime(2026,m,1).ToString("MMMM"))</option>}
         </select>
-        <input type="hidden" name="year" value="@Model.SelectedYear" />
+        <input type="hidden" name="year" value="@Model.SelectedYear"/>
     </form>
-    <span class="org-badge"><i class="bi bi-building"></i> @ViewBag.OrgName</span>
-    @if (ai != null && ai.TeamHealthScore > 0) {
-    <span style="font-size:.68rem;font-weight:700;padding:.2rem .55rem;border-radius:12px;background:@(ai.TeamHealthColor)15;color:@(ai.TeamHealthColor);">
-        <i class="bi bi-heart-pulse"></i> Health: @ai.TeamHealthScore/100
-    </span>}
+    <span style="font-size:.66rem;color:var(--txt3);background:var(--pri3);padding:.18rem .55rem;border-radius:12px;font-weight:600;"><i class="bi bi-building"></i> @ViewBag.OrgName</span>
+    @if(ai!=null&&ai.TeamHealthScore>0){<span style="font-size:.66rem;font-weight:700;padding:.18rem .5rem;border-radius:12px;background:@(ai.TeamHealthColor)15;color:@(ai.TeamHealthColor);"><i class="bi bi-heart-pulse"></i> @ai.TeamHealthScore/100</span>}
 </div>
 
-<!-- ══════ KPI CARDS ══════ -->
+<!-- ═══ KPI CARDS ═══ -->
 <div class="kpi-grid">
-    <div class="kpi-card">
-        <div class="kpi-icon blue"><i class="bi bi-diagram-3-fill"></i></div>
-        <div class="kpi-label">Teams</div>
-        <div class="kpi-value">@Model.TotalTeams</div>
-        <div class="kpi-sub">@Model.TotalProjects projects</div>
-    </div>
-    <div class="kpi-card green">
-        <div class="kpi-icon green"><i class="bi bi-people-fill"></i></div>
-        <div class="kpi-label">People</div>
-        <div class="kpi-value">@Model.TotalMembers</div>
-        <div class="kpi-sub">team members</div>
-    </div>
-    <div class="kpi-card">
-        <div class="kpi-icon blue"><i class="bi bi-check2-all"></i></div>
-        <div class="kpi-label">Completed</div>
-        <div class="kpi-value">@Model.TotalTasksCompleted<small style="font-size:.55rem;color:var(--txt-4);">/@Model.TotalTasksAssigned</small></div>
-        <div class="kpi-sub">@Model.OverallCompletionPct% done</div>
-    </div>
-    <div class="kpi-card red">
-        <div class="kpi-icon red"><i class="bi bi-bug-fill"></i></div>
-        <div class="kpi-label">Bugs Found</div>
-        <div class="kpi-value">@Model.TotalBugsFound</div>
-        <div class="kpi-sub">@Model.TotalBugsFixed fixed</div>
-    </div>
-    <div class="kpi-card purple">
-        <div class="kpi-icon purple"><i class="bi bi-award-fill"></i></div>
-        <div class="kpi-label">Avg Quality</div>
-        <div class="kpi-value">@Model.AvgQuality<small style="font-size:.6rem;color:var(--txt-4);">/5</small></div>
-        <div class="kpi-sub">star rating</div>
-    </div>
-    <div class="kpi-card teal">
-        <div class="kpi-icon teal"><i class="bi bi-clock-fill"></i></div>
-        <div class="kpi-label">Total Hours</div>
-        <div class="kpi-value">@Model.TotalHoursWorked.ToString("N0")</div>
-        <div class="kpi-sub">man-hours</div>
-    </div>
-    <div class="kpi-card orange">
-        <div class="kpi-icon amber"><i class="bi bi-lightning-fill"></i></div>
-        <div class="kpi-label">Overtime</div>
-        <div class="kpi-value">@Model.TotalExtraHours.ToString("N0")</div>
-        <div class="kpi-sub">extra hours</div>
-    </div>
-    <div class="kpi-card green">
-        <div class="kpi-icon green"><i class="bi bi-bullseye"></i></div>
-        <div class="kpi-label">Completion</div>
-        <div class="kpi-value">@Model.OverallCompletionPct%</div>
-        <div style="height:4px;background:var(--brd);border-radius:2px;margin-top:.3rem;overflow:hidden;">
-            <div style="height:100%;width:@(Model.OverallCompletionPct)%;background:var(--green);border-radius:2px;"></div>
-        </div>
-    </div>
+    <div class="kc"><div class="ki" style="background:var(--pri3);color:var(--pri);"><i class="bi bi-diagram-3-fill"></i></div><div class="kl">Teams</div><div class="kv">@Model.TotalTeams</div><div class="ks">@Model.TotalProjects projects</div></div>
+    <div class="kc g"><div class="ki" style="background:var(--gbg);color:var(--g);"><i class="bi bi-people-fill"></i></div><div class="kl">People</div><div class="kv">@Model.TotalMembers</div><div class="ks">team members</div></div>
+    <div class="kc"><div class="ki" style="background:var(--pri3);color:var(--pri);"><i class="bi bi-check2-all"></i></div><div class="kl">Done</div><div class="kv">@Model.TotalTasksCompleted<small style="font-size:.5rem;color:var(--txt4)">/@Model.TotalTasksAssigned</small></div><div class="ks">@Model.OverallCompletionPct%</div></div>
+    <div class="kc r"><div class="ki" style="background:var(--rbg);color:var(--r);"><i class="bi bi-bug-fill"></i></div><div class="kl">Bugs</div><div class="kv">@Model.TotalBugsFound</div><div class="ks">@Model.TotalBugsFixed fixed</div></div>
+    <div class="kc p"><div class="ki" style="background:var(--pbg);color:var(--p);"><i class="bi bi-award-fill"></i></div><div class="kl">Quality</div><div class="kv">@Model.AvgQuality<small style="font-size:.55rem;color:var(--txt4)">/5</small></div><div class="ks">avg rating</div></div>
+    <div class="kc t"><div class="ki" style="background:var(--tbg);color:var(--t);"><i class="bi bi-clock-fill"></i></div><div class="kl">Hours</div><div class="kv">@Model.TotalHoursWorked.ToString("N0")</div><div class="ks">total</div></div>
+    <div class="kc o"><div class="ki" style="background:var(--abg);color:var(--a);"><i class="bi bi-lightning-fill"></i></div><div class="kl">Overtime</div><div class="kv">@Model.TotalExtraHours.ToString("N0")</div><div class="ks">extra hrs</div></div>
+    <div class="kc g"><div class="ki" style="background:var(--gbg);color:var(--g);"><i class="bi bi-bullseye"></i></div><div class="kl">Completion</div><div class="kv">@Model.OverallCompletionPct%</div><div style="height:4px;background:var(--brd);border-radius:2px;margin-top:.25rem;overflow:hidden;"><div style="height:100%;width:@(Model.OverallCompletionPct)%;background:var(--g);border-radius:2px;"></div></div></div>
 </div>
 
-<!-- ══════ TABS ══════ -->
+<!-- ═══ DESKTOP TABS (hidden on mobile, mobile uses bottom nav) ═══ -->
 <div class="tab-bar">
-    <div class="tab-btn active" onclick="showTab('tp-ai',this)"><i class="bi bi-stars"></i> AI Insights</div>
-    <div class="tab-btn" onclick="showTab('tp-teams',this)"><i class="bi bi-diagram-3"></i> Teams</div>
-    <div class="tab-btn" onclick="showTab('tp-kpi',this)"><i class="bi bi-graph-up-arrow"></i> KPIs</div>
-    <div class="tab-btn" onclick="showTab('tp-log',this)"><i class="bi bi-journal-text"></i> Daily Log</div>
-    <div class="tab-btn" onclick="showTab('tp-fb',this)"><i class="bi bi-chat-dots"></i> Feedback</div>
-    <div class="tab-btn" onclick="showTab('tp-inv',this)"><i class="bi bi-link-45deg"></i> Invite</div>
+    <div class="tb active" onclick="go('tp-ai',this,0)"><i class="bi bi-stars"></i> AI Insights</div>
+    <div class="tb" onclick="go('tp-teams',this,1)"><i class="bi bi-diagram-3"></i> Teams</div>
+    <div class="tb" onclick="go('tp-kpi',this,2)"><i class="bi bi-graph-up-arrow"></i> KPIs</div>
+    <div class="tb" onclick="go('tp-log',this,3)"><i class="bi bi-journal-text"></i> Daily Log</div>
+    <div class="tb" onclick="go('tp-fb',this,4)"><i class="bi bi-chat-dots"></i> Feedback</div>
+    <div class="tb" onclick="go('tp-inv',this,5)"><i class="bi bi-link-45deg"></i> Invite</div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════════
-     TAB: AI INSIGHTS
-     ══════════════════════════════════════════════════════════════ -->
-<div class="tab-pane active" id="tp-ai">
-@if (ai == null || ai.TeamHealthScore == 0) {
-<div class="empty-state">
-    <i class="bi bi-stars"></i>
-    <p>Generate KPI records and fill in data to unlock AI-powered insights, risk alerts, and smart recommendations.</p>
-</div>
+<!-- ══════════════════ TAB: AI INSIGHTS ══════════════════ -->
+<div class="tp active" id="tp-ai">
+@if(ai==null||ai.TeamHealthScore==0){
+<div class="es"><i class="bi bi-stars"></i><p>Generate KPI records and fill in data to unlock AI-powered insights.</p></div>
 } else {
-
-<!-- Executive Summary -->
-<div style="background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;border-radius:var(--r);padding:1rem 1.15rem;margin-bottom:1rem;">
-    <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">
-        <i class="bi bi-stars" style="color:#818cf8;font-size:1.1rem;"></i>
-        <span style="font-weight:700;font-size:.88rem;">AI Executive Summary</span>
-    </div>
-    <p style="font-size:.78rem;color:rgba(255,255,255,.75);line-height:1.6;margin:0;">@ai.ExecutiveSummary</p>
+<div style="background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;border-radius:var(--rd);padding:.9rem 1rem;margin-bottom:.85rem;">
+    <div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.4rem;"><i class="bi bi-stars" style="color:var(--pri2);font-size:1rem;"></i><span style="font-weight:700;font-size:.85rem;">AI Executive Summary</span></div>
+    <p style="font-size:.76rem;color:rgba(255,255,255,.7);line-height:1.55;margin:0;">@ai.ExecutiveSummary</p>
 </div>
-
-<!-- Team Health + Alerts side by side on desktop -->
 <div class="row g-3 mb-3">
     <div class="col-md-4">
-        <div style="background:var(--card);border-radius:var(--r);padding:1.25rem;text-align:center;box-shadow:var(--sh);height:100%;">
-            <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--txt-4);font-weight:700;margin-bottom:.5rem;">Team Health Score</div>
-            <div style="position:relative;width:100px;height:100px;margin:0 auto .5rem;">
-                <svg viewBox="0 0 36 36" style="transform:rotate(-90deg);">
-                    <circle cx="18" cy="18" r="15.5" fill="none" stroke="#e2e8f0" stroke-width="3"/>
-                    <circle cx="18" cy="18" r="15.5" fill="none" stroke="@ai.TeamHealthColor" stroke-width="3"
-                            stroke-dasharray="@(ai.TeamHealthScore * 97.4 / 100) 97.4" stroke-linecap="round"/>
-                </svg>
-                <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:900;color:var(--txt);">@ai.TeamHealthScore</div>
+        <div style="background:var(--card);border-radius:var(--rd);padding:1.1rem;text-align:center;box-shadow:var(--sh);height:100%;">
+            <div class="kl" style="margin-bottom:.4rem;">Team Health</div>
+            <div style="position:relative;width:90px;height:90px;margin:0 auto .4rem;">
+                <svg viewBox="0 0 36 36" style="transform:rotate(-90deg);"><circle cx="18" cy="18" r="15.5" fill="none" stroke="#e2e8f0" stroke-width="3"/><circle cx="18" cy="18" r="15.5" fill="none" stroke="@ai.TeamHealthColor" stroke-width="3" stroke-dasharray="@(ai.TeamHealthScore*97.4/100) 97.4" stroke-linecap="round"/></svg>
+                <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:900;color:var(--txt);">@ai.TeamHealthScore</div>
             </div>
-            <div style="font-weight:700;font-size:.85rem;color:@ai.TeamHealthColor;">@ai.TeamHealthLabel</div>
+            <div style="font-weight:700;font-size:.82rem;color:@ai.TeamHealthColor;">@ai.TeamHealthLabel</div>
         </div>
     </div>
     <div class="col-md-8">
-        <div style="background:var(--card);border-radius:var(--r);padding:.85rem;box-shadow:var(--sh);height:100%;">
-            <div style="font-weight:700;font-size:.82rem;margin-bottom:.5rem;color:var(--txt);"><i class="bi bi-bell"></i> Smart Alerts</div>
-            @if (!ai.Alerts.Any()) { <div style="font-size:.78rem;color:var(--txt-4);padding:.5rem;">No alerts — everything looks good!</div> }
-            @foreach (var a in ai.Alerts) {
-                var bg = a.Level switch { "critical" => "var(--red-bg)", "warning" => "var(--amber-bg)", "success" => "var(--green-bg)", _ => "var(--pri-bg)" };
-                var color = a.Level switch { "critical" => "var(--red)", "warning" => "var(--amber)", "success" => "var(--green)", _ => "var(--pri)" };
-                <div style="background:@bg;border-radius:8px;padding:.5rem .65rem;margin-bottom:.4rem;display:flex;gap:.5rem;align-items:flex-start;">
-                    <i class="bi @a.Icon" style="color:@color;font-size:.85rem;margin-top:.1rem;flex-shrink:0;"></i>
-                    <div>
-                        <div style="font-weight:700;font-size:.72rem;color:@color;">@a.Title</div>
-                        <div style="font-size:.68rem;color:var(--txt-2);line-height:1.4;">@a.Detail</div>
-                    </div>
-                </div>
-            }
+        <div style="background:var(--card);border-radius:var(--rd);padding:.75rem;box-shadow:var(--sh);height:100%;">
+            <div style="font-weight:700;font-size:.8rem;margin-bottom:.4rem;"><i class="bi bi-bell"></i> Smart Alerts</div>
+            @if(!ai.Alerts.Any()){<div style="font-size:.76rem;color:var(--txt4);padding:.5rem;">All clear — no alerts!</div>}
+            @foreach(var al in ai.Alerts){
+                var abg=al.Level switch{"critical"=>"var(--rbg)","warning"=>"var(--abg)","success"=>"var(--gbg)",_=>"var(--pri3)"};
+                var acl=al.Level switch{"critical"=>"var(--r)","warning"=>"var(--a)","success"=>"var(--g)",_=>"var(--pri)"};
+                <div style="background:@abg;border-radius:8px;padding:.45rem .6rem;margin-bottom:.35rem;display:flex;gap:.4rem;align-items:flex-start;">
+                    <i class="bi @al.Icon" style="color:@acl;font-size:.8rem;margin-top:.1rem;flex-shrink:0;"></i>
+                    <div><div style="font-weight:700;font-size:.7rem;color:@acl;">@al.Title</div><div style="font-size:.66rem;color:var(--txt2);line-height:1.4;">@al.Detail</div></div>
+                </div>}
         </div>
     </div>
 </div>
-
-<!-- AI Recommendations -->
-@if (ai.Recommendations.Any()) {
-<div style="background:var(--card);border-radius:var(--r);padding:.85rem;box-shadow:var(--sh);margin-bottom:1rem;">
-    <div style="font-weight:700;font-size:.82rem;margin-bottom:.5rem;color:var(--txt);"><i class="bi bi-lightbulb" style="color:var(--amber);"></i> AI Recommendations</div>
-    <div class="row g-2">
-    @foreach (var r in ai.Recommendations) {
-        var priBg = r.Priority switch { "high" => "var(--red-bg)", "medium" => "var(--amber-bg)", _ => "var(--bg-alt)" };
-        var priColor = r.Priority switch { "high" => "var(--red)", "medium" => "var(--amber)", _ => "var(--txt-3)" };
-        <div class="col-12 col-md-6">
-            <div style="background:var(--bg);border-radius:8px;padding:.6rem .7rem;border:1px solid var(--brd-light);height:100%;">
-                <div style="display:flex;align-items:center;gap:.35rem;margin-bottom:.25rem;">
-                    <i class="bi @r.Icon" style="color:var(--pri);font-size:.8rem;"></i>
-                    <span style="font-weight:700;font-size:.72rem;color:var(--txt);">@r.Title</span>
-                    <span style="font-size:.55rem;font-weight:700;padding:.1rem .35rem;border-radius:8px;background:@priBg;color:@priColor;margin-left:auto;">@r.Priority</span>
-                </div>
-                <div style="font-size:.68rem;color:var(--txt-2);line-height:1.4;">@r.Detail</div>
-            </div>
-        </div>
-    }
-    </div>
+@if(ai.Recommendations.Any()){
+<div style="background:var(--card);border-radius:var(--rd);padding:.75rem;box-shadow:var(--sh);margin-bottom:.85rem;">
+    <div style="font-weight:700;font-size:.8rem;margin-bottom:.4rem;"><i class="bi bi-lightbulb" style="color:var(--a);"></i> AI Recommendations</div>
+    <div class="row g-2">@foreach(var rc in ai.Recommendations){
+        var rpbg=rc.Priority switch{"high"=>"var(--rbg)","medium"=>"var(--abg)",_=>"var(--bg2)"};
+        var rpcl=rc.Priority switch{"high"=>"var(--r)","medium"=>"var(--a)",_=>"var(--txt3)"};
+        <div class="col-12 col-md-6"><div style="background:var(--bg);border-radius:8px;padding:.5rem .6rem;border:1px solid var(--brd2);height:100%;">
+            <div style="display:flex;align-items:center;gap:.3rem;margin-bottom:.2rem;"><i class="bi @rc.Icon" style="color:var(--pri);font-size:.75rem;"></i><span style="font-weight:700;font-size:.7rem;">@rc.Title</span><span style="font-size:.52rem;font-weight:700;padding:.08rem .3rem;border-radius:8px;background:@rpbg;color:@rpcl;margin-left:auto;">@rc.Priority</span></div>
+            <div style="font-size:.66rem;color:var(--txt2);line-height:1.4;">@rc.Detail</div>
+        </div></div>}</div>
 </div>}
-
-<!-- AI Member Insights -->
-<div style="background:var(--card);border-radius:var(--r);padding:.85rem;box-shadow:var(--sh);">
-    <div style="font-weight:700;font-size:.82rem;margin-bottom:.5rem;color:var(--txt);"><i class="bi bi-person-check" style="color:var(--pri);"></i> AI Performance Insights</div>
-    <div class="row g-2">
-    @foreach (var mi in ai.MemberInsights) {
-        var riskBg = mi.RiskLevel switch { "high" => "var(--red-bg)", "medium" => "var(--amber-bg)", _ => "var(--green-bg)" };
-        var riskColor = mi.RiskLevel switch { "high" => "var(--red)", "medium" => "var(--amber)", _ => "var(--green)" };
-        <div class="col-12 col-md-6">
-            <div style="border:1px solid var(--brd);border-radius:10px;padding:.65rem;height:100%;">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem;">
-                    <div>
-                        <span style="font-size:.95rem;margin-right:.25rem;">@mi.Emoji</span>
-                        <span style="font-weight:700;font-size:.82rem;color:var(--txt);">@mi.Name</span>
-                        <span style="font-size:.6rem;color:var(--txt-4);margin-left:.2rem;">@mi.Role</span>
-                    </div>
-                    <span style="font-size:.55rem;font-weight:700;padding:.12rem .4rem;border-radius:8px;background:@riskBg;color:@riskColor;">@mi.RiskLevel risk</span>
-                </div>
-                <div style="font-size:.7rem;color:var(--txt-2);line-height:1.45;margin-bottom:.35rem;">@mi.PerformanceSummary</div>
-                @if (mi.Strengths.Any()) {
-                <div style="display:flex;flex-wrap:wrap;gap:.2rem;margin-bottom:.25rem;">
-                    @foreach (var s in mi.Strengths.Take(2)) { <span style="font-size:.58rem;background:var(--green-bg);color:var(--green);padding:.1rem .35rem;border-radius:6px;font-weight:600;">@s</span> }
-                </div>}
-                @if (mi.Improvements.Any()) {
-                <div style="display:flex;flex-wrap:wrap;gap:.2rem;">
-                    @foreach (var imp in mi.Improvements.Take(2)) { <span style="font-size:.58rem;background:var(--amber-bg);color:var(--amber);padding:.1rem .35rem;border-radius:6px;font-weight:600;">@imp</span> }
-                </div>}
-                <details style="margin-top:.3rem;">
-                    <summary style="font-size:.62rem;color:var(--pri);cursor:pointer;font-weight:600;">View AI-generated feedback draft</summary>
-                    <div style="font-size:.68rem;color:var(--txt-2);background:var(--pri-bg);padding:.4rem .5rem;border-radius:6px;margin-top:.2rem;line-height:1.4;">@mi.FeedbackDraft</div>
-                </details>
+<div style="background:var(--card);border-radius:var(--rd);padding:.75rem;box-shadow:var(--sh);">
+    <div style="font-weight:700;font-size:.8rem;margin-bottom:.4rem;"><i class="bi bi-person-check" style="color:var(--pri);"></i> AI Performance Insights</div>
+    <div class="row g-2">@foreach(var mi in ai.MemberInsights){
+        var rkbg=mi.RiskLevel switch{"high"=>"var(--rbg)","medium"=>"var(--abg)",_=>"var(--gbg)"};
+        var rkcl=mi.RiskLevel switch{"high"=>"var(--r)","medium"=>"var(--a)",_=>"var(--g)"};
+        <div class="col-12 col-md-6"><div style="border:1px solid var(--brd);border-radius:10px;padding:.6rem;height:100%;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;">
+                <div><span style="font-size:.9rem;margin-right:.2rem;">@mi.Emoji</span><span style="font-weight:700;font-size:.8rem;">@mi.Name</span><span style="font-size:.58rem;color:var(--txt4);margin-left:.15rem;">@mi.Role</span></div>
+                <span style="font-size:.52rem;font-weight:700;padding:.1rem .35rem;border-radius:8px;background:@rkbg;color:@rkcl;">@mi.RiskLevel</span>
             </div>
+            <div style="font-size:.68rem;color:var(--txt2);line-height:1.4;margin-bottom:.3rem;">@mi.PerformanceSummary</div>
+            @if(mi.Strengths.Any()){<div style="display:flex;flex-wrap:wrap;gap:.15rem;margin-bottom:.2rem;">@foreach(var s in mi.Strengths.Take(2)){<span style="font-size:.55rem;background:var(--gbg);color:var(--g);padding:.08rem .3rem;border-radius:6px;font-weight:600;">@s</span>}</div>}
+            @if(mi.Improvements.Any()){<div style="display:flex;flex-wrap:wrap;gap:.15rem;">@foreach(var im in mi.Improvements.Take(2)){<span style="font-size:.55rem;background:var(--abg);color:var(--a);padding:.08rem .3rem;border-radius:6px;font-weight:600;">@im</span>}</div>}
+            <details style="margin-top:.25rem;"><summary style="font-size:.6rem;color:var(--pri);cursor:pointer;font-weight:600;">AI feedback draft</summary><div style="font-size:.66rem;color:var(--txt2);background:var(--pri3);padding:.35rem .45rem;border-radius:6px;margin-top:.15rem;line-height:1.4;">@mi.FeedbackDraft</div></details>
+        </div></div>}</div>
+</div>}
+</div>
+
+<!-- ══════════════════ TAB: TEAMS ══════════════════ -->
+<div class="tp" id="tp-teams">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.65rem;">
+        <div style="font-weight:700;font-size:.88rem;">Teams & Members</div>
+        @if(canEdit){<button class="btn-a" data-bs-toggle="modal" data-bs-target="#addTeamModal"><i class="bi bi-plus"></i> Team</button>}
+    </div>
+    @if(!Model.Teams.Any()){<div class="es"><i class="bi bi-diagram-3"></i><p>No teams yet. Create your first team!</p></div>}
+    @foreach(var t in Model.Teams){var ci=Model.Teams.IndexOf(t)%tc.Length;
+    <div class="tc">
+        <div class="tc-h"><div style="display:flex;align-items:center;gap:.4rem;"><div style="width:6px;height:28px;border-radius:3px;background:@tc[ci];flex-shrink:0;"></div><div><span class="tn">@t.Name</span> <span class="pt" style="background:@tc[ci];">@t.Project</span></div></div>
+        @if(canEdit){<a asp-controller="Teams" asp-action="Edit" asp-route-id="@t.Id" class="btn-g"><i class="bi bi-pencil"></i> Edit</a>}</div>
+        <div class="tc-m"><i class="bi bi-star-fill" style="color:var(--a);font-size:.55rem;"></i> Lead: <strong>@t.TechLead</strong> <span style="margin-left:auto;">@t.Members.Count members</span></div>
+        <div class="tc-b">
+            @foreach(var m in t.Members.OrderBy(x=>x.Role.Contains("Lead")?0:1).ThenBy(x=>x.Name)){
+                var dc=m.Role switch{var r when r.Contains("Lead")=>"#dc2626",var r when r.Contains("QA")=>"#059669",var r when r.Contains("Design")||r.Contains("UI")=>"#7c3aed",var r when r.Contains("Product")||r.Contains("BA")=>"#d97706",_=>"#2563eb"};
+                <span class="mc"><span class="dot" style="background:@dc;"></span> @m.Name <span class="rl">@m.Role</span>@if(m.ProjectsAssigned.Contains(",")){<i class="bi bi-arrow-left-right" style="font-size:.5rem;color:var(--pri);" title="Multi-project"></i>}</span>}
+            @if(canEdit){<button class="mc mc-a" data-bs-toggle="modal" data-bs-target="#addMemberModal" onclick="document.getElementById('nmt').value=@t.Id"><i class="bi bi-plus" style="font-size:.65rem;"></i> Add</button>}
         </div>
-    }
-    </div>
-</div>
-}
-</div>
-
-<!-- ══════════════════════════════════════════════════════════════
-     TAB: TEAMS
-     ══════════════════════════════════════════════════════════════ -->
-<div class="tab-pane" id="tp-teams">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;">
-        <div style="font-weight:700;font-size:.9rem;color:var(--txt);">Teams & Members</div>
-        @if (canEdit) { <button class="btn-accent" data-bs-toggle="modal" data-bs-target="#addTeamModal"><i class="bi bi-plus"></i> Add Team</button> }
-    </div>
-    @if (!Model.Teams.Any()) { <div class="empty-state"><i class="bi bi-diagram-3"></i><p>No teams yet. Create your first team to get started.</p></div> }
-    @foreach (var t in Model.Teams) {
-        var ci = Model.Teams.IndexOf(t) % teamColors.Length;
-        <div class="team-card">
-            <div class="team-header">
-                <div style="display:flex;align-items:center;gap:.5rem;">
-                    <div style="width:8px;height:32px;border-radius:4px;background:@teamColors[ci];flex-shrink:0;"></div>
-                    <div>
-                        <span class="team-name">@t.Name</span>
-                        <span class="proj-tag" style="background:@teamColors[ci];">@t.Project</span>
-                    </div>
-                </div>
-                @if (canEdit) { <a asp-controller="Teams" asp-action="Edit" asp-route-id="@t.Id" class="btn-ghost"><i class="bi bi-pencil"></i></a> }
-            </div>
-            <div class="team-meta"><i class="bi bi-star-fill" style="color:var(--amber);font-size:.6rem;"></i> Lead: <strong>@t.TechLead</strong> <span style="margin-left:auto;">@t.Members.Count members</span></div>
-            <div class="team-members">
-                @foreach (var m in t.Members.OrderBy(x => x.Role.Contains("Lead") ? 0 : 1).ThenBy(x => x.Name)) {
-                    var dotColor = m.Role switch { var r when r.Contains("Lead") => "#dc2626", var r when r.Contains("QA") => "#059669", var r when r.Contains("Design") || r.Contains("UI") => "#7c3aed", var r when r.Contains("Product") || r.Contains("BA") => "#d97706", _ => "#2563eb" };
-                    <span class="m-chip"><span class="dot" style="background:@dotColor;"></span> @m.Name <span class="role-label">@m.Role</span>
-                    @if (m.ProjectsAssigned.Contains(",")) { <i class="bi bi-arrow-left-right multi-icon" title="Multi-project"></i> }</span>
-                }
-                @if (canEdit) { <button class="m-chip m-chip-add" data-bs-toggle="modal" data-bs-target="#addMemberModal" onclick="document.getElementById('newMemberTeamId').value=@t.Id"><i class="bi bi-plus" style="font-size:.7rem;"></i> Add</button> }
-            </div>
-        </div>
-    }
-</div>
-
-<!-- ══════════════════════════════════════════════════════════════
-     TAB: KPI SCORECARD
-     ══════════════════════════════════════════════════════════════ -->
-<div class="tab-pane" id="tp-kpi">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem;">
-        <div style="font-weight:700;font-size:.9rem;color:var(--txt);">KPI Scorecard</div>
-        @if (canEdit) { <a asp-controller="Kpi" asp-action="Generate" asp-route-month="@Model.SelectedMonth" asp-route-year="@Model.SelectedYear" class="btn-accent"><i class="bi bi-plus"></i> Generate KPIs</a> }
-    </div>
-    @if (!Model.Kpis.Any()) { <div class="empty-state"><i class="bi bi-graph-up-arrow"></i><p>No KPI data yet. Click "Generate KPIs" to create records for all members.</p></div> }
-    else {
-    <div class="tbl-wrap">
-        <table class="tbl">
-            <thead><tr><th style="text-align:left;">Name</th><th>Team</th><th>Assigned</th><th>Done</th><th style="min-width:90px;">Completion</th><th>Bugs</th><th>On-Time</th><th>Quality</th><th>Hours</th><th>Extra</th><th>Grade</th><th></th></tr></thead>
-            <tbody>
-            @foreach (var k in Model.Kpis) {
-                var progColor = k.CompletionPct >= 80 ? "green" : k.CompletionPct >= 50 ? "amber" : "red";
-                var gradeClass = k.Grade switch { "A" => "grade-A", "B" => "grade-B", "C" => "grade-C", "D" => "grade-D", "F" => "grade-F", _ => "grade-none" };
-                <tr>
-                    <td class="name-cell">@(k.Member.Role.Contains("Lead") ? "<span class=\"lead-star\">★</span>" : "")@k.Member.Name</td>
-                    <td style="font-size:.68rem;color:var(--txt-3);">@k.Member.Team.Name</td>
-                    <td style="text-align:center;">@k.TasksAssigned</td>
-                    <td style="text-align:center;font-weight:600;">@k.TasksCompleted</td>
-                    <td><div class="prog-bar"><div class="prog-track"><div class="prog-fill @progColor" style="width:@(Math.Min(k.CompletionPct, 100))%;"></div></div><span class="prog-val" style="color:var(--@progColor);">@k.CompletionPct%</span></div></td>
-                    <td style="text-align:center;@(k.BugsFoundInWork > 3 ? "color:var(--red);font-weight:700;" : "")">@k.BugsFoundInWork</td>
-                    <td style="text-align:center;">@k.OnTimeDeliveryPct%</td>
-                    <td style="text-align:center;">@for(int s=0;s<5;s++){<span style="color:@(s<k.QualityScore?"#d97706":"#e2e8f0");font-size:.6rem;">★</span>}</td>
-                    <td style="text-align:center;">@k.TotalHoursWorked</td>
-                    <td style="text-align:center;@(k.ExtraHours > 0 ? "color:var(--amber);font-weight:600;" : "color:var(--txt-4);")">@k.ExtraHours</td>
-                    <td style="text-align:center;"><span class="grade @gradeClass">@k.Grade</span></td>
-                    <td>@if (canEdit) { <a asp-controller="Kpi" asp-action="Edit" asp-route-id="@k.Id" class="btn-ghost" style="padding:.15rem .3rem;"><i class="bi bi-pencil"></i></a> }</td>
-                </tr>
-            }
-            </tbody>
-        </table>
     </div>}
 </div>
 
-<!-- ══════════════════════════════════════════════════════════════
-     TAB: DAILY LOG
-     ══════════════════════════════════════════════════════════════ -->
-<div class="tab-pane" id="tp-log">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem;">
-        <div style="font-weight:700;font-size:.9rem;color:var(--txt);">Daily Work Log</div>
-        @if (canEdit) { <a asp-controller="DailyLog" asp-action="Create" class="btn-accent"><i class="bi bi-plus"></i> Add Entry</a> }
+<!-- ══════════════════ TAB: KPI ══════════════════ -->
+<div class="tp" id="tp-kpi">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.65rem;flex-wrap:wrap;gap:.4rem;">
+        <div style="font-weight:700;font-size:.88rem;">KPI Scorecard</div>
+        @if(canEdit){<a asp-controller="Kpi" asp-action="Generate" asp-route-month="@Model.SelectedMonth" asp-route-year="@Model.SelectedYear" class="btn-a"><i class="bi bi-plus"></i> Generate</a>}
     </div>
-    @if (!Model.RecentLogs.Any()) { <div class="empty-state"><i class="bi bi-journal-text"></i><p>No log entries yet. <a asp-controller="DailyLog" asp-action="Create">Add the first one</a>.</p></div> }
-    else {
-    <div class="tbl-wrap">
-        <table class="tbl">
-            <thead><tr><th style="text-align:left;">Date</th><th style="text-align:left;">Name</th><th>Project</th><th style="text-align:left;">Task</th><th>Status</th><th>Hours</th><th></th></tr></thead>
-            <tbody>
-            @foreach (var l in Model.RecentLogs) {
-                var statusClass = l.Status switch { "Completed" => "status-completed", "In Progress" => "status-in-progress", "Blocked" => "status-blocked", "In Review" => "status-in-review", "Carry Forward" => "status-carry", _ => "status-default" };
-                <tr>
-                    <td style="white-space:nowrap;font-size:.72rem;color:var(--txt-3);">@l.Date.ToString("dd MMM")</td>
-                    <td class="name-cell">@l.Member.Name</td>
-                    <td style="text-align:center;font-size:.68rem;">@l.Project</td>
-                    <td style="max-width:220px;font-size:.72rem;color:var(--txt-2);">@(l.TaskDescription.Length > 50 ? l.TaskDescription[..50] + "…" : l.TaskDescription)</td>
-                    <td style="text-align:center;"><span class="status-pill @statusClass">@l.Status</span></td>
-                    <td style="text-align:center;font-weight:600;">@l.HoursWorked</td>
-                    <td>@if (canEdit) { <a asp-controller="DailyLog" asp-action="Edit" asp-route-id="@l.Id" class="btn-ghost" style="padding:.15rem .3rem;"><i class="bi bi-pencil"></i></a> }</td>
-                </tr>
-            }
-            </tbody>
-        </table>
-    </div>}
+    @if(!Model.Kpis.Any()){<div class="es"><i class="bi bi-graph-up-arrow"></i><p>No KPI data. Click "Generate" to create records.</p></div>}
+    else{<div class="tbl-w"><table class="tbl">
+        <thead><tr><th style="text-align:left">Name</th><th>Team</th><th>Asgn</th><th>Done</th><th style="min-width:80px">%</th><th>Bugs</th><th>OT%</th><th>Qual</th><th>Hrs</th><th>Extra</th><th>Grade</th><th></th></tr></thead>
+        <tbody>@foreach(var k in Model.Kpis){
+            var pc=k.CompletionPct>=80?"g":k.CompletionPct>=50?"a":"r";
+            var gc=k.Grade switch{"A"=>"gr-A","B"=>"gr-B","C"=>"gr-C","D"=>"gr-D","F"=>"gr-F",_=>"gr-n"};
+            <tr>
+                <td class="nc">@(k.Member.Role.Contains("Lead")?"<span style='color:var(--a);'>★</span> ":"")@k.Member.Name</td>
+                <td style="font-size:.66rem;color:var(--txt3);">@k.Member.Team.Name</td>
+                <td style="text-align:center">@k.TasksAssigned</td>
+                <td style="text-align:center;font-weight:600;">@k.TasksCompleted</td>
+                <td><div class="pb"><div class="pb-t"><div class="pb-f @pc" style="width:@(Math.Min(k.CompletionPct,100))%"></div></div><span class="pb-v" style="color:var(--@pc)">@k.CompletionPct%</span></div></td>
+                <td style="text-align:center;@(k.BugsFoundInWork>3?"color:var(--r);font-weight:700;":"")">@k.BugsFoundInWork</td>
+                <td style="text-align:center">@k.OnTimeDeliveryPct%</td>
+                <td style="text-align:center">@for(int s=0;s<5;s++){<span style="color:@(s<k.QualityScore?"#d97706":"#e2e8f0");font-size:.55rem;">★</span>}</td>
+                <td style="text-align:center">@k.TotalHoursWorked</td>
+                <td style="text-align:center;@(k.ExtraHours>0?"color:var(--a);font-weight:600;":"color:var(--txt4);")">@k.ExtraHours</td>
+                <td style="text-align:center"><span class="gr @gc">@k.Grade</span></td>
+                <td>@if(canEdit){<a asp-controller="Kpi" asp-action="Edit" asp-route-id="@k.Id" class="btn-g" style="padding:.12rem .25rem;"><i class="bi bi-pencil"></i></a>}</td>
+            </tr>}</tbody>
+    </table></div>}
 </div>
 
-<!-- ══════════════════════════════════════════════════════════════
-     TAB: FEEDBACK
-     ══════════════════════════════════════════════════════════════ -->
-<div class="tab-pane" id="tp-fb">
-    <div style="font-weight:700;font-size:.9rem;color:var(--txt);margin-bottom:.75rem;">Feedback & Achievements</div>
-    @if (!Model.Kpis.Any()) { <div class="empty-state"><i class="bi bi-chat-dots"></i><p>Generate KPIs first to see feedback cards.</p></div> }
-    <div class="row g-3">
-    @foreach (var k in Model.Kpis) {
-        var ci2 = Model.Kpis.IndexOf(k) % teamColors.Length;
-        <div class="col-12 col-sm-6 col-lg-4">
-            <div class="fb-card">
-                <div class="fb-card-head">
-                    <div class="fb-name">@(k.Member.Role.Contains("Lead") ? "★ " : "")@k.Member.Name</div>
-                    <span style="font-size:.55rem;font-weight:700;padding:.12rem .4rem;border-radius:6px;background:@(teamColors[ci2])18;color:@teamColors[ci2];">@k.Member.Team.Name</span>
-                </div>
-                <div class="fb-card-body">
-                    <div class="fb-section"><div class="fb-label ach"><i class="bi bi-trophy"></i> Achievements</div><div class="fb-text ach-bg @(string.IsNullOrEmpty(k.Achievements) ? "empty" : "")">@(string.IsNullOrEmpty(k.Achievements) ? "No achievements recorded yet" : k.Achievements)</div></div>
-                    <div class="fb-section"><div class="fb-label err"><i class="bi bi-bug"></i> Errors / Issues</div><div class="fb-text err-bg @(string.IsNullOrEmpty(k.ErrorsLog) ? "empty" : "")">@(string.IsNullOrEmpty(k.ErrorsLog) ? "No errors logged" : k.ErrorsLog)</div></div>
-                    <div class="fb-section"><div class="fb-label tl"><i class="bi bi-chat-left-quote"></i> Tech Lead Feedback</div><div class="fb-text tl-bg @(string.IsNullOrEmpty(k.TechLeadFeedback) ? "empty" : "")">@(string.IsNullOrEmpty(k.TechLeadFeedback) ? "Pending feedback" : k.TechLeadFeedback)</div></div>
-                    <div class="fb-section"><div class="fb-label mgr"><i class="bi bi-person-check"></i> Manager Feedback</div><div class="fb-text mgr-bg @(string.IsNullOrEmpty(k.ManagerFeedback) ? "empty" : "")">@(string.IsNullOrEmpty(k.ManagerFeedback) ? "Pending feedback" : k.ManagerFeedback)</div></div>
-                </div>
-                @if (canEdit) { <div style="padding:.4rem .6rem;border-top:1px solid var(--brd-light);"><a asp-controller="Kpi" asp-action="Edit" asp-route-id="@k.Id" class="btn-ghost" style="width:100%;justify-content:center;"><i class="bi bi-pencil"></i> Edit Feedback</a></div> }
-            </div>
+<!-- ══════════════════ TAB: DAILY LOG ══════════════════ -->
+<div class="tp" id="tp-log">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.65rem;flex-wrap:wrap;gap:.4rem;">
+        <div style="font-weight:700;font-size:.88rem;">Daily Work Log</div>
+        @if(canEdit){<a asp-controller="DailyLog" asp-action="Create" class="btn-a"><i class="bi bi-plus"></i> Add Entry</a>}
+    </div>
+    @if(!Model.RecentLogs.Any()){<div class="es"><i class="bi bi-journal-text"></i><p>No entries. <a asp-controller="DailyLog" asp-action="Create">Add one</a>.</p></div>}
+    else{<div class="tbl-w"><table class="tbl">
+        <thead><tr><th style="text-align:left">Date</th><th style="text-align:left">Name</th><th>Project</th><th style="text-align:left">Task</th><th>Status</th><th>Hrs</th><th></th></tr></thead>
+        <tbody>@foreach(var l in Model.RecentLogs){
+            var sc=l.Status switch{"Completed"=>"sp-c","In Progress"=>"sp-p","Blocked"=>"sp-b","In Review"=>"sp-r","Carry Forward"=>"sp-f",_=>"sp-d"};
+            <tr>
+                <td style="white-space:nowrap;font-size:.7rem;color:var(--txt3);">@l.Date.ToString("dd MMM")</td>
+                <td class="nc">@l.Member.Name</td>
+                <td style="text-align:center;font-size:.66rem;">@l.Project</td>
+                <td style="max-width:200px;font-size:.7rem;color:var(--txt2);">@(l.TaskDescription.Length>45?l.TaskDescription[..45]+"…":l.TaskDescription)</td>
+                <td style="text-align:center"><span class="sp @sc">@l.Status</span></td>
+                <td style="text-align:center;font-weight:600;">@l.HoursWorked</td>
+                <td>@if(canEdit){<a asp-controller="DailyLog" asp-action="Edit" asp-route-id="@l.Id" class="btn-g" style="padding:.12rem .25rem;"><i class="bi bi-pencil"></i></a>}</td>
+            </tr>}</tbody>
+    </table></div>}
+</div>
+
+<!-- ══════════════════ TAB: FEEDBACK ══════════════════ -->
+<div class="tp" id="tp-fb">
+    <div style="font-weight:700;font-size:.88rem;margin-bottom:.65rem;">Feedback & Achievements</div>
+    @if(!Model.Kpis.Any()){<div class="es"><i class="bi bi-chat-dots"></i><p>Generate KPIs first.</p></div>}
+    <div class="row g-2">@foreach(var k in Model.Kpis){var ci2=Model.Kpis.IndexOf(k)%tc.Length;
+    <div class="col-12 col-sm-6 col-lg-4"><div class="fc">
+        <div class="fc-h"><span style="font-weight:700;font-size:.8rem;">@(k.Member.Role.Contains("Lead")?"★ ":"")@k.Member.Name</span><span style="font-size:.52rem;font-weight:700;padding:.1rem .35rem;border-radius:6px;background:@(tc[ci2])15;color:@tc[ci2];">@k.Member.Team.Name</span></div>
+        <div class="fc-b">
+            <div class="fs"><div class="fl" style="color:var(--pri);"><i class="bi bi-trophy"></i> Achievements</div><div class="ft @(string.IsNullOrEmpty(k.Achievements)?"em":"")" style="background:var(--pri3);">@(string.IsNullOrEmpty(k.Achievements)?"Not recorded":k.Achievements)</div></div>
+            <div class="fs"><div class="fl" style="color:var(--r);"><i class="bi bi-bug"></i> Errors</div><div class="ft @(string.IsNullOrEmpty(k.ErrorsLog)?"em":"")" style="background:var(--rbg);">@(string.IsNullOrEmpty(k.ErrorsLog)?"None":k.ErrorsLog)</div></div>
+            <div class="fs"><div class="fl" style="color:var(--a);"><i class="bi bi-chat-left-quote"></i> TL Feedback</div><div class="ft @(string.IsNullOrEmpty(k.TechLeadFeedback)?"em":"")" style="background:var(--abg);">@(string.IsNullOrEmpty(k.TechLeadFeedback)?"Pending":k.TechLeadFeedback)</div></div>
+            <div class="fs"><div class="fl" style="color:var(--g);"><i class="bi bi-person-check"></i> Manager</div><div class="ft @(string.IsNullOrEmpty(k.ManagerFeedback)?"em":"")" style="background:var(--gbg);">@(string.IsNullOrEmpty(k.ManagerFeedback)?"Pending":k.ManagerFeedback)</div></div>
         </div>
-    }
-    </div>
+        @if(canEdit){<div style="padding:.35rem .55rem;border-top:1px solid var(--brd2);"><a asp-controller="Kpi" asp-action="Edit" asp-route-id="@k.Id" class="btn-g" style="width:100%;justify-content:center;"><i class="bi bi-pencil"></i> Edit</a></div>}
+    </div></div>}</div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════════
-     TAB: INVITE & SHARE
-     ══════════════════════════════════════════════════════════════ -->
-<div class="tab-pane" id="tp-inv">
-    <div style="font-weight:700;font-size:.9rem;color:var(--txt);margin-bottom:.75rem;">Invite & Share</div>
-
-    @if (canEdit) {
-    <div style="background:var(--pri-bg);border:1px solid #c7d2fe;border-radius:var(--r);padding:.75rem;margin-bottom:1rem;">
-        <div style="font-weight:700;font-size:.78rem;color:var(--pri);margin-bottom:.5rem;"><i class="bi bi-link-45deg"></i> Create Invite Link</div>
-        <form asp-controller="Invite" asp-action="Create" method="post" style="display:flex;gap:.5rem;align-items:end;flex-wrap:wrap;">
+<!-- ══════════════════ TAB: INVITE ══════════════════ -->
+<div class="tp" id="tp-inv">
+    <div style="font-weight:700;font-size:.88rem;margin-bottom:.65rem;">Invite & Share</div>
+    @if(canEdit){
+    <div style="background:var(--pri3);border:1px solid #c7d2fe;border-radius:var(--rd);padding:.65rem;margin-bottom:.85rem;">
+        <div style="font-weight:700;font-size:.76rem;color:var(--pri);margin-bottom:.4rem;"><i class="bi bi-link-45deg"></i> Create Invite Link</div>
+        <form asp-controller="Invite" asp-action="Create" method="post" style="display:flex;gap:.4rem;align-items:end;flex-wrap:wrap;">
             @Html.AntiForgeryToken()
-            <div><label style="font-size:.62rem;font-weight:600;color:var(--txt-3);display:block;">Role</label><select name="role" class="form-select form-select-sm" style="font-size:.72rem;width:110px;border-radius:8px;"><option value="Viewer">Viewer</option><option value="Manager">Manager</option></select></div>
-            <div><label style="font-size:.62rem;font-weight:600;color:var(--txt-3);display:block;">Max Uses</label><input type="number" name="maxUses" value="0" min="0" class="form-control form-control-sm" style="font-size:.72rem;width:60px;border-radius:8px;"/></div>
-            <div><label style="font-size:.62rem;font-weight:600;color:var(--txt-3);display:block;">Expiry (days)</label><input type="number" name="expiryDays" placeholder="∞" min="1" class="form-control form-control-sm" style="font-size:.72rem;width:70px;border-radius:8px;"/></div>
-            <button class="btn-accent"><i class="bi bi-link-45deg"></i> Generate</button>
+            <div><label class="form-label">Role</label><select name="role" class="form-select form-select-sm" style="width:105px;"><option value="Viewer">Viewer</option><option value="Manager">Manager</option></select></div>
+            <div><label class="form-label">Max Uses</label><input type="number" name="maxUses" value="0" min="0" class="form-control form-control-sm" style="width:55px;"/></div>
+            <div><label class="form-label">Expires</label><input type="number" name="expiryDays" placeholder="∞ days" min="1" class="form-control form-control-sm" style="width:65px;"/></div>
+            <button class="btn-a"><i class="bi bi-link-45deg"></i> Generate</button>
         </form>
     </div>}
-
-    @foreach (var link in inviteLinks.Where(l => l.IsValid)) {
-        var url = $"{Context.Request.Scheme}://{Context.Request.Host}/Auth/Join/{link.Code}";
-        <div class="invite-card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
-                <div>
-                    <span style="font-size:.6rem;font-weight:700;padding:.12rem .4rem;border-radius:6px;color:#fff;background:@(link.Role == "Manager" ? "var(--pri)" : "var(--txt-3)");">@link.Role</span>
-                    <span style="font-size:.6rem;color:var(--txt-4);margin-left:.3rem;">Used @link.TimesUsed@(link.MaxUses > 0 ? $"/{link.MaxUses}" : "") times</span>
-                </div>
-                @if (canEdit) { <form asp-controller="Invite" asp-action="Deactivate" asp-route-id="@link.Id" method="post" class="d-inline">@Html.AntiForgeryToken()<button class="btn-ghost" style="color:var(--red);border-color:var(--red);padding:.12rem .3rem;font-size:.6rem;"><i class="bi bi-x-lg"></i></button></form> }
-            </div>
-            <div class="input-group input-group-sm">
-                <input type="text" class="form-control" value="@url" readonly id="lnk-@link.Id" style="font-size:.7rem;border-radius:8px 0 0 8px;"/>
-                <button class="btn btn-outline-primary" style="font-size:.65rem;border-radius:0 8px 8px 0;" onclick="navigator.clipboard.writeText(document.getElementById('lnk-@link.Id').value);this.innerHTML='<i class=\'bi bi-check-lg\'></i> Copied!';setTimeout(()=>this.innerHTML='<i class=\'bi bi-clipboard\'></i> Copy',2000)"><i class="bi bi-clipboard"></i> Copy</button>
-            </div>
+    @foreach(var lk in inviteLinks.Where(l=>l.IsValid)){var url=$"{Context.Request.Scheme}://{Context.Request.Host}/Auth/Join/{lk.Code}";
+    <div class="ic">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem;">
+            <div><span style="font-size:.58rem;font-weight:700;padding:.1rem .35rem;border-radius:6px;color:#fff;background:@(lk.Role=="Manager"?"var(--pri)":"var(--txt3)");">@lk.Role</span><span style="font-size:.58rem;color:var(--txt4);margin-left:.25rem;">@lk.TimesUsed@(lk.MaxUses>0?$"/{lk.MaxUses}":"") uses</span></div>
+            @if(canEdit){<form asp-controller="Invite" asp-action="Deactivate" asp-route-id="@lk.Id" method="post" class="d-inline">@Html.AntiForgeryToken()<button class="btn-g" style="color:var(--r);border-color:var(--r);padding:.1rem .22rem;font-size:.55rem;"><i class="bi bi-x-lg"></i></button></form>}
         </div>
-    }
-
-    @if (orgMembers.Any()) {
-    <div style="font-weight:700;font-size:.82rem;color:var(--txt);margin:1rem 0 .5rem;"><i class="bi bi-people"></i> Organization Members (@orgMembers.Count)</div>
-    <div class="tbl-wrap">
-        <table class="tbl">
-            <thead><tr><th style="text-align:left;">Member</th><th>Email</th><th>Role</th></tr></thead>
-            <tbody>
-            @foreach (var m in orgMembers) {
-                var roleBg = m.OrgRole switch { "Owner" => "var(--red-bg)", "Manager" => "var(--pri-bg)", _ => "var(--bg-alt)" };
-                var roleColor = m.OrgRole switch { "Owner" => "var(--red)", "Manager" => "var(--pri)", _ => "var(--txt-3)" };
-                <tr>
-                    <td style="text-align:left;"><div style="display:flex;align-items:center;gap:.4rem;">
-                        @if (m.AvatarUrl != null) { <img src="@m.AvatarUrl" style="width:22px;height:22px;border-radius:50%;border:1.5px solid var(--brd);" referrerpolicy="no-referrer"/> }
-                        else { <div style="width:22px;height:22px;border-radius:50%;background:var(--pri-bg);display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:700;color:var(--pri);">@(m.DisplayName?.FirstOrDefault())</div> }
-                        <span style="font-weight:600;font-size:.78rem;">@m.DisplayName</span>
-                    </div></td>
-                    <td style="font-size:.68rem;color:var(--txt-4);">@m.Email</td>
-                    <td style="text-align:center;"><span style="font-size:.6rem;font-weight:700;padding:.12rem .4rem;border-radius:6px;background:@roleBg;color:@roleColor;">@m.OrgRole</span></td>
-                </tr>
-            }
-            </tbody>
-        </table>
+        <div class="input-group input-group-sm"><input type="text" class="form-control" value="@url" readonly id="lnk-@lk.Id" style="font-size:.68rem;"/><button class="btn btn-outline-primary" style="font-size:.62rem;" onclick="navigator.clipboard.writeText(document.getElementById('lnk-@lk.Id').value);this.innerHTML='<i class=\'bi bi-check-lg\'></i> Copied!';setTimeout(()=>this.innerHTML='<i class=\'bi bi-clipboard\'></i> Copy',2000)"><i class="bi bi-clipboard"></i> Copy</button></div>
     </div>}
+    @if(orgMembers.Any()){
+    <div style="font-weight:700;font-size:.8rem;margin:.85rem 0 .4rem;"><i class="bi bi-people"></i> Members (@orgMembers.Count)</div>
+    <div class="tbl-w"><table class="tbl">
+        <thead><tr><th style="text-align:left">Member</th><th>Email</th><th>Role</th></tr></thead>
+        <tbody>@foreach(var m in orgMembers){
+            var rbg=m.OrgRole switch{"Owner"=>"var(--rbg)","Manager"=>"var(--pri3)",_=>"var(--bg2)"};
+            var rcl=m.OrgRole switch{"Owner"=>"var(--r)","Manager"=>"var(--pri)",_=>"var(--txt3)"};
+            <tr>
+                <td style="text-align:left"><div style="display:flex;align-items:center;gap:.35rem;">
+                    @if(m.AvatarUrl!=null){<img src="@m.AvatarUrl" style="width:20px;height:20px;border-radius:50%;border:1.5px solid var(--brd);" referrerpolicy="no-referrer"/>}
+                    else{<div style="width:20px;height:20px;border-radius:50%;background:var(--pri3);display:flex;align-items:center;justify-content:center;font-size:.52rem;font-weight:700;color:var(--pri);">@(m.DisplayName?.FirstOrDefault())</div>}
+                    <span style="font-weight:600;font-size:.76rem;">@m.DisplayName</span></div></td>
+                <td style="font-size:.66rem;color:var(--txt4);">@m.Email</td>
+                <td style="text-align:center"><span style="font-size:.58rem;font-weight:700;padding:.1rem .35rem;border-radius:6px;background:@rbg;color:@rcl;">@m.OrgRole</span></td>
+            </tr>}</tbody>
+    </table></div>}
 </div>
 
-<!-- ══════ ADD TEAM MODAL ══════ -->
-<div class="modal fade" id="addTeamModal"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
-    <div class="modal-header"><h6 class="modal-title"><i class="bi bi-diagram-3" style="color:var(--pri);"></i> Add Team</h6><button class="btn-close" data-bs-dismiss="modal" style="font-size:.6rem;"></button></div>
-    <div class="modal-body">
-        <form asp-controller="Teams" asp-action="Create" method="post">
-            @Html.AntiForgeryToken()
-            <div class="mb-2"><label class="form-label mb-0" style="font-size:.72rem;font-weight:600;">Team Name</label><input name="Name" class="form-control form-control-sm" required placeholder="e.g. Team 1" style="border-radius:8px;"/></div>
-            <div class="mb-2"><label class="form-label mb-0" style="font-size:.72rem;font-weight:600;">Project</label><input name="Project" class="form-control form-control-sm" required placeholder="e.g. AGONEWorkj" style="border-radius:8px;"/></div>
-            <div class="mb-3"><label class="form-label mb-0" style="font-size:.72rem;font-weight:600;">Tech Lead</label><input name="TechLead" class="form-control form-control-sm" required placeholder="e.g. Abdullah" style="border-radius:8px;"/></div>
-            <button class="btn-accent" style="width:100%;justify-content:center;padding:.5rem;"><i class="bi bi-check-lg"></i> Create Team</button>
+<!-- ═══ MODALS ═══ -->
+<div class="modal fade" id="addTeamModal"><div class="modal-dialog modal-dialog-centered modal-sm"><div class="modal-content">
+    <div class="modal-header"><h6 class="modal-title"><i class="bi bi-diagram-3" style="color:var(--pri);"></i> Add Team</h6><button class="btn-close" data-bs-dismiss="modal" style="font-size:.55rem;"></button></div>
+    <div class="modal-body p-3">
+        <form asp-controller="Teams" asp-action="Create" method="post">@Html.AntiForgeryToken()
+            <div class="mb-2"><label class="form-label">Team Name</label><input name="Name" class="form-control form-control-sm" required placeholder="e.g. Team Alpha"/></div>
+            <div class="mb-2"><label class="form-label">Project</label><input name="Project" class="form-control form-control-sm" required placeholder="e.g. AGONEWorkj"/></div>
+            <div class="mb-3"><label class="form-label">Tech Lead</label><input name="TechLead" class="form-control form-control-sm" required placeholder="e.g. Abdullah"/></div>
+            <button class="btn-a" style="width:100%;justify-content:center;padding:.45rem;"><i class="bi bi-check-lg"></i> Create</button>
         </form>
     </div>
 </div></div></div>
 
-<!-- ══════ ADD MEMBER MODAL ══════ -->
-<div class="modal fade" id="addMemberModal"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
-    <div class="modal-header"><h6 class="modal-title"><i class="bi bi-person-plus" style="color:var(--pri);"></i> Add Member</h6><button class="btn-close" data-bs-dismiss="modal" style="font-size:.6rem;"></button></div>
-    <div class="modal-body">
-        <form asp-controller="Members" asp-action="Create" method="post">
-            @Html.AntiForgeryToken()
-            <input type="hidden" name="TeamId" id="newMemberTeamId"/>
-            <div class="mb-2"><label class="form-label mb-0" style="font-size:.72rem;font-weight:600;">Name</label><input name="Name" class="form-control form-control-sm" required style="border-radius:8px;"/></div>
-            <div class="mb-2"><label class="form-label mb-0" style="font-size:.72rem;font-weight:600;">Role</label>
-                <select name="Role" class="form-select form-select-sm" style="border-radius:8px;"><option>Developer</option><option>Tech Lead</option><option>QA</option><option>UI/UX</option><option>Product</option><option>BA</option><option>Designer</option><option>DevOps</option><option>Manager</option></select></div>
-            <div class="mb-3"><label class="form-label mb-0" style="font-size:.72rem;font-weight:600;">Projects Assigned</label><input name="ProjectsAssigned" class="form-control form-control-sm" placeholder="e.g. AGONEWorkj, OJE Safe" style="border-radius:8px;"/></div>
-            <button class="btn-accent" style="width:100%;justify-content:center;padding:.5rem;"><i class="bi bi-check-lg"></i> Add Member</button>
+<div class="modal fade" id="addMemberModal"><div class="modal-dialog modal-dialog-centered modal-sm"><div class="modal-content">
+    <div class="modal-header"><h6 class="modal-title"><i class="bi bi-person-plus" style="color:var(--pri);"></i> Add Member</h6><button class="btn-close" data-bs-dismiss="modal" style="font-size:.55rem;"></button></div>
+    <div class="modal-body p-3">
+        <form asp-controller="Members" asp-action="Create" method="post">@Html.AntiForgeryToken()
+            <input type="hidden" name="TeamId" id="nmt"/>
+            <div class="mb-2"><label class="form-label">Name</label><input name="Name" class="form-control form-control-sm" required/></div>
+            <div class="mb-3"><label class="form-label">Role</label>
+                <select name="Role" class="form-select form-select-sm"><option>Developer</option><option>Tech Lead</option><option>QA</option><option>UI/UX</option><option>Product</option><option>BA</option><option>Designer</option><option>DevOps</option><option>Manager</option></select></div>
+            <button class="btn-a" style="width:100%;justify-content:center;padding:.45rem;"><i class="bi bi-check-lg"></i> Add</button>
         </form>
     </div>
 </div></div></div>
 
 </div>
 
-@section Scripts {
+@section Scripts{
 <script>
-function showTab(id,el){
-    document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(t=>t.classList.remove('active'));
+function go(id,el,idx){
+    document.querySelectorAll('.tp').forEach(p=>p.classList.remove('active'));
     document.getElementById(id).classList.add('active');
+    // Desktop tabs
+    document.querySelectorAll('.tb').forEach(t=>t.classList.remove('active'));
+    if(el&&el.classList.contains('tb'))el.classList.add('active');
+    else document.querySelectorAll('.tb')[idx]?.classList.add('active');
+    // Desktop nav links
+    document.querySelectorAll('.nav-links a').forEach(a=>a.classList.remove('active'));
+    document.querySelectorAll('.nav-links a')[idx]?.classList.add('active');
+    // Mobile bottom nav
+    mNav(document.querySelectorAll('.bnav-item')[idx]);
+    // Scroll to top of content
+    window.scrollTo({top:0,behavior:'smooth'});
+}
+function mNav(el){
+    if(!el)return;
+    document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
     el.classList.add('active');
 }
-</script>
-}
+</script>}

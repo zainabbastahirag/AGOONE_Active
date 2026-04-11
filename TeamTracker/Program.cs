@@ -57,11 +57,14 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 var app = builder.Build();
 
-// ── Auto-migrate on startup ──
+// ── Auto-migrate + seed on startup ──
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
+
+    var um = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+    await SeedData.SeedAsync(db, um);
 }
 
 if (!app.Environment.IsDevelopment())
