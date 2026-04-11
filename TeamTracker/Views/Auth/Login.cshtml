@@ -33,7 +33,21 @@
             </div>
         </div>
 
-        <p style="color:rgba(255,255,255,.3); font-size:.7rem; margin-top:1.5rem;">
+        <details style="margin-top:1.5rem; text-align:left;">
+            <summary style="color:rgba(255,255,255,.3); font-size:.7rem; cursor:pointer;">
+                Developer: Show required Google Console redirect URI
+            </summary>
+            <div style="background:rgba(255,255,255,.08); padding:.75rem; border-radius:8px; margin-top:.5rem;">
+                <p style="color:rgba(255,255,255,.5); font-size:.7rem; margin-bottom:.25rem;">
+                    Add this <strong>exact</strong> URI to Google Cloud Console &gt; OAuth 2.0 &gt; Authorized redirect URIs:
+                </p>
+                <code style="color:#818cf8; font-size:.8rem; word-break:break-all;">
+                    @Context.Request.Scheme://@Context.Request.Host/signin-google
+                </code>
+            </div>
+        </details>
+
+        <p style="color:rgba(255,255,255,.3); font-size:.7rem; margin-top:1rem;">
             KpiPulse &mdash; Free project & people management for tech teams
         </p>
     </div>

@@ -38,9 +38,11 @@ builder.Services.AddAuthentication()
     {
         options.ClientId = googleClientId ?? "GOOGLE_CLIENT_ID_HERE";
         options.ClientSecret = googleClientSecret ?? "GOOGLE_CLIENT_SECRET_HERE";
+        options.CallbackPath = "/signin-google";
         options.Scope.Add("email");
         options.Scope.Add("profile");
         options.ClaimActions.MapJsonKey("picture", "picture");
+        options.SaveTokens = true;
     });
 
 builder.Services.ConfigureApplicationCookie(options =>
@@ -68,7 +70,9 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
+
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();

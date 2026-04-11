@@ -30,8 +30,8 @@ public class AuthController : Controller
     [HttpPost]
     public IActionResult GoogleLogin(string? returnUrl = null)
     {
-        var redirectUrl = Url.Action(nameof(GoogleCallback), "Auth", new { returnUrl });
-        var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
+        var callbackUrl = Url.Action(nameof(GoogleCallback), "Auth", new { returnUrl });
+        var properties = _signInManager.ConfigureExternalAuthenticationProperties("Google", callbackUrl);
         return Challenge(properties, "Google");
     }
 
