@@ -331,4 +331,114 @@ public class ApiController : Controller
     }
 
     public class DailySummaryDto { public string Date { get; set; } = ""; }
+
+    // ── Notes / Chat ──
+
+    [HttpGet("notes/{memberId}")]
+    public async Task<IActionResult> GetNotes(int memberId)
+    {
+        var notes = await _db.Notes.Where(n => n.MemberId == memberId)
+            .OrderByDescending(n => n.CreatedAt)
+            .Select(n => new { n.Id, n.Content, n.Type, n.Author, n.ImageUrl, Created = n.CreatedAt.ToString("dd MMM yyyy HH:mm") })
+            .Take(100).ToListAsync();
+        return Json(notes);
+    }
+
+    [HttpPost("notes")]
+    public async Task<IActionResult> AddNote([FromBody] NoteDto dto)
+    {
+        var u = await _um.GetUserAsync(User);
+        var note = new Note
+        {
+            MemberId = dto.MemberId,
+            Content = dto.Content ?? "",
+            Type = dto.Type ?? "Chat",
+            Author = u?.DisplayName ?? "Unknown",
+            ImageUrl = dto.ImageUrl,
+        };
+        _db.Notes.Add(note);
+        await _db.SaveChangesAsync();
+        return Json(new { ok = true, id = note.Id, created = note.CreatedAt.ToString("dd MMM yyyy HH:mm"), author = note.Author });
+    }
+
+    public class NoteDto { public int MemberId { get; set; } public string? Content { get; set; } public string? Type { get; set; } public string? ImageUrl { get; set; } }
+
+    [HttpDelete("notes/{id}")]
+    public async Task<IActionResult> DeleteNote(int id)
+    {
+        var n = await _db.Notes.FindAsync(id);
+        if (n != null) { _db.Notes.Remove(n); await _db.SaveChangesAsync(); }
+        return Json(new { ok = true });
+    }
+
+    // ── Image Upload ──
+
+    [HttpPost("upload")]
+    public async Task<IActionResult> Upload(IFormFile file)
+    {
+        if (file == null || file.Length == 0) return BadRequest("No file");
+        if (file.Length > 5 * 1024 * 1024) return BadRequest("Max 5MB");
+
+        var dir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+        Directory.CreateDirectory(dir);
+        var fname = $"{Guid.NewGuid():N}{Path.GetExtension(file.FileName)}";
+        var path = Path.Combine(dir, fname);
+        using (var s = new FileStream(path, FileMode.Create)) await file.CopyToAsync(s);
+        return Json(new { url = $"/uploads/{fname}" });
+    }
+
+    // ── Member Photo ──
+
+    [HttpPost("members/{id}/photo")]
+    public async Task<IActionResult> UploadMemberPhoto(int id, IFormFile file)
+    {
+        var m = await _db.Members.FindAsync(id);
+        if (m == null) return NotFound();
+        if (file == null || file.Length == 0) return BadRequest("No file");
+
+        var dir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "photos");
+        Directory.CreateDirectory(dir);
+        var fname = $"member_{id}{Path.GetExtension(file.FileName)}";
+        var path = Path.Combine(dir, fname);
+        using (var s = new FileStream(path, FileMode.Create)) await file.CopyToAsync(s);
+        m.PhotoUrl = $"/photos/{fname}";
+        await _db.SaveChangesAsync();
+        return Json(new { url = m.PhotoUrl });
+    }
+
+    // ── Generate Person Report (AI) ──
+
+    [HttpPost("ai/person-report/{memberId}")]
+    public async Task<IActionResult> AiPersonReport(int memberId)
+    {
+        var member = await _db.Members.Include(m => m.Team).FirstOrDefaultAsync(m => m.Id == memberId);
+        if (member == null) return NotFound();
+        var kpis = await _db.MonthlyKpis.Where(k => k.MemberId == memberId).OrderByDescending(k => k.Year).ThenByDescending(k => k.Month).Take(6).ToListAsync();
+        var notes = await _db.Notes.Where(n => n.MemberId == memberId).OrderByDescending(n => n.CreatedAt).Take(20).ToListAsync();
+        var logs = await _db.DailyLogs.Where(d => d.MemberId == memberId).OrderByDescending(d => d.Date).Take(30).ToListAsync();
+
+        var notesSummary = string.Join("\n", notes.Select(n => $"[{n.Type}] {n.Author}: {n.Content}"));
+        var kpiSummary = string.Join("\n", kpis.Select(k => $"{k.MonthName} {k.Year}: {k.TasksCompleted}/{k.TasksAssigned} tasks, Quality {k.QualityScore}/5, Grade {k.Grade}"));
+
+        var prompt = $@"Generate a comprehensive performance report for a team member. Write 5-7 sentences.
+
+Name: {member.Name}
+Role: {member.Role}
+Team: {member.Team.Name}
+Project: {member.Team.Project}
+Projects worked on: {member.ProjectsAssigned}
+
+KPI History:
+{(kpiSummary.Length > 0 ? kpiSummary : "No KPI data")}
+
+Notes & Feedback:
+{(notesSummary.Length > 0 ? notesSummary : "No notes")}
+
+Recent activity: {logs.Count} log entries, {logs.Sum(l => l.HoursWorked):N0} total hours
+
+Write a professional report covering: overall performance trajectory, key strengths, areas for development, project contributions, and recommendation for next steps. Under 200 words.";
+
+        var text = await _ai.CallGeminiPublic(prompt);
+        return Json(new { text, ai = _ai.IsAvailable });
+    }
 }

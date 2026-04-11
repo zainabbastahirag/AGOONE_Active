@@ -6,21 +6,16 @@
     var ai=ViewBag.AiReport as TeamTracker.Services.AiInsightEngine.AiReport;
     var inviteLinks=ViewBag.InviteLinks as List<TeamTracker.Models.InviteLink>??new();
     var orgMembers=ViewBag.OrgMembers as List<TeamTracker.Models.AppUser>??new();
+    var noteCounts=ViewBag.NoteCounts as Dictionary<int,int>??new();
     var pc=new[]{"#6366f1","#dc2626","#059669","#d97706","#7c3aed","#ea580c","#0d9488"};
-    var projects=Model.Teams.Select(t=>t.Project).Distinct().ToList();
-    var allMembers=Model.Teams.SelectMany(t=>t.Members.Select(m=>new{m,t})).ToList();
+    var allMembers=Model.Teams.SelectMany(t=>t.Members.Select(m=>new{m,t})).GroupBy(x=>x.m.Name).Select(g=>g.First()).ToList();
 }
 
-<!-- ═══ TOPNAV ═══ -->
+<!-- TOPNAV -->
 <nav class="topnav">
-    <div style="display:flex;align-items:center;gap:.6rem;">
-        <a href="/" class="brand">Kpi<span>Pulse</span></a>
-        <span style="font-size:.58rem;background:rgba(255,255,255,.1);padding:.12rem .45rem;border-radius:10px;color:rgba(255,255,255,.5);font-weight:600;">@ViewBag.OrgName</span>
-    </div>
+    <a href="/" class="brand">Kpi<span>Pulse</span></a>
     <div class="right">
-        <!-- 1-Click Director Report -->
-        <a href="/Export/FullReport?month=@Model.SelectedMonth&year=@Model.SelectedYear" class="btn-exp" title="Download Director Report"><i class="bi bi-file-earmark-pdf"></i><span class="d-none d-md-inline"> Director Report</span></a>
-        <a href="/Export/FullReport?month=@Model.SelectedMonth&year=@Model.SelectedYear" class="btn-exp" title="Export Excel"><i class="bi bi-file-earmark-excel"></i></a>
+        <a href="/Export/FullReport?month=@Model.SelectedMonth&year=@Model.SelectedYear" class="btn-exp" title="Director Report"><i class="bi bi-download"></i><span class="d-none d-md-inline"> Report</span></a>
         <div class="user-pill">
             @if(u?.AvatarUrl!=null){<img src="@u.AvatarUrl" referrerpolicy="no-referrer"/>}
             <span class="uname d-none d-sm-inline">@(u?.DisplayName?.Split(' ').FirstOrDefault())</span>
@@ -29,327 +24,329 @@
     </div>
 </nav>
 
-<!-- ═══ MOBILE BOTTOM NAV ═══ -->
+<!-- MOBILE BOTTOM NAV -->
 <nav class="bottom-nav"><div class="bnav-inner">
-    <div class="bnav-item active" onclick="sw(0);mNav(this)"><i class="bi bi-grid-3x3"></i>Board</div>
-    <div class="bnav-item" onclick="sw(1);mNav(this)"><i class="bi bi-table"></i>Sheet</div>
+    <div class="bnav-item active" onclick="sw(0);mNav(this)"><i class="bi bi-people"></i>People</div>
+    <div class="bnav-item" onclick="sw(1);mNav(this)"><i class="bi bi-folder"></i>Projects</div>
     <div class="bnav-item" onclick="sw(2);mNav(this)"><i class="bi bi-journal"></i>Log</div>
-    <div class="bnav-item" onclick="sw(3);mNav(this)"><i class="bi bi-link-45deg"></i>Invite</div>
+    <div class="bnav-item" onclick="sw(3);mNav(this)"><i class="bi bi-share"></i>Share</div>
 </div></nav>
 
 <div class="app-c">
 
 @if(TempData["Message"]!=null){<div class="toast-msg alert-dismissible fade show" role="alert"><i class="bi bi-check-circle-fill"></i> @TempData["Message"]<button type="button" class="btn-close" data-bs-dismiss="alert" style="font-size:.5rem;filter:brightness(0) invert(1);"></button></div>}
 
-<!-- ═══ MONTH + AI NUDGE BAR ═══ -->
+<!-- MONTH + HEALTH -->
 <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.85rem;flex-wrap:wrap;">
-    <form method="get" style="display:flex;align-items:center;gap:.25rem;">
-        <select name="month" class="form-select form-select-sm" style="width:110px;font-size:.76rem;" onchange="this.form.submit()">
-            @for(int m=1;m<=12;m++){<option value="@m" selected="@(m==Model.SelectedMonth)">@(new DateTime(2026,m,1).ToString("MMM yyyy"))</option>}
-        </select><input type="hidden" name="year" value="@Model.SelectedYear"/>
-    </form>
-    @if(ai!=null&&ai.TeamHealthScore>0){
-    <div style="display:flex;align-items:center;gap:.35rem;font-size:.66rem;font-weight:700;padding:.18rem .55rem;border-radius:12px;background:@(ai.TeamHealthColor)15;color:@(ai.TeamHealthColor);"><i class="bi bi-heart-pulse"></i> Team Health: @ai.TeamHealthScore/100</div>
-    }
-    <!-- AI Smart Nudge (unique feature) -->
-    @if(ai!=null&&ai.Alerts.Any()){
-    var nudge=ai.Alerts.First();
-    <div style="flex:1;min-width:200px;font-size:.64rem;color:var(--txt3);background:var(--pri3);padding:.25rem .6rem;border-radius:8px;display:flex;align-items:center;gap:.3rem;"><i class="bi bi-stars" style="color:var(--pri);"></i> <strong style="color:var(--pri);">AI:</strong> @nudge.Detail</div>
-    }
+    <form method="get" style="display:flex;gap:.2rem;"><select name="month" class="form-select form-select-sm" style="width:110px;font-size:.76rem;" onchange="this.form.submit()">@for(int m=1;m<=12;m++){<option value="@m" selected="@(m==Model.SelectedMonth)">@(new DateTime(2026,m,1).ToString("MMM yyyy"))</option>}</select><input type="hidden" name="year" value="@Model.SelectedYear"/></form>
+    <span style="font-size:.62rem;color:var(--txt3);background:var(--pri3);padding:.15rem .45rem;border-radius:10px;font-weight:600;">@ViewBag.OrgName</span>
+    @if(ai!=null&&ai.TeamHealthScore>0){<span style="font-size:.62rem;font-weight:700;padding:.15rem .45rem;border-radius:10px;background:@(ai.TeamHealthColor)15;color:@(ai.TeamHealthColor);"><i class="bi bi-heart-pulse"></i> @ai.TeamHealthScore</span>}
+    <span style="font-size:.62rem;color:var(--txt4);">@allMembers.Count people · @Model.Teams.Count teams · @Model.Teams.Select(t=>t.Project).Distinct().Count() projects</span>
 </div>
 
-<!-- ═══ RESOURCE HEATMAP (unique: shows who is on which project, color = workload) ═══ -->
-<div style="background:var(--card);border-radius:var(--rd);box-shadow:var(--sh);margin-bottom:.85rem;overflow:hidden;">
-    <div style="padding:.5rem .75rem;background:var(--bg2);font-weight:700;font-size:.76rem;color:var(--txt);display:flex;align-items:center;justify-content:space-between;">
-        <span><i class="bi bi-grid-3x3-gap" style="color:var(--pri);"></i> Resource Heatmap</span>
-        <span style="font-size:.55rem;color:var(--txt4);">
-            <span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#bbf7d0;margin-right:2px;"></span>Light
-            <span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#fde68a;margin:0 2px;"></span>Normal
-            <span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#fca5a5;margin:0 2px;"></span>Heavy
-        </span>
-    </div>
-    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
-        <table style="width:100%;font-size:.68rem;border-collapse:collapse;">
-            <thead><tr><th style="padding:.35rem .5rem;text-align:left;font-size:.58rem;color:var(--txt3);border-bottom:1px solid var(--brd);background:var(--card);position:sticky;left:0;z-index:2;">Member</th>
-            @foreach(var proj in projects){<th style="padding:.35rem .4rem;text-align:center;font-size:.55rem;color:var(--txt3);border-bottom:1px solid var(--brd);white-space:nowrap;">@proj</th>}
-            <th style="padding:.35rem .4rem;text-align:center;font-size:.55rem;color:var(--txt3);border-bottom:1px solid var(--brd);">Pulse</th>
-            </tr></thead>
-            <tbody>
-            @{var seenNames=new HashSet<string>();}
-            @foreach(var am in allMembers){
-                if(!seenNames.Add(am.m.Name+"_"+am.t.Name))continue;
-                var kpi=Model.Kpis.FirstOrDefault(k=>k.MemberId==am.m.Id);
-                var hours=kpi?.TotalHoursWorked??0;
-                var pulse=kpi!=null&&kpi.TasksAssigned>0?(int)((kpi.CompletionPct*0.3)+(kpi.OnTimeDeliveryPct*0.3)+(kpi.QualityScore/5.0*100*0.25)+((1-Math.Min(kpi.BugRatio,1))*100*0.15)):0;
-                var pulseColor=pulse>=75?"var(--g)":pulse>=50?"var(--a)":pulse>0?"var(--r)":"var(--txt4)";
-                var heatColor=hours>170?"#fca5a5":hours>140?"#fde68a":hours>0?"#bbf7d0":"transparent";
-                <tr style="border-bottom:1px solid var(--brd2);">
-                    <td style="padding:.3rem .5rem;font-weight:600;color:var(--txt);white-space:nowrap;position:sticky;left:0;background:var(--card);z-index:1;">
-                        @(am.m.Role.Contains("Lead")?"★ ":"")@am.m.Name
-                        <span style="font-size:.5rem;color:var(--txt4);margin-left:.15rem;">@am.m.Role</span>
-                    </td>
-                    @foreach(var proj in projects){
-                        var isOn=am.m.ProjectsAssigned.Contains(proj);
-                        <td style="padding:.25rem;text-align:center;">
-                            @if(isOn){<div style="width:22px;height:22px;border-radius:6px;background:@heatColor;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:.5rem;font-weight:700;color:var(--txt2);">@(hours>0?hours.ToString("N0"):"")</div>}
-                        </td>
-                    }
-                    <td style="text-align:center;">
-                        @if(pulse>0){
-                        <div style="position:relative;width:26px;height:26px;margin:0 auto;">
-                            <svg viewBox="0 0 36 36" style="transform:rotate(-90deg);width:26px;height:26px;"><circle cx="18" cy="18" r="14" fill="none" stroke="#e2e8f0" stroke-width="3"/><circle cx="18" cy="18" r="14" fill="none" stroke="@pulseColor" stroke-width="3" stroke-dasharray="@(pulse*88/100) 88" stroke-linecap="round"/></svg>
-                            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.5rem;font-weight:800;color:@pulseColor;">@pulse</div>
-                        </div>}
-                        else{<span style="font-size:.5rem;color:var(--txt4);">—</span>}
-                    </td>
-                </tr>
-            }
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<!-- ═══ VIEW SWITCHER (desktop) ═══ -->
+<!-- TABS -->
 <div class="tab-bar">
-    <div class="tb active" onclick="sw(0,this)"><i class="bi bi-grid-3x3"></i> Resource Board</div>
-    <div class="tb" onclick="sw(1,this)"><i class="bi bi-table"></i> Performance Sheet</div>
-    <div class="tb" onclick="sw(2,this)"><i class="bi bi-journal-text"></i> Activity Log</div>
-    <div class="tb" onclick="sw(3,this)"><i class="bi bi-link-45deg"></i> Invite Team</div>
+    <div class="tb active" onclick="sw(0,this)"><i class="bi bi-people-fill"></i> People</div>
+    <div class="tb" onclick="sw(1,this)"><i class="bi bi-folder-fill"></i> Projects</div>
+    <div class="tb" onclick="sw(2,this)"><i class="bi bi-journal-text"></i> Activity</div>
+    <div class="tb" onclick="sw(3,this)"><i class="bi bi-share-fill"></i> Share</div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════════
-     VIEW 1: RESOURCE BOARD (drag-drop Kanban by project)
-     ══════════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════════
+     TAB 1: PEOPLE — each person is a card
+     ══════════════════════════════════════════════ -->
 <div class="tp active" id="v0">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.65rem;flex-wrap:wrap;gap:.4rem;">
-        <div style="font-weight:700;font-size:.88rem;">Resource Board <span style="font-size:.6rem;color:var(--txt4);font-weight:500;">drag members between projects</span></div>
-        @if(canEdit){<button class="btn-a" data-bs-toggle="modal" data-bs-target="#addTeamModal"><i class="bi bi-plus"></i> Project</button>}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;flex-wrap:wrap;gap:.3rem;">
+    <span style="font-weight:700;font-size:.85rem;">People</span>
+    <div style="display:flex;gap:.3rem;">
+        @if(canEdit){<button class="btn-a" data-bs-toggle="modal" data-bs-target="#addMemberModal" onclick="document.getElementById('nmt').value=@(Model.Teams.FirstOrDefault()?.Id??0)"><i class="bi bi-person-plus"></i> Add</button>}
+        @if(canEdit){<a asp-controller="Kpi" asp-action="Generate" asp-route-month="@Model.SelectedMonth" asp-route-year="@Model.SelectedYear" class="btn-g"><i class="bi bi-plus"></i> Generate KPIs</a>}
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.65rem;align-items:start;" id="board">
-        @foreach(var t in Model.Teams){var ci=Model.Teams.IndexOf(t)%pc.Length;
-        <div class="proj-col" data-team-id="@t.Id" ondragover="event.preventDefault();this.style.background='var(--pri3)'" ondragleave="this.style.background=''" ondrop="dropMember(event,@t.Id);this.style.background=''">
-            <div style="display:flex;align-items:center;gap:.3rem;margin-bottom:.5rem;">
-                <div style="width:5px;height:24px;border-radius:3px;background:@pc[ci];"></div>
-                <div>
-                    <div style="font-weight:700;font-size:.78rem;color:var(--txt);">@t.Project</div>
-                    <div style="font-size:.55rem;color:var(--txt4);">@t.Name · Lead: @t.TechLead</div>
-                </div>
-                @if(canEdit){<a asp-controller="Teams" asp-action="Edit" asp-route-id="@t.Id" class="btn-g" style="margin-left:auto;padding:.1rem .2rem;font-size:.55rem;"><i class="bi bi-pencil"></i></a>}
+</div>
+
+<div class="row g-2">
+@foreach(var am in allMembers){
+    var m=am.m; var t=am.t;
+    var kpi=Model.Kpis.FirstOrDefault(k=>k.MemberId==m.Id);
+    var pulse=kpi!=null&&kpi.TasksAssigned>0?(int)((kpi.CompletionPct*0.3)+(kpi.OnTimeDeliveryPct*0.3)+(kpi.QualityScore/5.0*100*0.25)+((1-Math.Min(kpi.BugRatio,1))*100*0.15)):0;
+    var pColor=pulse>=75?"var(--g)":pulse>=50?"var(--a)":pulse>0?"var(--r)":"var(--txt4)";
+    var dotC=m.Role switch{var r when r.Contains("Lead")=>"#dc2626",var r when r.Contains("QA")=>"#059669",var r when r.Contains("Design")||r.Contains("UI")=>"#7c3aed",var r when r.Contains("BA")||r.Contains("Product")=>"#d97706",_=>"#2563eb"};
+    var nc=noteCounts.GetValueOrDefault(m.Id,0);
+    var ci=allMembers.IndexOf(am)%pc.Length;
+
+<div class="col-12 col-sm-6 col-lg-4">
+<div style="background:var(--card);border-radius:var(--rd);border:1px solid var(--brd);overflow:hidden;transition:box-shadow .15s;" id="pcard-@m.Id">
+    <!-- Card header — click to expand -->
+    <div style="padding:.6rem .75rem;cursor:pointer;display:flex;align-items:center;gap:.5rem;" onclick="togglePerson(@m.Id)">
+        <!-- Avatar -->
+        <div style="position:relative;flex-shrink:0;">
+            @if(m.PhotoUrl!=null){<img src="@m.PhotoUrl" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid var(--brd);"/>}
+            else{<div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,@pc[ci],@pc[(ci+2)%pc.Length]);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:#fff;">@m.Name[0..2].ToUpper()</div>}
+            <div style="position:absolute;bottom:-1px;right:-1px;width:12px;height:12px;border-radius:50%;border:2px solid var(--card);background:@dotC;" title="@m.Role"></div>
+        </div>
+        <!-- Name + meta -->
+        <div style="flex:1;min-width:0;">
+            <div style="font-weight:700;font-size:.8rem;color:var(--txt);display:flex;align-items:center;gap:.25rem;">
+                @m.Name
+                @if(m.ProjectsAssigned.Contains(",")){<i class="bi bi-arrow-left-right" style="font-size:.5rem;color:var(--pri);" title="Multi-project"></i>}
             </div>
-            @foreach(var m in t.Members.OrderBy(x=>x.Role.Contains("Lead")?0:1).ThenBy(x=>x.Name)){
-                var kpi=Model.Kpis.FirstOrDefault(k=>k.MemberId==m.Id);
-                var pulse=kpi!=null&&kpi.TasksAssigned>0?(int)((kpi.CompletionPct*0.3)+(kpi.OnTimeDeliveryPct*0.3)+(kpi.QualityScore/5.0*100*0.25)+((1-Math.Min(kpi.BugRatio,1))*100*0.15)):0;
-                var dotC=m.Role switch{var r when r.Contains("Lead")=>"#dc2626",var r when r.Contains("QA")=>"#059669",var r when r.Contains("Design")||r.Contains("UI")=>"#7c3aed",var r when r.Contains("BA")||r.Contains("Product")=>"#d97706",_=>"#2563eb"};
-                <div class="member-card" draggable="true" data-member-id="@m.Id" ondragstart="event.dataTransfer.setData('mid','@m.Id')">
-                    <div style="display:flex;align-items:center;gap:.3rem;">
-                        <span class="dot" style="background:@dotC;width:7px;height:7px;border-radius:50%;flex-shrink:0;"></span>
-                        <span style="font-weight:600;font-size:.72rem;color:var(--txt);">@m.Name</span>
-                        <span style="font-size:.52rem;color:var(--txt4);margin-left:auto;">@m.Role</span>
-                    </div>
-                    @if(pulse>0){
-                    <div style="display:flex;align-items:center;gap:.3rem;margin-top:.25rem;">
-                        <div style="flex:1;height:4px;background:var(--brd);border-radius:2px;overflow:hidden;">
-                            <div style="height:100%;width:@pulse%;background:@(pulse>=75?"var(--g)":pulse>=50?"var(--a)":"var(--r)");border-radius:2px;"></div>
-                        </div>
-                        <span style="font-size:.52rem;font-weight:700;color:@(pulse>=75?"var(--g)":pulse>=50?"var(--a)":"var(--r)");">@pulse</span>
-                    </div>}
-                    @if(m.ProjectsAssigned.Contains(",")){<div style="font-size:.5rem;color:var(--pri);margin-top:.15rem;"><i class="bi bi-arrow-left-right"></i> Multi-project</div>}
+            <div style="font-size:.58rem;color:var(--txt4);">@m.Role · @t.Project</div>
+        </div>
+        <!-- Pulse ring -->
+        @if(pulse>0){
+        <div style="position:relative;width:32px;height:32px;flex-shrink:0;">
+            <svg viewBox="0 0 36 36" style="transform:rotate(-90deg);width:32px;height:32px;"><circle cx="18" cy="18" r="14" fill="none" stroke="#e2e8f0" stroke-width="3"/><circle cx="18" cy="18" r="14" fill="none" stroke="@pColor" stroke-width="3" stroke-dasharray="@(pulse*88/100) 88" stroke-linecap="round"/></svg>
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.52rem;font-weight:800;color:@pColor;">@pulse</div>
+        </div>}
+        <!-- Notes count -->
+        @if(nc>0){<span style="font-size:.55rem;background:var(--pri3);color:var(--pri);padding:.1rem .3rem;border-radius:8px;font-weight:700;">@nc</span>}
+        <i class="bi bi-chevron-down" style="font-size:.7rem;color:var(--txt4);transition:transform .2s;" id="pchev-@m.Id"></i>
+    </div>
+
+    <!-- Expanded content (hidden by default) -->
+    <div style="display:none;border-top:1px solid var(--brd2);" id="pdetail-@m.Id">
+        <!-- Quick KPI strip -->
+        @if(kpi!=null&&kpi.TasksAssigned>0){
+        <div style="display:flex;gap:.2rem;padding:.4rem .6rem;background:var(--bg2);flex-wrap:wrap;">
+            <span style="font-size:.55rem;background:var(--card);padding:.12rem .35rem;border-radius:6px;font-weight:600;">Tasks: @kpi.TasksCompleted/@kpi.TasksAssigned</span>
+            <span style="font-size:.55rem;background:var(--card);padding:.12rem .35rem;border-radius:6px;font-weight:600;">Quality: @for(int s=1;s<=5;s++){<span style="color:@(s<=kpi.QualityScore?"#d97706":"#e2e8f0");">★</span>}</span>
+            <span style="font-size:.55rem;background:var(--card);padding:.12rem .35rem;border-radius:6px;font-weight:600;">Hours: @kpi.TotalHoursWorked</span>
+            @if(kpi.ExtraHours>0){<span style="font-size:.55rem;background:var(--abg);padding:.12rem .35rem;border-radius:6px;font-weight:600;color:var(--a);">OT: @kpi.ExtraHours</span>}
+            @if(canEdit){<a asp-controller="Kpi" asp-action="Edit" asp-route-id="@kpi.Id" class="btn-g" style="margin-left:auto;padding:.08rem .2rem;font-size:.52rem;"><i class="bi bi-pencil"></i> Edit KPI</a>}
+        </div>}
+
+        <!-- Projects assigned -->
+        <div style="padding:.4rem .6rem;">
+            <div style="font-size:.55rem;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem;">Projects</div>
+            <div style="display:flex;gap:.2rem;flex-wrap:wrap;">
+                @foreach(var proj in m.ProjectsAssigned.Split(',',StringSplitOptions.TrimEntries)){
+                    var pci=Model.Teams.Select(tt=>tt.Project).Distinct().ToList().IndexOf(proj);
+                    if(pci<0)pci=0;
+                    <span style="font-size:.58rem;font-weight:700;padding:.12rem .4rem;border-radius:6px;color:#fff;background:@pc[pci%pc.Length];">@proj</span>
+                }
+            </div>
+        </div>
+
+        <!-- Notes/Chat timeline -->
+        <div style="padding:.3rem .6rem .5rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;">
+                <span style="font-size:.55rem;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;">Notes & Chat</span>
+                <div style="display:flex;gap:.2rem;">
+                    <button class="btn-g" style="font-size:.5rem;padding:.08rem .25rem;" onclick="aiReport(@m.Id)"><i class="bi bi-stars"></i> AI Report</button>
                 </div>
-            }
-            @if(canEdit){<button class="member-card" style="border-style:dashed;color:var(--pri);cursor:pointer;text-align:center;font-weight:600;font-size:.68rem;" data-bs-toggle="modal" data-bs-target="#addMemberModal" onclick="document.getElementById('nmt').value=@t.Id"><i class="bi bi-plus"></i> Add Member</button>}
+            </div>
+            <div id="notes-@m.Id" style="max-height:200px;overflow-y:auto;margin-bottom:.3rem;">
+                <div style="text-align:center;padding:.5rem;font-size:.6rem;color:var(--txt4);">Loading...</div>
+            </div>
+            <!-- Chat input -->
+            @if(canEdit){
+            <div style="display:flex;gap:.25rem;align-items:center;">
+                <input type="text" id="chat-@m.Id" class="form-control form-control-sm" style="font-size:.7rem;flex:1;" placeholder="Write a note or review..." onkeydown="if(event.key==='Enter')sendNote(@m.Id)"/>
+                <select id="chattype-@m.Id" style="font-size:.58rem;border:1px solid var(--brd);border-radius:6px;padding:.15rem .25rem;color:var(--txt3);background:var(--card);">
+                    <option value="Chat">Chat</option><option value="Note">Note</option><option value="Review">Review</option><option value="Achievement">Win</option><option value="Concern">Flag</option><option value="Goal">Goal</option>
+                </select>
+                <label style="cursor:pointer;color:var(--pri);font-size:.85rem;" title="Attach image"><i class="bi bi-image"></i><input type="file" accept="image/*" style="display:none;" onchange="uploadImg(@m.Id,this)"/></label>
+                <button class="btn-a" style="padding:.2rem .4rem;font-size:.65rem;" onclick="sendNote(@m.Id)"><i class="bi bi-send"></i></button>
+            </div>}
+        </div>
+        <!-- AI Report output -->
+        <div id="aireport-@m.Id" style="display:none;padding:.4rem .6rem .5rem;">
+            <div style="font-size:.55rem;font-weight:700;color:var(--pri);text-transform:uppercase;margin-bottom:.2rem;"><i class="bi bi-stars"></i> AI Performance Report</div>
+            <div id="aireporttext-@m.Id" style="font-size:.68rem;color:var(--txt2);line-height:1.5;background:var(--pri3);padding:.4rem .5rem;border-radius:8px;"></div>
+        </div>
+    </div>
+</div>
+</div>
+}
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     TAB 2: PROJECTS
+     ══════════════════════════════════════════════ -->
+<div class="tp" id="v1">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;">
+    <span style="font-weight:700;font-size:.85rem;">Projects</span>
+    @if(canEdit){<button class="btn-a" data-bs-toggle="modal" data-bs-target="#addTeamModal"><i class="bi bi-plus"></i> Project</button>}
+</div>
+<div class="row g-2">
+@foreach(var t in Model.Teams){var ci=Model.Teams.IndexOf(t)%pc.Length;var mCount=t.Members.Count;
+<div class="col-12 col-md-6">
+<div style="background:var(--card);border-radius:var(--rd);border:1px solid var(--brd);overflow:hidden;">
+    <div style="padding:.6rem .75rem;cursor:pointer;display:flex;align-items:center;gap:.5rem;" onclick="document.getElementById('proj-@t.Id').style.display=document.getElementById('proj-@t.Id').style.display==='none'?'block':'none'">
+        <div style="width:6px;height:32px;border-radius:3px;background:@pc[ci];flex-shrink:0;"></div>
+        <div style="flex:1;">
+            <div style="font-weight:700;font-size:.82rem;">@t.Project</div>
+            <div style="font-size:.56rem;color:var(--txt4);">@t.Name · @mCount members · Since @(t.StartDate?.ToString("MMM yyyy")??"—")</div>
+        </div>
+        <span style="font-size:.55rem;font-weight:700;padding:.12rem .4rem;border-radius:8px;background:@(t.Status=="Active"?"var(--gbg)":t.Status=="Completed"?"var(--pri3)":"var(--abg)");color:@(t.Status=="Active"?"var(--g)":t.Status=="Completed"?"var(--pri)":"var(--a)");">@t.Status</span>
+        <i class="bi bi-chevron-down" style="font-size:.7rem;color:var(--txt4);"></i>
+    </div>
+    <div id="proj-@t.Id" style="display:none;border-top:1px solid var(--brd2);padding:.5rem .75rem;">
+        <div style="display:flex;gap:.5rem;margin-bottom:.4rem;flex-wrap:wrap;">
+            <div style="font-size:.6rem;"><span style="color:var(--txt4);">Lead:</span> <strong>★ @t.TechLead</strong></div>
+            <div style="font-size:.6rem;"><span style="color:var(--txt4);">Start:</span> <strong>@(t.StartDate?.ToString("dd MMM yyyy")??"—")</strong></div>
+            @if(t.EndDate!=null){<div style="font-size:.6rem;"><span style="color:var(--txt4);">End:</span> <strong>@t.EndDate.Value.ToString("dd MMM yyyy")</strong></div>}
+        </div>
+        <div style="font-size:.55rem;font-weight:700;color:var(--txt3);text-transform:uppercase;margin-bottom:.2rem;">Team Members</div>
+        @foreach(var mm in t.Members.OrderBy(x=>x.Role.Contains("Lead")?0:1).ThenBy(x=>x.Name)){
+            var dC=mm.Role switch{var r when r.Contains("Lead")=>"#dc2626",var r when r.Contains("QA")=>"#059669",_=>"#2563eb"};
+            <div style="display:flex;align-items:center;gap:.35rem;padding:.2rem 0;border-bottom:1px solid var(--brd2);">
+                <span style="width:6px;height:6px;border-radius:50%;background:@dC;flex-shrink:0;"></span>
+                <span style="font-weight:600;font-size:.72rem;flex:1;">@mm.Name</span>
+                <span style="font-size:.55rem;color:var(--txt4);">@mm.Role</span>
+            </div>
+        }
+        @if(canEdit){<div style="margin-top:.4rem;display:flex;gap:.25rem;">
+            <a asp-controller="Teams" asp-action="Edit" asp-route-id="@t.Id" class="btn-g" style="flex:1;justify-content:center;"><i class="bi bi-pencil"></i> Edit</a>
+            <button class="btn-g" style="flex:1;justify-content:center;" data-bs-toggle="modal" data-bs-target="#addMemberModal" onclick="document.getElementById('nmt').value=@t.Id"><i class="bi bi-person-plus"></i> Add Member</button>
         </div>}
     </div>
 </div>
-
-<!-- ══════════════════════════════════════════════════════════════
-     VIEW 2: PERFORMANCE SHEET (editable spreadsheet)
-     ══════════════════════════════════════════════════════════════ -->
-<div class="tp" id="v1">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.65rem;flex-wrap:wrap;gap:.4rem;">
-        <div style="font-weight:700;font-size:.88rem;">Performance Sheet <span style="font-size:.6rem;color:var(--txt4);font-weight:500;">click any cell to edit</span></div>
-        <div style="display:flex;gap:.3rem;">
-            @if(canEdit){<a asp-controller="Kpi" asp-action="Generate" asp-route-month="@Model.SelectedMonth" asp-route-year="@Model.SelectedYear" class="btn-a"><i class="bi bi-plus"></i> Generate</a>}
-            <button class="btn-a" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);" onclick="aiGenSummary()"><i class="bi bi-stars"></i> AI Summary</button>
-        </div>
-    </div>
-    <!-- AI output area -->
-    <div id="ai-out" style="display:none;background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;border-radius:var(--rd);padding:.75rem .9rem;margin-bottom:.7rem;">
-        <div style="display:flex;align-items:center;gap:.3rem;margin-bottom:.3rem;"><i class="bi bi-stars" style="color:var(--pri2);"></i><span style="font-weight:700;font-size:.78rem;" id="ai-title">AI</span><span style="font-size:.5rem;background:rgba(99,102,241,.3);padding:.1rem .3rem;border-radius:6px;color:var(--pri2);font-weight:600;margin-left:auto;">GEMINI</span></div>
-        <div id="ai-body" style="font-size:.72rem;color:rgba(255,255,255,.7);line-height:1.5;"></div>
-    </div>
-    @if(!Model.Kpis.Any()){<div class="es"><i class="bi bi-table"></i><p>Click "Generate" to create performance records for all members.</p></div>}
-    else{
-    <div class="tbl-w"><table class="tbl">
-        <thead><tr>
-            <th style="text-align:left;min-width:120px;">Member</th><th>Project</th><th>Role</th>
-            <th>Tasks</th><th>Done</th>
-            <th style="min-width:55px;">Rating</th>
-            <th>Delivered</th>
-            <th style="min-width:70px;">Pulse</th>
-            <th>Feedback</th>
-            <th></th>
-        </tr></thead>
-        <tbody>
-        @foreach(var k in Model.Kpis){
-            var pulse=(int)((k.CompletionPct*0.3)+(k.OnTimeDeliveryPct*0.3)+(k.QualityScore/5.0*100*0.25)+((1-Math.Min(k.BugRatio,1))*100*0.15));
-            var pColor=pulse>=75?"var(--g)":pulse>=50?"var(--a)":pulse>0?"var(--r)":"var(--txt4)";
-            var grade=k.Grade;var gCls=grade switch{"A"=>"gr-A","B"=>"gr-B","C"=>"gr-C","D"=>"gr-D","F"=>"gr-F",_=>"gr-n"};
-            <tr>
-                <td class="nc">@(k.Member.Role.Contains("Lead")?"<span style='color:var(--a);'>★</span> ":"")@k.Member.Name</td>
-                <td style="font-size:.66rem;color:var(--txt3);">@k.Member.Team.Project</td>
-                <td style="font-size:.64rem;color:var(--txt4);">@k.Member.Role</td>
-                <td style="text-align:center;font-size:.72rem;">@k.TasksAssigned</td>
-                <td style="text-align:center;font-weight:700;color:@(k.CompletionPct>=80?"var(--g)":k.CompletionPct>=50?"var(--a)":"var(--r)");">@k.TasksCompleted</td>
-                <td style="text-align:center;">@for(int s=1;s<=5;s++){<span style="cursor:pointer;color:@(s<=k.QualityScore?"#d97706":"#e2e8f0");font-size:.65rem;">★</span>}</td>
-                <td style="text-align:center;">
-                    @if(k.OnTimeDeliveryPct>=80){<span style="color:var(--g);font-size:.75rem;"><i class="bi bi-check-circle-fill"></i></span>}
-                    else if(k.OnTimeDeliveryPct>=50){<span style="color:var(--a);font-size:.75rem;"><i class="bi bi-dash-circle-fill"></i></span>}
-                    else if(k.TasksAssigned>0){<span style="color:var(--r);font-size:.75rem;"><i class="bi bi-x-circle-fill"></i></span>}
-                    else{<span style="color:var(--txt5);font-size:.55rem;">—</span>}
-                </td>
-                <td style="text-align:center;">
-                    <div style="position:relative;width:30px;height:30px;margin:0 auto;">
-                        <svg viewBox="0 0 36 36" style="transform:rotate(-90deg);width:30px;height:30px;"><circle cx="18" cy="18" r="14" fill="none" stroke="#e2e8f0" stroke-width="3"/><circle cx="18" cy="18" r="14" fill="none" stroke="@pColor" stroke-width="3" stroke-dasharray="@(pulse*88/100) 88" stroke-linecap="round"/></svg>
-                        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.52rem;font-weight:800;color:@pColor;">@pulse</div>
-                    </div>
-                </td>
-                <td style="max-width:150px;font-size:.62rem;color:var(--txt3);">@(string.IsNullOrEmpty(k.ManagerFeedback)?(string.IsNullOrEmpty(k.TechLeadFeedback)?"":k.TechLeadFeedback.Length>40?k.TechLeadFeedback[..40]+"…":k.TechLeadFeedback):k.ManagerFeedback.Length>40?k.ManagerFeedback[..40]+"…":k.ManagerFeedback)</td>
-                <td>@if(canEdit){<a asp-controller="Kpi" asp-action="Edit" asp-route-id="@k.Id" class="btn-g" style="padding:.12rem .25rem;"><i class="bi bi-pencil"></i></a>}</td>
-            </tr>
-        }
-        </tbody>
-    </table></div>}
+</div>
+}
+</div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════════
-     VIEW 3: ACTIVITY LOG
-     ══════════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════════
+     TAB 3: ACTIVITY LOG
+     ══════════════════════════════════════════════ -->
 <div class="tp" id="v2">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.65rem;flex-wrap:wrap;gap:.4rem;">
-        <div style="font-weight:700;font-size:.88rem;">Activity Log</div>
-        @if(canEdit){<a asp-controller="DailyLog" asp-action="Create" class="btn-a"><i class="bi bi-plus"></i> Add</a>}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;">
+    <span style="font-weight:700;font-size:.85rem;">Activity</span>
+    @if(canEdit){<a asp-controller="DailyLog" asp-action="Create" class="btn-a"><i class="bi bi-plus"></i> Log</a>}
+</div>
+@if(!Model.RecentLogs.Any()){<div class="es"><i class="bi bi-journal-text"></i><p><a asp-controller="DailyLog" asp-action="Create">Add first entry</a></p></div>}
+else{
+    DateTime? ld=null;
+    foreach(var l in Model.RecentLogs){
+    if(ld==null||l.Date.Date!=ld.Value.Date){ld=l.Date;<div style="font-size:.6rem;font-weight:700;color:var(--txt3);padding:.25rem 0;border-bottom:1px solid var(--brd);margin-top:.15rem;">@l.Date.ToString("ddd, dd MMM")</div>}
+    var sc=l.Status switch{"Completed"=>"sp-c","In Progress"=>"sp-p","Blocked"=>"sp-b","In Review"=>"sp-r","Carry Forward"=>"sp-f",_=>"sp-d"};
+    <div style="display:flex;align-items:center;gap:.4rem;padding:.3rem .2rem;border-bottom:1px solid var(--brd2);">
+        <div style="width:28px;height:28px;border-radius:8px;background:var(--pri3);display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:700;color:var(--pri);flex-shrink:0;">@l.Member.Name[0..2].ToUpper()</div>
+        <div style="flex:1;min-width:0;"><div style="display:flex;align-items:center;gap:.2rem;"><span style="font-weight:600;font-size:.72rem;">@l.Member.Name</span><span style="font-size:.52rem;color:var(--txt4);">@l.Project</span><span class="sp @sc" style="margin-left:auto;">@l.Status</span></div>
+        <div style="font-size:.64rem;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">@l.TaskDescription</div></div>
+        <span style="font-size:.6rem;font-weight:700;color:var(--txt3);flex-shrink:0;">@l.HoursWorked h</span>
+        @if(canEdit){<a asp-controller="DailyLog" asp-action="Edit" asp-route-id="@l.Id" class="btn-g" style="padding:.08rem .18rem;flex-shrink:0;"><i class="bi bi-pencil"></i></a>}
     </div>
-    @if(!Model.RecentLogs.Any()){<div class="es"><i class="bi bi-journal-text"></i><p>No entries. <a asp-controller="DailyLog" asp-action="Create">Add one</a>.</p></div>}
-    else{
-    <div style="display:flex;flex-direction:column;gap:.4rem;">
-        @{DateTime? lastDate=null;}
-        @foreach(var l in Model.RecentLogs){
-            if(lastDate==null||l.Date.Date!=lastDate.Value.Date){
-                lastDate=l.Date;
-                <div style="font-size:.62rem;font-weight:700;color:var(--txt3);padding:.3rem 0;border-bottom:1px solid var(--brd);margin-top:.2rem;">@l.Date.ToString("dddd, dd MMM yyyy")</div>
-            }
-            var sc=l.Status switch{"Completed"=>"sp-c","In Progress"=>"sp-p","Blocked"=>"sp-b","In Review"=>"sp-r","Carry Forward"=>"sp-f",_=>"sp-d"};
-            <div style="display:flex;align-items:center;gap:.5rem;padding:.35rem .4rem;border-radius:8px;background:var(--bg);border:1px solid var(--brd2);">
-                <div style="flex-shrink:0;width:32px;height:32px;border-radius:8px;background:var(--pri3);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:var(--pri);">@l.Member.Name[0..2].ToUpper()</div>
-                <div style="flex:1;min-width:0;">
-                    <div style="display:flex;align-items:center;gap:.3rem;flex-wrap:wrap;">
-                        <span style="font-weight:600;font-size:.74rem;color:var(--txt);">@l.Member.Name</span>
-                        <span style="font-size:.55rem;color:var(--txt4);">@l.Project</span>
-                        <span class="sp @sc" style="margin-left:auto;">@l.Status</span>
-                    </div>
-                    <div style="font-size:.68rem;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">@l.TaskDescription</div>
-                </div>
-                <div style="font-size:.65rem;font-weight:700;color:var(--txt3);flex-shrink:0;">@l.HoursWorked h</div>
-                @if(canEdit){<a asp-controller="DailyLog" asp-action="Edit" asp-route-id="@l.Id" class="btn-g" style="padding:.1rem .2rem;flex-shrink:0;"><i class="bi bi-pencil"></i></a>}
-            </div>
-        }
-    </div>}
+}}
 </div>
 
-<!-- ══════════════════════════════════════════════════════════════
-     VIEW 4: INVITE TEAM
-     ══════════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════════
+     TAB 4: SHARE / INVITE
+     ══════════════════════════════════════════════ -->
 <div class="tp" id="v3">
-    <div style="font-weight:700;font-size:.88rem;margin-bottom:.65rem;">Invite Your Tech Leads & Team</div>
-    <div style="background:var(--pri3);border:1px solid #c7d2fe;border-radius:var(--rd);padding:.65rem;margin-bottom:.85rem;">
-        <div style="font-size:.72rem;color:var(--txt2);margin-bottom:.5rem;line-height:1.5;"><i class="bi bi-info-circle" style="color:var(--pri);"></i> Share a link with your Tech Leads — they sign in with Google and can add daily logs for their team members. <strong>Managers</strong> can edit everything, <strong>Viewers</strong> can only see.</div>
-        @if(canEdit){
-        <form asp-controller="Invite" asp-action="Create" method="post" style="display:flex;gap:.4rem;align-items:end;flex-wrap:wrap;">
-            @Html.AntiForgeryToken()
-            <div><label class="form-label">Role</label><select name="role" class="form-select form-select-sm" style="width:110px;"><option value="Manager">Manager</option><option value="Viewer">Viewer</option></select></div>
-            <div><label class="form-label">Max Uses</label><input type="number" name="maxUses" value="0" min="0" class="form-control form-control-sm" style="width:55px;"/></div>
-            <button class="btn-a"><i class="bi bi-link-45deg"></i> Create Link</button>
-        </form>}
-    </div>
-    @foreach(var lk in inviteLinks.Where(l=>l.IsValid)){var url=$"{Context.Request.Scheme}://{Context.Request.Host}/Auth/Join/{lk.Code}";
-    <div class="ic">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;">
-            <span style="font-size:.58rem;font-weight:700;padding:.1rem .35rem;border-radius:6px;color:#fff;background:@(lk.Role=="Manager"?"var(--pri)":"var(--txt3)");">@lk.Role</span>
-            @if(canEdit){<form asp-controller="Invite" asp-action="Deactivate" asp-route-id="@lk.Id" method="post" class="d-inline">@Html.AntiForgeryToken()<button class="btn-g" style="color:var(--r);border-color:var(--r);padding:.08rem .2rem;font-size:.5rem;"><i class="bi bi-x-lg"></i></button></form>}
-        </div>
-        <div class="input-group input-group-sm"><input type="text" class="form-control" value="@url" readonly id="lnk-@lk.Id" style="font-size:.66rem;"/><button class="btn btn-outline-primary" style="font-size:.6rem;" onclick="navigator.clipboard.writeText(document.getElementById('lnk-@lk.Id').value);this.innerHTML='Copied!';setTimeout(()=>this.innerHTML='<i class=\'bi bi-clipboard\'></i> Copy',2000)"><i class="bi bi-clipboard"></i> Copy</button></div>
-    </div>}
-    @if(orgMembers.Any()){
-    <div style="font-weight:700;font-size:.78rem;margin:.8rem 0 .35rem;"><i class="bi bi-people"></i> Team (@orgMembers.Count)</div>
-    @foreach(var m in orgMembers){
-        <div style="display:flex;align-items:center;gap:.4rem;padding:.3rem .4rem;border-bottom:1px solid var(--brd2);">
-            @if(m.AvatarUrl!=null){<img src="@m.AvatarUrl" style="width:22px;height:22px;border-radius:50%;" referrerpolicy="no-referrer"/>}
-            else{<div style="width:22px;height:22px;border-radius:50%;background:var(--pri3);display:flex;align-items:center;justify-content:center;font-size:.5rem;font-weight:700;color:var(--pri);">@(m.DisplayName?.FirstOrDefault())</div>}
-            <span style="font-weight:600;font-size:.74rem;">@m.DisplayName</span>
-            <span style="font-size:.6rem;color:var(--txt4);margin-left:auto;">@m.Email</span>
-            <span style="font-size:.55rem;font-weight:700;padding:.1rem .3rem;border-radius:6px;background:@(m.OrgRole=="Owner"?"var(--rbg)":m.OrgRole=="Manager"?"var(--pri3)":"var(--bg2)");color:@(m.OrgRole=="Owner"?"var(--r)":m.OrgRole=="Manager"?"var(--pri)":"var(--txt3)");">@m.OrgRole</span>
-        </div>
-    }}
+<div style="font-weight:700;font-size:.85rem;margin-bottom:.6rem;">Share with your Tech Leads</div>
+<div style="font-size:.7rem;color:var(--txt2);margin-bottom:.6rem;line-height:1.5;">Share a link — they sign in with Google and can add daily logs and notes for their team members.</div>
+@if(canEdit){
+<div style="background:var(--pri3);border:1px solid #c7d2fe;border-radius:var(--rd);padding:.55rem;margin-bottom:.7rem;">
+    <form asp-controller="Invite" asp-action="Create" method="post" style="display:flex;gap:.35rem;align-items:end;flex-wrap:wrap;">@Html.AntiForgeryToken()
+        <div><label class="form-label">Role</label><select name="role" class="form-select form-select-sm" style="width:105px;"><option value="Manager">Manager</option><option value="Viewer">Viewer</option></select></div>
+        <button class="btn-a"><i class="bi bi-link-45deg"></i> Create Link</button>
+    </form>
+</div>}
+@foreach(var lk in inviteLinks.Where(l=>l.IsValid)){var url=$"{Context.Request.Scheme}://{Context.Request.Host}/Auth/Join/{lk.Code}";
+<div class="ic"><div class="input-group input-group-sm"><span style="font-size:.55rem;font-weight:700;padding:.2rem .4rem;color:#fff;background:@(lk.Role=="Manager"?"var(--pri)":"var(--txt3)");border-radius:6px 0 0 6px;">@lk.Role</span><input type="text" class="form-control" value="@url" readonly id="lnk-@lk.Id" style="font-size:.64rem;"/><button class="btn btn-outline-primary" style="font-size:.58rem;" onclick="navigator.clipboard.writeText(document.getElementById('lnk-@lk.Id').value);this.textContent='Copied!';setTimeout(()=>this.innerHTML='<i class=\'bi bi-clipboard\'></i>',2000)"><i class="bi bi-clipboard"></i></button></div></div>}
+@if(orgMembers.Any()){
+<div style="font-weight:700;font-size:.78rem;margin:.7rem 0 .3rem;">Team (@orgMembers.Count)</div>
+@foreach(var om in orgMembers){
+<div style="display:flex;align-items:center;gap:.3rem;padding:.25rem 0;border-bottom:1px solid var(--brd2);">
+    @if(om.AvatarUrl!=null){<img src="@om.AvatarUrl" style="width:20px;height:20px;border-radius:50%;" referrerpolicy="no-referrer"/>}
+    <span style="font-weight:600;font-size:.72rem;flex:1;">@om.DisplayName</span>
+    <span style="font-size:.55rem;color:var(--txt4);">@om.Email</span>
+    <span style="font-size:.52rem;font-weight:700;padding:.08rem .25rem;border-radius:6px;background:@(om.OrgRole=="Owner"?"var(--rbg)":"var(--pri3)");color:@(om.OrgRole=="Owner"?"var(--r)":"var(--pri)");">@om.OrgRole</span>
+</div>}}
 </div>
 
-<!-- ═══ MODALS ═══ -->
-<div class="modal fade" id="addTeamModal"><div class="modal-dialog modal-dialog-centered modal-sm"><div class="modal-content">
-    <div class="modal-header"><h6 class="modal-title"><i class="bi bi-folder-plus" style="color:var(--pri);"></i> Add Project/Team</h6><button class="btn-close" data-bs-dismiss="modal" style="font-size:.55rem;"></button></div>
-    <div class="modal-body p-3"><form asp-controller="Teams" asp-action="Create" method="post">@Html.AntiForgeryToken()
-        <div class="mb-2"><label class="form-label">Project Name</label><input name="Project" class="form-control form-control-sm" required placeholder="e.g. AGONEWorkj"/></div>
-        <div class="mb-2"><label class="form-label">Team Name</label><input name="Name" class="form-control form-control-sm" required placeholder="e.g. Team Alpha"/></div>
-        <div class="mb-3"><label class="form-label">Tech Lead</label><input name="TechLead" class="form-control form-control-sm" required placeholder="e.g. Abdullah"/></div>
-        <button class="btn-a" style="width:100%;justify-content:center;padding:.45rem;"><i class="bi bi-check-lg"></i> Create</button>
-    </form></div>
-</div></div></div>
+<!-- MODALS -->
+<div class="modal fade" id="addTeamModal"><div class="modal-dialog modal-dialog-centered modal-sm"><div class="modal-content"><div class="modal-header"><h6 class="modal-title"><i class="bi bi-folder-plus" style="color:var(--pri);"></i> Add Project</h6><button class="btn-close" data-bs-dismiss="modal" style="font-size:.5rem;"></button></div><div class="modal-body p-3"><form asp-controller="Teams" asp-action="Create" method="post">@Html.AntiForgeryToken()
+<div class="mb-2"><label class="form-label">Project</label><input name="Project" class="form-control form-control-sm" required placeholder="e.g. AGONEWorkj"/></div>
+<div class="mb-2"><label class="form-label">Team</label><input name="Name" class="form-control form-control-sm" required placeholder="e.g. Team Alpha"/></div>
+<div class="mb-3"><label class="form-label">Tech Lead</label><input name="TechLead" class="form-control form-control-sm" required/></div>
+<button class="btn-a" style="width:100%;justify-content:center;padding:.4rem;">Create</button></form></div></div></div></div>
 
-<div class="modal fade" id="addMemberModal"><div class="modal-dialog modal-dialog-centered modal-sm"><div class="modal-content">
-    <div class="modal-header"><h6 class="modal-title"><i class="bi bi-person-plus" style="color:var(--pri);"></i> Add Member</h6><button class="btn-close" data-bs-dismiss="modal" style="font-size:.55rem;"></button></div>
-    <div class="modal-body p-3"><form asp-controller="Members" asp-action="Create" method="post">@Html.AntiForgeryToken()
-        <input type="hidden" name="TeamId" id="nmt"/>
-        <div class="mb-2"><label class="form-label">Name</label><input name="Name" class="form-control form-control-sm" required/></div>
-        <div class="mb-3"><label class="form-label">Role</label><select name="Role" class="form-select form-select-sm"><option>Developer</option><option>Tech Lead</option><option>QA</option><option>UI/UX</option><option>Product</option><option>BA</option><option>Designer</option><option>DevOps</option></select></div>
-        <button class="btn-a" style="width:100%;justify-content:center;padding:.45rem;"><i class="bi bi-check-lg"></i> Add</button>
-    </form></div>
-</div></div></div>
-
+<div class="modal fade" id="addMemberModal"><div class="modal-dialog modal-dialog-centered modal-sm"><div class="modal-content"><div class="modal-header"><h6 class="modal-title"><i class="bi bi-person-plus" style="color:var(--pri);"></i> Add Member</h6><button class="btn-close" data-bs-dismiss="modal" style="font-size:.5rem;"></button></div><div class="modal-body p-3"><form asp-controller="Members" asp-action="Create" method="post">@Html.AntiForgeryToken()
+<input type="hidden" name="TeamId" id="nmt"/>
+<div class="mb-2"><label class="form-label">Name</label><input name="Name" class="form-control form-control-sm" required/></div>
+<div class="mb-3"><label class="form-label">Role</label><select name="Role" class="form-select form-select-sm"><option>Developer</option><option>Tech Lead</option><option>QA</option><option>UI/UX</option><option>Product</option><option>BA</option><option>Designer</option><option>DevOps</option></select></div>
+<button class="btn-a" style="width:100%;justify-content:center;padding:.4rem;">Add</button></form></div></div></div></div>
 </div>
 
 @section Scripts{
 <script>
-function sw(idx,el){
-    document.querySelectorAll('.tp').forEach(p=>p.classList.remove('active'));
-    document.getElementById('v'+idx).classList.add('active');
-    document.querySelectorAll('.tb').forEach(t=>t.classList.remove('active'));
-    if(el)el.classList.add('active');
-    else document.querySelectorAll('.tb')[idx]?.classList.add('active');
-}
+function sw(i,el){document.querySelectorAll('.tp').forEach(p=>p.classList.remove('active'));document.getElementById('v'+i).classList.add('active');document.querySelectorAll('.tb').forEach(t=>t.classList.remove('active'));if(el)el.classList.add('active');else document.querySelectorAll('.tb')[i]?.classList.add('active');}
 function mNav(el){document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
 
-async function dropMember(e,teamId){
-    e.preventDefault();
-    var mid=e.dataTransfer.getData('mid');
-    if(!mid)return;
-    try{
-        await fetch('/api/members/assign',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({memberId:parseInt(mid),teamId:teamId})});
-        location.reload();
-    }catch(ex){console.error(ex);}
+function togglePerson(id){
+    var d=document.getElementById('pdetail-'+id);
+    var c=document.getElementById('pchev-'+id);
+    if(d.style.display==='none'||!d.style.display||d.style.display===''){
+        d.style.display='block';c.style.transform='rotate(180deg)';
+        loadNotes(id);
+    } else {d.style.display='none';c.style.transform='rotate(0)';}
 }
 
-async function aiCall(url,body,title){
-    var box=document.getElementById('ai-out');
-    var t=document.getElementById('ai-title');
-    var b=document.getElementById('ai-body');
-    box.style.display='block';t.textContent=title;
-    b.innerHTML='<div style="display:flex;align-items:center;gap:.3rem;"><div class="spinner-border spinner-border-sm" style="width:12px;height:12px;border-width:2px;color:var(--pri2);"></div> Generating...</div>';
+async function loadNotes(mid){
+    var box=document.getElementById('notes-'+mid);
     try{
-        var res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        var res=await fetch('/api/notes/'+mid);
+        var notes=await res.json();
+        if(!notes.length){box.innerHTML='<div style="text-align:center;padding:.4rem;font-size:.6rem;color:var(--txt4);">No notes yet. Write one below.</div>';return;}
+        var html='';
+        var typeIcons={Chat:'bi-chat',Note:'bi-sticky',Review:'bi-star',Achievement:'bi-trophy',Concern:'bi-exclamation-triangle',Goal:'bi-bullseye'};
+        var typeBg={Chat:'var(--bg2)',Note:'var(--pri3)',Review:'var(--abg)',Achievement:'var(--gbg)',Concern:'var(--rbg)',Goal:'var(--pbg)'};
+        notes.reverse().forEach(n=>{
+            html+='<div style="margin-bottom:.3rem;padding:.3rem .4rem;border-radius:8px;background:'+(typeBg[n.type]||'var(--bg2)')+';font-size:.65rem;">';
+            html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.1rem;"><span style="font-weight:700;color:var(--txt);"><i class="bi '+(typeIcons[n.type]||'bi-chat')+'" style="font-size:.6rem;margin-right:.15rem;"></i>'+n.author+'</span><span style="font-size:.5rem;color:var(--txt4);">'+n.created+'</span></div>';
+            html+='<div style="color:var(--txt2);line-height:1.4;">'+n.content+'</div>';
+            if(n.imageUrl)html+='<img src="'+n.imageUrl+'" style="max-width:100%;max-height:150px;border-radius:6px;margin-top:.2rem;"/>';
+            html+='</div>';
+        });
+        box.innerHTML=html;
+        box.scrollTop=box.scrollHeight;
+    }catch(e){box.innerHTML='<div style="color:var(--r);font-size:.6rem;">Error loading notes</div>';}
+}
+
+async function sendNote(mid){
+    var input=document.getElementById('chat-'+mid);
+    var type=document.getElementById('chattype-'+mid);
+    if(!input.value.trim())return;
+    try{
+        await fetch('/api/notes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({memberId:mid,content:input.value,type:type.value})});
+        input.value='';loadNotes(mid);
+    }catch(e){}
+}
+
+async function uploadImg(mid,input){
+    if(!input.files[0])return;
+    var fd=new FormData();fd.append('file',input.files[0]);
+    try{
+        var res=await fetch('/api/upload',{method:'POST',body:fd});
         var data=await res.json();
-        if(data.text&&data.text.length>10)b.innerHTML=data.text.replace(/\n/g,'<br/>');
-        else if(!data.ai)b.innerHTML='Add free Gemini API key in appsettings.json → <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:#818cf8;">Get key</a>';
-        else b.textContent='No data.';
-    }catch(e){b.textContent='Error.';}
+        if(data.url){
+            await fetch('/api/notes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({memberId:mid,content:'Shared an image',type:'Chat',imageUrl:data.url})});
+            loadNotes(mid);
+        }
+    }catch(e){}
+    input.value='';
 }
-function aiGenSummary(){aiCall('/api/ai/summary',{month:@Model.SelectedMonth,year:@Model.SelectedYear},'AI Team Summary');}
-</script>
+
+async function aiReport(mid){
+    var box=document.getElementById('aireport-'+mid);
+    var txt=document.getElementById('aireporttext-'+mid);
+    box.style.display='block';txt.innerHTML='<div class="spinner-border spinner-border-sm" style="width:12px;height:12px;border-width:2px;color:var(--pri);"></div> Generating...';
+    try{
+        var res=await fetch('/api/ai/person-report/'+mid,{method:'POST'});
+        var data=await res.json();
+        txt.innerHTML=data.text&&data.text.length>10?data.text.replace(/\n/g,'<br/>'):(data.ai?'No data.':'<a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--pri);">Add free Gemini API key</a>');
+    }catch(e){txt.textContent='Error.';}
 }
+
+function aiGenSummary(){
+    var box=document.getElementById('ai-out');if(!box)return;
+    var t=document.getElementById('ai-title');var b=document.getElementById('ai-body');
+    box.style.display='block';t.textContent='AI Summary';b.innerHTML='Generating...';
+    fetch('/api/ai/summary',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({month:@Model.SelectedMonth,year:@Model.SelectedYear})})
+    .then(r=>r.json()).then(d=>{b.innerHTML=d.text||'No data.';}).catch(()=>{b.textContent='Error.';});
+}
+</script>}

@@ -89,6 +89,8 @@ Under 80 words. No bullets.";
         return await CallGemini(prompt);
     }
 
+    public async Task<string> CallGeminiPublic(string prompt) => await CallGemini(prompt);
+
     private async Task<string> CallGemini(string prompt)
     {
         try

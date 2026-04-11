@@ -341,6 +341,10 @@ namespace TeamTracker.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("PhotoUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("ProjectsAssigned")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -436,6 +440,44 @@ namespace TeamTracker.Migrations
                     b.ToTable("MonthlyKpis");
                 });
 
+            modelBuilder.Entity("TeamTracker.Models.Note", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Author")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(3000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("MemberId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MemberId");
+
+                    b.ToTable("Notes");
+                });
+
             modelBuilder.Entity("TeamTracker.Models.Organization", b =>
                 {
                     b.Property<int>("Id")
@@ -469,6 +511,9 @@ namespace TeamTracker.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -480,6 +525,14 @@ namespace TeamTracker.Migrations
                     b.Property<string>("Project")
                         .IsRequired()
                         .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("StartDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("TechLead")
@@ -598,6 +651,17 @@ namespace TeamTracker.Migrations
                     b.Navigation("Member");
                 });
 
+            modelBuilder.Entity("TeamTracker.Models.Note", b =>
+                {
+                    b.HasOne("TeamTracker.Models.Member", "Member")
+                        .WithMany("Notes")
+                        .HasForeignKey("MemberId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Member");
+                });
+
             modelBuilder.Entity("TeamTracker.Models.Team", b =>
                 {
                     b.HasOne("TeamTracker.Models.Organization", "Organization")
@@ -614,6 +678,8 @@ namespace TeamTracker.Migrations
                     b.Navigation("DailyLogs");
 
                     b.Navigation("MonthlyKpis");
+
+                    b.Navigation("Notes");
                 });
 
             modelBuilder.Entity("TeamTracker.Models.Organization", b =>

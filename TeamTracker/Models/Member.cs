@@ -15,9 +15,13 @@ public class Member
     [MaxLength(500)]
     public string ProjectsAssigned { get; set; } = string.Empty;
 
+    [MaxLength(500)]
+    public string? PhotoUrl { get; set; }
+
     public int TeamId { get; set; }
     public Team Team { get; set; } = null!;
 
     public ICollection<DailyLog> DailyLogs { get; set; } = new List<DailyLog>();
     public ICollection<MonthlyKpi> MonthlyKpis { get; set; } = new List<MonthlyKpi>();
+    public ICollection<Note> Notes { get; set; } = new List<Note>();
 }

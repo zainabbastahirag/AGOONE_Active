@@ -14,6 +14,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
     public DbSet<DailyLog> DailyLogs => Set<DailyLog>();
     public DbSet<MonthlyKpi> MonthlyKpis => Set<MonthlyKpi>();
     public DbSet<InviteLink> InviteLinks => Set<InviteLink>();
+    public DbSet<Note> Notes => Set<Note>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {

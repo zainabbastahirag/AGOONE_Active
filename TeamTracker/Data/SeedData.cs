@@ -40,13 +40,13 @@ public static class SeedData
         // ── 2. Create Teams ──
         var teams = new[]
         {
-            new Team { Name = "Team Alpha",   Project = "AGONEWorkj", TechLead = "Abdullah",      OrganizationId = org.Id },
-            new Team { Name = "Team Beta",    Project = "OJE Safe",   TechLead = "Geena",          OrganizationId = org.Id },
-            new Team { Name = "Team Gamma",   Project = "ONe Learn",  TechLead = "Phuoc (Ricky)",  OrganizationId = org.Id },
-            new Team { Name = "Team Delta",   Project = "Ne Pulse",   TechLead = "Majed",          OrganizationId = org.Id },
-            new Team { Name = "Team Epsilon", Project = "AGONE",      TechLead = "Sarisha",        OrganizationId = org.Id },
-            new Team { Name = "Team Zeta",    Project = "AGONEWorkj", TechLead = "Faisal",         OrganizationId = org.Id },
-            new Team { Name = "Team Eta",     Project = "OJE Safe",   TechLead = "Hanis",          OrganizationId = org.Id },
+            new Team { Name = "Team Alpha",   Project = "AGONEWorkj", TechLead = "Abdullah",      OrganizationId = org.Id, Status = "Active",    StartDate = new DateTime(2025,3,1) },
+            new Team { Name = "Team Beta",    Project = "OJE Safe",   TechLead = "Geena",          OrganizationId = org.Id, Status = "Active",    StartDate = new DateTime(2025,6,1) },
+            new Team { Name = "Team Gamma",   Project = "ONe Learn",  TechLead = "Phuoc (Ricky)",  OrganizationId = org.Id, Status = "Active",    StartDate = new DateTime(2025,9,1) },
+            new Team { Name = "Team Delta",   Project = "Ne Pulse",   TechLead = "Majed",          OrganizationId = org.Id, Status = "Active",    StartDate = new DateTime(2025,1,15) },
+            new Team { Name = "Team Epsilon", Project = "AGONE",      TechLead = "Sarisha",        OrganizationId = org.Id, Status = "Active",    StartDate = new DateTime(2025,4,1) },
+            new Team { Name = "Team Zeta",    Project = "AGONEWorkj", TechLead = "Faisal",         OrganizationId = org.Id, Status = "Active",    StartDate = new DateTime(2025,7,1) },
+            new Team { Name = "Team Eta",     Project = "OJE Safe",   TechLead = "Hanis",          OrganizationId = org.Id, Status = "Active",    StartDate = new DateTime(2025,8,1) },
         };
         db.Teams.AddRange(teams);
         await db.SaveChangesAsync();
@@ -218,20 +218,61 @@ public static class SeedData
         }
         await db.SaveChangesAsync();
 
-        // ── 6. Create sample invite link ──
-        db.InviteLinks.Add(new InviteLink
+        // ── 6. Create sample invite links ──
+        db.InviteLinks.Add(new InviteLink { OrganizationId = org.Id, Role = "Viewer", Code = "demo-invite-2026" });
+        db.InviteLinks.Add(new InviteLink { OrganizationId = org.Id, Role = "Manager", Code = "mgr-invite-2026", MaxUses = 5 });
+        await db.SaveChangesAsync();
+
+        // ── 7. Create notes/chat history per member ──
+        var noteEntries = new (int idx, string type, string content, string author, int daysAgo)[]
         {
-            OrganizationId = org.Id,
-            Role = "Viewer",
-            Code = "demo-invite-2026",
-        });
-        db.InviteLinks.Add(new InviteLink
+            (0, "Review", "Abdullah has been instrumental in driving the v2.0 architecture. His code reviews are thorough and he mentors juniors well.", "Zain", 5),
+            (0, "Achievement", "Successfully led the team through a critical sprint with zero production incidents.", "Zain", 12),
+            (0, "Chat", "Abdullah, can you share the architecture doc with the director before Friday?", "Zain", 2),
+            (0, "Chat", "Done — shared the RFC doc in the shared drive. Let me know if he needs a walkthrough.", "Abdullah", 2),
+            (1, "Note", "Nastaran is picking up speed. Her payment gateway integration was clean and well-tested.", "Abdullah", 8),
+            (1, "Goal", "Target: Lead a feature independently by end of Q1 without senior oversight.", "Zain", 15),
+            (2, "Concern", "Jawad's validation bug caused a production 500 error. Need to improve testing before PRs.", "Abdullah", 6),
+            (2, "Chat", "Jawad, please add unit tests for all edge cases before submitting PRs. Let's review together.", "Abdullah", 5),
+            (2, "Chat", "Understood. I've started writing tests for the user module. Will share by tomorrow.", "Jawad", 5),
+            (3, "Achievement", "Zero bugs in 14 deliveries this month. Outstanding quality benchmark for the team.", "Abdullah", 3),
+            (3, "Review", "Geena handles dual-project responsibility exceptionally well. Ready for a lead role.", "Zain", 10),
+            (3, "Chat", "Geena, how are you managing the workload across both projects?", "Zain", 1),
+            (3, "Chat", "It's manageable! I timebox AGONEWorkj mornings and OJE Safe afternoons. Works well so far.", "Geena", 1),
+            (5, "Concern", "Logesh's database migration script failed in staging. Needs more testing rigor.", "Geena", 7),
+            (5, "Goal", "Pair Logesh with a senior developer for the next 2 sprints to improve SQL skills.", "Zain", 4),
+            (6, "Achievement", "Shipped ONe Learn mobile app v1.0 to App Store. Approved within 24 hours!", "Zain", 9),
+            (6, "Chat", "Ricky, amazing job on the mobile launch! The client loved it.", "Zain", 8),
+            (9, "Review", "Majed runs the tightest QA process in the org. Delta team has the best quality metrics.", "Zain", 11),
+            (11, "Achievement", "Caught 5 critical bugs before release through manual testing. Saved us from a hotfix.", "Majed", 6),
+            (12, "Concern", "Umeswar has 20 hours overtime and 5 bugs. Task estimation may be the root cause.", "Majed", 3),
+            (12, "Chat", "Umeswar, let's schedule daily 15-min check-ins to help unblock you early.", "Majed", 2),
+            (12, "Chat", "Thanks Majed, that would really help. I've been stuck on the file upload module.", "Umeswar", 2),
+            (13, "Achievement", "Completed AGONE admin portal redesign. Stakeholders approved for Feb go-live.", "Zain", 7),
+            (15, "Achievement", "Created the entire component library — 40 components in Storybook. Zero revision requests.", "Sarisha", 10),
+            (15, "Review", "Sharuti's design work is exceptional. Best designer on the team. Valuable asset.", "Zain", 5),
+            (16, "Note", "Faisal's microservices RFC is solid. Architecture board approved the migration plan.", "Zain", 8),
+            (17, "Concern", "Kirtinini deployed a breaking API change without notifying the mobile team. Communication gap.", "Faisal", 4),
+            (19, "Achievement", "Led security audit — fixed 4 high and 8 medium vulnerabilities. OWASP scan clean.", "Zain", 9),
+            (20, "Achievement", "Redesigned OJE Safe mobile UI with full WCAG 2.1 AA accessibility compliance.", "Hanis", 6),
+            (20, "Review", "Fatin's accessibility work is the best in the organization. Should be showcased.", "Zain", 4),
+            (21, "Concern", "Max has 18h overtime + race condition bug. Potential burnout. Consider reducing scope.", "Hanis", 3),
+            (21, "Chat", "Max, take Friday off. We'll redistribute the alert system tasks to the team.", "Hanis", 1),
+            (21, "Chat", "Appreciate that, Hanis. I'll document the current state so others can pick it up.", "Max", 1),
+        };
+
+        var now = DateTime.UtcNow;
+        foreach (var n in noteEntries)
         {
-            OrganizationId = org.Id,
-            Role = "Manager",
-            Code = "mgr-invite-2026",
-            MaxUses = 5,
-        });
+            db.Notes.Add(new Note
+            {
+                MemberId = members[n.idx].Id,
+                Type = n.type,
+                Content = n.content,
+                Author = n.author,
+                CreatedAt = now.AddDays(-n.daysAgo).AddHours(9 + n.daysAgo % 8),
+            });
+        }
         await db.SaveChangesAsync();
     }
 }

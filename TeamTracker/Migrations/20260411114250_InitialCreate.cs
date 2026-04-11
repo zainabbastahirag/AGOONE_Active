@@ -132,6 +132,9 @@ namespace TeamTracker.Migrations
                     Name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
                     Project = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
                     TechLead = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    Status = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    StartDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    EndDate = table.Column<DateTime>(type: "TEXT", nullable: true),
                     OrganizationId = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
@@ -239,6 +242,7 @@ namespace TeamTracker.Migrations
                     Name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
                     Role = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
                     ProjectsAssigned = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    PhotoUrl = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
                     TeamId = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
@@ -315,6 +319,30 @@ namespace TeamTracker.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Notes",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    MemberId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Content = table.Column<string>(type: "TEXT", maxLength: 3000, nullable: false),
+                    Type = table.Column<string>(type: "TEXT", maxLength: 30, nullable: false),
+                    Author = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    ImageUrl = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Notes", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Notes_Members_MemberId",
+                        column: x => x.MemberId,
+                        principalTable: "Members",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
@@ -385,6 +413,11 @@ namespace TeamTracker.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Notes_MemberId",
+                table: "Notes",
+                column: "MemberId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Teams_OrganizationId",
                 table: "Teams",
                 column: "OrganizationId");
@@ -416,6 +449,9 @@ namespace TeamTracker.Migrations
 
             migrationBuilder.DropTable(
                 name: "MonthlyKpis");
+
+            migrationBuilder.DropTable(
+                name: "Notes");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");

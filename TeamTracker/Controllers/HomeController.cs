@@ -81,6 +81,13 @@ public class HomeController : Controller
             .Where(u => u.OrganizationId == oid)
             .OrderBy(u => u.DisplayName).ToListAsync();
 
+        // Notes count per member
+        ViewBag.NoteCounts = await _db.Notes
+            .Where(n => memberIds.Contains(n.MemberId))
+            .GroupBy(n => n.MemberId)
+            .Select(g => new { g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Key, x => x.Count);
+
         // AI Insights
         var aiEngine = new AiInsightEngine();
         ViewBag.AiReport = aiEngine.Analyze(kpis, recentLogs, teams);
