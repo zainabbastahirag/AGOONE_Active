@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Team KPI Dashboard — January 2026</title>
+<style>
+:root {
+  --primary: #1a365d; --primary-l: #2b6cb0; --accent: #3182ce;
+  --bg: #f0f4f8; --card: #fff; --border: #e2e8f0;
+  --text: #2d3748; --text-l: #718096; --text-ll: #a0aec0;
+  --green: #38a169; --red: #e53e3e; --yellow: #d69e2e;
+  --purple: #805ad5; --orange: #dd6b20; --teal: #319795;
+  --r: 10px;
+  --sh: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --sh-lg: 0 10px 15px -3px rgba(0,0,0,0.07);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:var(--bg); color:var(--text); line-height:1.5; }
+
+.topbar {
+  background:linear-gradient(135deg,var(--primary) 0%,var(--primary-l) 100%);
+  color:#fff; padding:1.25rem 2rem; display:flex; justify-content:space-between; align-items:center;
+  position:sticky; top:0; z-index:100; box-shadow:var(--sh-lg);
+}
+.topbar h1 { font-size:1.3rem; font-weight:700; }
+.topbar .sub { font-size:.78rem; opacity:.8; margin-top:.15rem; }
+.topbar .meta { text-align:right; font-size:.78rem; opacity:.85; }
+.topbar .badge { display:inline-block; background:rgba(255,255,255,.2); padding:.15rem .65rem; border-radius:20px; font-weight:600; font-size:.85rem; margin-bottom:.2rem; }
+
+.container { max-width:1400px; margin:0 auto; padding:1.25rem; }
+
+/* KPI row */
+.kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:.75rem; margin-bottom:1.25rem; }
+.kpi { background:var(--card); border-radius:var(--r); padding:1rem 1.15rem; box-shadow:var(--sh); border-left:4px solid var(--accent); }
+.kpi.g { border-left-color:var(--green); } .kpi.r { border-left-color:var(--red); }
+.kpi.y { border-left-color:var(--yellow); } .kpi.p { border-left-color:var(--purple); }
+.kpi.o { border-left-color:var(--orange); } .kpi.t { border-left-color:var(--teal); }
+.kpi .kl { font-size:.65rem; text-transform:uppercase; letter-spacing:.07em; color:var(--text-l); margin-bottom:.15rem; }
+.kpi .kv { font-size:1.5rem; font-weight:800; color:var(--primary); line-height:1.2; }
+.kpi .ks { font-size:.7rem; color:var(--text-ll); margin-top:.1rem; }
+
+/* Tabs */
+.tabs { display:flex; gap:0; border-bottom:2px solid var(--border); margin-bottom:1.25rem; overflow-x:auto; }
+.tab { padding:.65rem 1.15rem; font-size:.8rem; font-weight:600; color:var(--text-l); cursor:pointer;
+  border-bottom:3px solid transparent; transition:all .2s; white-space:nowrap; user-select:none; }
+.tab:hover { color:var(--primary); background:rgba(49,130,206,.04); }
+.tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+.tc { display:none; } .tc.active { display:block; }
+
+/* Panel */
+.pnl { background:var(--card); border-radius:var(--r); box-shadow:var(--sh); margin-bottom:1.25rem; overflow:hidden; }
+.pnl-h { padding:.85rem 1.25rem; font-weight:700; font-size:.9rem; color:var(--primary);
+  border-bottom:1px solid var(--border); background:#f8fafc; display:flex; justify-content:space-between; align-items:center; }
+.pnl-h .tag { font-size:.7rem; padding:.15rem .5rem; border-radius:12px; color:#fff; font-weight:600; }
+.pnl-b { padding:1rem 1.25rem; overflow-x:auto; }
+
+/* Tables */
+table { width:100%; border-collapse:collapse; font-size:.8rem; }
+th { background:var(--primary); color:#fff; padding:.6rem .65rem; text-align:center;
+  font-size:.7rem; text-transform:uppercase; letter-spacing:.04em; font-weight:600; white-space:nowrap; }
+th:first-child { text-align:left; }
+td { padding:.55rem .65rem; text-align:center; border-bottom:1px solid var(--border); white-space:nowrap; }
+td:first-child { text-align:left; font-weight:600; color:var(--primary); }
+tbody tr:hover { background:#edf2f7; }
+tbody tr:nth-child(even) { background:#fafbfc; }
+tbody tr:nth-child(even):hover { background:#edf2f7; }
+tfoot td { font-weight:700; background:#edf2f7; border-top:2px solid var(--primary); }
+.zero { color:var(--text-ll); }
+.good { color:var(--green); font-weight:700; }
+.warn { color:var(--yellow); font-weight:700; }
+.bad { color:var(--red); font-weight:700; }
+
+/* Feedback cards */
+.fb-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:1rem; }
+.fb-card { background:var(--card); border-radius:var(--r); box-shadow:var(--sh); padding:1.15rem; border-left:4px solid var(--accent); }
+.fb-card .fb-name { font-weight:700; color:var(--primary); font-size:.9rem; }
+.fb-card .fb-role { font-size:.7rem; color:var(--text-l); margin-bottom:.5rem; }
+.fb-card .fb-section { margin-bottom:.6rem; }
+.fb-card .fb-label { font-size:.65rem; text-transform:uppercase; letter-spacing:.06em; color:var(--text-l); font-weight:600; margin-bottom:.1rem; }
+.fb-card .fb-text { font-size:.8rem; color:var(--text); background:#f7fafc; padding:.4rem .6rem; border-radius:6px; border:1px solid var(--border); min-height:1.8rem; }
+.fb-card .fb-text.empty { color:var(--text-ll); font-style:italic; }
+
+/* Multi-project badge */
+.mp-badge { display:inline-block; padding:.1rem .4rem; border-radius:10px; font-size:.65rem; font-weight:600; margin:.1rem; }
+
+/* Progress bar */
+.prog { display:flex; align-items:center; gap:.5rem; }
+.prog-track { flex:1; height:8px; background:#edf2f7; border-radius:4px; overflow:hidden; }
+.prog-fill { height:100%; border-radius:4px; transition:width .3s; }
+.prog-val { font-size:.75rem; font-weight:700; min-width:40px; text-align:right; }
+
+/* Quality stars */
+.stars { font-size:1rem; letter-spacing:2px; }
+
+@media print {
+  body { background:#fff; } .topbar { position:static; }
+  .tabs { display:none; } .tc { display:block !important; page-break-inside:avoid; }
+  .pnl { box-shadow:none; border:1px solid #ddd; }
+}
+@media (max-width:768px) {
+  .container { padding:.5rem; } .kpis { grid-template-columns:repeat(2,1fr); }
+  .topbar { flex-direction:column; text-align:center; gap:.4rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <h1>Team KPI & Manpower Tracker</h1>
+    <div class="sub">Tech Manager: Zain &bull; 7 Teams &bull; 21 People &bull; 5 Projects</div>
+  </div>
+  <div class="meta">
+    <div class="badge">January 2026</div>
+    <div>Generated: Apr 10, 2026 15:21</div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ══════ KPI CARDS ══════ -->
+<div class="kpis">
+  <div class="kpi g"><div class="kl">Total People</div><div class="kv">21</div><div class="ks">across 7 teams</div></div>
+  <div class="kpi"><div class="kl">Tasks Assigned</div><div class="kv">0</div><div class="ks">this month</div></div>
+  <div class="kpi g"><div class="kl">Tasks Completed</div><div class="kv">0</div><div class="ks">0% completion</div></div>
+  <div class="kpi r"><div class="kl">Bugs Found</div><div class="kv">0</div><div class="ks">in delivered work</div></div>
+  <div class="kpi y"><div class="kl">Bugs Fixed</div><div class="kv">0</div><div class="ks">resolved this month</div></div>
+  <div class="kpi p"><div class="kl">Avg Quality</div><div class="kv">0/5</div><div class="ks">team average</div></div>
+  <div class="kpi t"><div class="kl">Total Hours</div><div class="kv">0</div><div class="ks">man-hours worked</div></div>
+  <div class="kpi o"><div class="kl">Extra Hours</div><div class="kv">0</div><div class="ks">overtime</div></div>
+</div>
+
+<!-- ══════ TABS ══════ -->
+<div class="tabs" id="mainTabs">
+  <div class="tab active" data-tab="t-all">All Members</div>
+  <div class="tab" data-tab="t-teams">By Team</div>
+  <div class="tab" data-tab="t-kpi">KPI Scorecard</div>
+  <div class="tab" data-tab="t-errors">Errors & Bugs</div>
+  <div class="tab" data-tab="t-feedback">Feedback & Achievements</div>
+  <div class="tab" data-tab="t-hours">Hours & Overtime</div>
+  <div class="tab" data-tab="t-multi">Multi-Project Members</div>
+</div>
+
+<div class="tc active" id="t-all">
+<div class="pnl"><div class="pnl-h">All Team Members — Complete Overview</div><div class="pnl-b">
+<table><thead><tr>
+  <th>Name</th><th>Team</th><th>Project</th><th>Role</th>
+  <th>Assigned</th><th>Completed</th><th>Completion</th>
+  <th>Bugs In</th><th>Bugs Fixed</th><th>Reviews</th>
+  <th>On-Time %</th><th>Quality</th><th>Hours</th><th>Extra Hrs</th>
+</tr></thead><tbody>
+<tr>
+  <td>&#9733; Abdullah</td><td>Team 1</td><td>AGONEWorkj</td><td>Tech Lead</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+</tr>
+<tr>
+  <td>Nastaran</td><td>Team 1</td><td>AGONEWorkj</td><td>Developer</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+</tr>
+<tr>
+  <td>Jawad</td><td>Team 1</td><td>AGONEWorkj</td><td>Developer</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+</tr>
+<tr>
+  <td>Geena</td><td>Team 1</td><td>AGONEWorkj</td><td>Developer</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+</tr>
+<tr>
+  <td>&#9733; Geena</td><td>Team 2</td><td>OJE Safe</td><td>Tech Lead</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+</tr>
+<tr>
+  <td>Logesh</td><td>Team 2</td><td>OJE Safe</td><td>Developer</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+</tr>
+<tr>
+  <td>&#9733; Phuoc (Ricky)</td><td>Team 3</td><td>ONe Learn</td><td>Tech Lead</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+</tr>
+<tr>
+  <td>Than</td><td>Team 3</td><td>ONe Learn</td><td>Developer</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+</tr>
+<tr>
+  <td>Loc</td><td>Team 3</td><td>ONe Learn</td><td>Developer</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+</tr>
+<tr>
+  <td>&#9733; Majed</td><td>Team 4</td><td>Ne Pulse</td><td>Tech Lead</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+</tr>
+<tr>
+  <td>Hema</td><td>Team 4</td><td>Ne Pulse</td><td>Developer</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+</tr>
+<tr>
+  <td>Rahmya</td><td>Team 4</td><td>Ne Pulse</td><td>Developer</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+</tr>
+<tr>
+  <td>Umeswar</td><td>Team 4</td><td>Ne Pulse</td><td>Developer</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+</tr>
+<tr>
+  <td>&#9733; Sarisha</td><td>Team 5</td><td>AGONE</td><td>Tech Lead</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+</tr>
+<tr>
+  <td>Kanan</td><td>Team 5</td><td>AGONE</td><td>Developer</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+</tr>
+<tr>
+  <td>Sharuti</td><td>Team 5</td><td>AGONE</td><td>Developer</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+</tr>
+<tr>
+  <td>&#9733; Faisal</td><td>Team 6</td><td>AGONEWorkj</td><td>Tech Lead</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+</tr>
+<tr>
+  <td>Kirtinini</td><td>Team 6</td><td>AGONEWorkj</td><td>Developer</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+</tr>
+<tr>
+  <td>Surya</td><td>Team 6</td><td>AGONEWorkj</td><td>Developer</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+</tr>
+<tr>
+  <td>&#9733; Hanis</td><td>Team 7</td><td>OJE Safe</td><td>Tech Lead</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+</tr>
+<tr>
+  <td>Fatin</td><td>Team 7</td><td>OJE Safe</td><td>Developer</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+</tr>
+<tr>
+  <td>Max</td><td>Team 7</td><td>OJE Safe</td><td>Developer</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0%</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+  <td class="zero">0</td>
+</tr>
+</tbody></table>
+</div></div></div>
+<div class="tc" id="t-teams">
+<div class="pnl">
+<div class="pnl-h" style="border-left:4px solid #3182ce;">
+  Team 1 — AGONEWorkj
+  <span><span class="tag" style="background:#3182ce;">Lead: Abdullah</span>
+  &nbsp; 4 members &bull; 0 hrs &bull; 0% completion</span>
+</div>
+<div class="pnl-b"><table><thead><tr>
+  <th>Member</th><th>Role</th><th>Assigned</th><th>Completed</th><th>Completion</th>
+  <th>Bugs In</th><th>Bugs Fixed</th><th>On-Time %</th><th>Quality</th><th>Hours</th><th>Extra</th>
+</tr></thead><tbody>
+<tr>
+  <td>&#9733; Abdullah</td><td>Tech Lead</td>
+  <td>0</td><td>0</td><td>0%</td>
+  <td>0</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0</td>
+</tr>
+<tr>
+  <td>Nastaran</td><td>Developer</td>
+  <td>0</td><td>0</td><td>0%</td>
+  <td>0</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0</td>
+</tr>
+<tr>
+  <td>Jawad</td><td>Developer</td>
+  <td>0</td><td>0</td><td>0%</td>
+  <td>0</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0</td>
+</tr>
+<tr>
+  <td>Geena</td><td>Developer</td>
+  <td>0</td><td>0</td><td>0%</td>
+  <td>0</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0</td>
+</tr>
+</tbody><tfoot><tr>
+  <td>TEAM TOTAL</td><td></td><td>0</td><td>0</td><td>0%</td>
+  <td>0</td>
+  <td>0</td>
+  <td></td><td></td><td>0</td>
+  <td>0</td>
+</tr></tfoot></table></div></div>
+<div class="pnl">
+<div class="pnl-h" style="border-left:4px solid #e53e3e;">
+  Team 2 — OJE Safe
+  <span><span class="tag" style="background:#e53e3e;">Lead: Geena</span>
+  &nbsp; 2 members &bull; 0 hrs &bull; 0% completion</span>
+</div>
+<div class="pnl-b"><table><thead><tr>
+  <th>Member</th><th>Role</th><th>Assigned</th><th>Completed</th><th>Completion</th>
+  <th>Bugs In</th><th>Bugs Fixed</th><th>On-Time %</th><th>Quality</th><th>Hours</th><th>Extra</th>
+</tr></thead><tbody>
+<tr>
+  <td>&#9733; Geena</td><td>Tech Lead</td>
+  <td>0</td><td>0</td><td>0%</td>
+  <td>0</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0</td>
+</tr>
+<tr>
+  <td>Logesh</td><td>Developer</td>
+  <td>0</td><td>0</td><td>0%</td>
+  <td>0</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0</td>
+</tr>
+</tbody><tfoot><tr>
+  <td>TEAM TOTAL</td><td></td><td>0</td><td>0</td><td>0%</td>
+  <td>0</td>
+  <td>0</td>
+  <td></td><td></td><td>0</td>
+  <td>0</td>
+</tr></tfoot></table></div></div>
+<div class="pnl">
+<div class="pnl-h" style="border-left:4px solid #38a169;">
+  Team 3 — ONe Learn
+  <span><span class="tag" style="background:#38a169;">Lead: Phuoc (Ricky)</span>
+  &nbsp; 3 members &bull; 0 hrs &bull; 0% completion</span>
+</div>
+<div class="pnl-b"><table><thead><tr>
+  <th>Member</th><th>Role</th><th>Assigned</th><th>Completed</th><th>Completion</th>
+  <th>Bugs In</th><th>Bugs Fixed</th><th>On-Time %</th><th>Quality</th><th>Hours</th><th>Extra</th>
+</tr></thead><tbody>
+<tr>
+  <td>&#9733; Phuoc (Ricky)</td><td>Tech Lead</td>
+  <td>0</td><td>0</td><td>0%</td>
+  <td>0</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0</td>
+</tr>
+<tr>
+  <td>Than</td><td>Developer</td>
+  <td>0</td><td>0</td><td>0%</td>
+  <td>0</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0</td>
+</tr>
+<tr>
+  <td>Loc</td><td>Developer</td>
+  <td>0</td><td>0</td><td>0%</td>
+  <td>0</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0</td>
+</tr>
+</tbody><tfoot><tr>
+  <td>TEAM TOTAL</td><td></td><td>0</td><td>0</td><td>0%</td>
+  <td>0</td>
+  <td>0</td>
+  <td></td><td></td><td>0</td>
+  <td>0</td>
+</tr></tfoot></table></div></div>
+<div class="pnl">
+<div class="pnl-h" style="border-left:4px solid #d69e2e;">
+  Team 4 — Ne Pulse
+  <span><span class="tag" style="background:#d69e2e;">Lead: Majed</span>
+  &nbsp; 4 members &bull; 0 hrs &bull; 0% completion</span>
+</div>
+<div class="pnl-b"><table><thead><tr>
+  <th>Member</th><th>Role</th><th>Assigned</th><th>Completed</th><th>Completion</th>
+  <th>Bugs In</th><th>Bugs Fixed</th><th>On-Time %</th><th>Quality</th><th>Hours</th><th>Extra</th>
+</tr></thead><tbody>
+<tr>
+  <td>&#9733; Majed</td><td>Tech Lead</td>
+  <td>0</td><td>0</td><td>0%</td>
+  <td>0</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0</td>
+</tr>
+<tr>
+  <td>Hema</td><td>Developer</td>
+  <td>0</td><td>0</td><td>0%</td>
+  <td>0</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0</td>
+</tr>
+<tr>
+  <td>Rahmya</td><td>Developer</td>
+  <td>0</td><td>0</td><td>0%</td>
+  <td>0</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0</td>
+</tr>
+<tr>
+  <td>Umeswar</td><td>Developer</td>
+  <td>0</td><td>0</td><td>0%</td>
+  <td>0</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0</td>
+</tr>
+</tbody><tfoot><tr>
+  <td>TEAM TOTAL</td><td></td><td>0</td><td>0</td><td>0%</td>
+  <td>0</td>
+  <td>0</td>
+  <td></td><td></td><td>0</td>
+  <td>0</td>
+</tr></tfoot></table></div></div>
+<div class="pnl">
+<div class="pnl-h" style="border-left:4px solid #805ad5;">
+  Team 5 — AGONE
+  <span><span class="tag" style="background:#805ad5;">Lead: Sarisha</span>
+  &nbsp; 3 members &bull; 0 hrs &bull; 0% completion</span>
+</div>
+<div class="pnl-b"><table><thead><tr>
+  <th>Member</th><th>Role</th><th>Assigned</th><th>Completed</th><th>Completion</th>
+  <th>Bugs In</th><th>Bugs Fixed</th><th>On-Time %</th><th>Quality</th><th>Hours</th><th>Extra</th>
+</tr></thead><tbody>
+<tr>
+  <td>&#9733; Sarisha</td><td>Tech Lead</td>
+  <td>0</td><td>0</td><td>0%</td>
+  <td>0</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0</td>
+</tr>
+<tr>
+  <td>Kanan</td><td>Developer</td>
+  <td>0</td><td>0</td><td>0%</td>
+  <td>0</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0</td>
+</tr>
+<tr>
+  <td>Sharuti</td><td>Developer</td>
+  <td>0</td><td>0</td><td>0%</td>
+  <td>0</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0</td>
+</tr>
+</tbody><tfoot><tr>
+  <td>TEAM TOTAL</td><td></td><td>0</td><td>0</td><td>0%</td>
+  <td>0</td>
+  <td>0</td>
+  <td></td><td></td><td>0</td>
+  <td>0</td>
+</tr></tfoot></table></div></div>
+<div class="pnl">
+<div class="pnl-h" style="border-left:4px solid #dd6b20;">
+  Team 6 — AGONEWorkj
+  <span><span class="tag" style="background:#dd6b20;">Lead: Faisal</span>
+  &nbsp; 3 members &bull; 0 hrs &bull; 0% completion</span>
+</div>
+<div class="pnl-b"><table><thead><tr>
+  <th>Member</th><th>Role</th><th>Assigned</th><th>Completed</th><th>Completion</th>
+  <th>Bugs In</th><th>Bugs Fixed</th><th>On-Time %</th><th>Quality</th><th>Hours</th><th>Extra</th>
+</tr></thead><tbody>
+<tr>
+  <td>&#9733; Faisal</td><td>Tech Lead</td>
+  <td>0</td><td>0</td><td>0%</td>
+  <td>0</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0</td>
+</tr>
+<tr>
+  <td>Kirtinini</td><td>Developer</td>
+  <td>0</td><td>0</td><td>0%</td>
+  <td>0</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0</td>
+</tr>
+<tr>
+  <td>Surya</td><td>Developer</td>
+  <td>0</td><td>0</td><td>0%</td>
+  <td>0</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0</td>
+</tr>
+</tbody><tfoot><tr>
+  <td>TEAM TOTAL</td><td></td><td>0</td><td>0</td><td>0%</td>
+  <td>0</td>
+  <td>0</td>
+  <td></td><td></td><td>0</td>
+  <td>0</td>
+</tr></tfoot></table></div></div>
+<div class="pnl">
+<div class="pnl-h" style="border-left:4px solid #319795;">
+  Team 7 — OJE Safe
+  <span><span class="tag" style="background:#319795;">Lead: Hanis</span>
+  &nbsp; 3 members &bull; 0 hrs &bull; 0% completion</span>
+</div>
+<div class="pnl-b"><table><thead><tr>
+  <th>Member</th><th>Role</th><th>Assigned</th><th>Completed</th><th>Completion</th>
+  <th>Bugs In</th><th>Bugs Fixed</th><th>On-Time %</th><th>Quality</th><th>Hours</th><th>Extra</th>
+</tr></thead><tbody>
+<tr>
+  <td>&#9733; Hanis</td><td>Tech Lead</td>
+  <td>0</td><td>0</td><td>0%</td>
+  <td>0</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0</td>
+</tr>
+<tr>
+  <td>Fatin</td><td>Developer</td>
+  <td>0</td><td>0</td><td>0%</td>
+  <td>0</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0</td>
+</tr>
+<tr>
+  <td>Max</td><td>Developer</td>
+  <td>0</td><td>0</td><td>0%</td>
+  <td>0</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0</td>
+</tr>
+</tbody><tfoot><tr>
+  <td>TEAM TOTAL</td><td></td><td>0</td><td>0</td><td>0%</td>
+  <td>0</td>
+  <td>0</td>
+  <td></td><td></td><td>0</td>
+  <td>0</td>
+</tr></tfoot></table></div></div>
+</div>
+<div class="tc" id="t-kpi">
+<div class="pnl"><div class="pnl-h">Individual KPI Scorecard</div><div class="pnl-b">
+<table><thead><tr>
+  <th>Name</th><th>Team</th><th>Completion Rate</th><th>On-Time Delivery</th><th>Quality Score</th><th>Bug Ratio</th><th>Overall Grade</th>
+</tr></thead><tbody>
+<tr>
+  <td>Abdullah</td><td>Team 1</td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td class="stars">&#9734;&#9734;&#9734;&#9734;&#9734;</td>
+  <td class="warn">0</td>
+  <td class="zero" style="font-size:1.1rem;font-weight:800;">-</td>
+</tr>
+<tr>
+  <td>Nastaran</td><td>Team 1</td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td class="stars">&#9734;&#9734;&#9734;&#9734;&#9734;</td>
+  <td class="warn">0</td>
+  <td class="zero" style="font-size:1.1rem;font-weight:800;">-</td>
+</tr>
+<tr>
+  <td>Jawad</td><td>Team 1</td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td class="stars">&#9734;&#9734;&#9734;&#9734;&#9734;</td>
+  <td class="warn">0</td>
+  <td class="zero" style="font-size:1.1rem;font-weight:800;">-</td>
+</tr>
+<tr>
+  <td>Geena</td><td>Team 1</td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td class="stars">&#9734;&#9734;&#9734;&#9734;&#9734;</td>
+  <td class="warn">0</td>
+  <td class="zero" style="font-size:1.1rem;font-weight:800;">-</td>
+</tr>
+<tr>
+  <td>Geena</td><td>Team 2</td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td class="stars">&#9734;&#9734;&#9734;&#9734;&#9734;</td>
+  <td class="warn">0</td>
+  <td class="zero" style="font-size:1.1rem;font-weight:800;">-</td>
+</tr>
+<tr>
+  <td>Logesh</td><td>Team 2</td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td class="stars">&#9734;&#9734;&#9734;&#9734;&#9734;</td>
+  <td class="warn">0</td>
+  <td class="zero" style="font-size:1.1rem;font-weight:800;">-</td>
+</tr>
+<tr>
+  <td>Phuoc (Ricky)</td><td>Team 3</td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td class="stars">&#9734;&#9734;&#9734;&#9734;&#9734;</td>
+  <td class="warn">0</td>
+  <td class="zero" style="font-size:1.1rem;font-weight:800;">-</td>
+</tr>
+<tr>
+  <td>Than</td><td>Team 3</td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td class="stars">&#9734;&#9734;&#9734;&#9734;&#9734;</td>
+  <td class="warn">0</td>
+  <td class="zero" style="font-size:1.1rem;font-weight:800;">-</td>
+</tr>
+<tr>
+  <td>Loc</td><td>Team 3</td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td class="stars">&#9734;&#9734;&#9734;&#9734;&#9734;</td>
+  <td class="warn">0</td>
+  <td class="zero" style="font-size:1.1rem;font-weight:800;">-</td>
+</tr>
+<tr>
+  <td>Majed</td><td>Team 4</td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td class="stars">&#9734;&#9734;&#9734;&#9734;&#9734;</td>
+  <td class="warn">0</td>
+  <td class="zero" style="font-size:1.1rem;font-weight:800;">-</td>
+</tr>
+<tr>
+  <td>Hema</td><td>Team 4</td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td class="stars">&#9734;&#9734;&#9734;&#9734;&#9734;</td>
+  <td class="warn">0</td>
+  <td class="zero" style="font-size:1.1rem;font-weight:800;">-</td>
+</tr>
+<tr>
+  <td>Rahmya</td><td>Team 4</td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td class="stars">&#9734;&#9734;&#9734;&#9734;&#9734;</td>
+  <td class="warn">0</td>
+  <td class="zero" style="font-size:1.1rem;font-weight:800;">-</td>
+</tr>
+<tr>
+  <td>Umeswar</td><td>Team 4</td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td class="stars">&#9734;&#9734;&#9734;&#9734;&#9734;</td>
+  <td class="warn">0</td>
+  <td class="zero" style="font-size:1.1rem;font-weight:800;">-</td>
+</tr>
+<tr>
+  <td>Sarisha</td><td>Team 5</td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td class="stars">&#9734;&#9734;&#9734;&#9734;&#9734;</td>
+  <td class="warn">0</td>
+  <td class="zero" style="font-size:1.1rem;font-weight:800;">-</td>
+</tr>
+<tr>
+  <td>Kanan</td><td>Team 5</td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td class="stars">&#9734;&#9734;&#9734;&#9734;&#9734;</td>
+  <td class="warn">0</td>
+  <td class="zero" style="font-size:1.1rem;font-weight:800;">-</td>
+</tr>
+<tr>
+  <td>Sharuti</td><td>Team 5</td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td class="stars">&#9734;&#9734;&#9734;&#9734;&#9734;</td>
+  <td class="warn">0</td>
+  <td class="zero" style="font-size:1.1rem;font-weight:800;">-</td>
+</tr>
+<tr>
+  <td>Faisal</td><td>Team 6</td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td class="stars">&#9734;&#9734;&#9734;&#9734;&#9734;</td>
+  <td class="warn">0</td>
+  <td class="zero" style="font-size:1.1rem;font-weight:800;">-</td>
+</tr>
+<tr>
+  <td>Kirtinini</td><td>Team 6</td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td class="stars">&#9734;&#9734;&#9734;&#9734;&#9734;</td>
+  <td class="warn">0</td>
+  <td class="zero" style="font-size:1.1rem;font-weight:800;">-</td>
+</tr>
+<tr>
+  <td>Surya</td><td>Team 6</td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td class="stars">&#9734;&#9734;&#9734;&#9734;&#9734;</td>
+  <td class="warn">0</td>
+  <td class="zero" style="font-size:1.1rem;font-weight:800;">-</td>
+</tr>
+<tr>
+  <td>Hanis</td><td>Team 7</td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td class="stars">&#9734;&#9734;&#9734;&#9734;&#9734;</td>
+  <td class="warn">0</td>
+  <td class="zero" style="font-size:1.1rem;font-weight:800;">-</td>
+</tr>
+<tr>
+  <td>Fatin</td><td>Team 7</td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td class="stars">&#9734;&#9734;&#9734;&#9734;&#9734;</td>
+  <td class="warn">0</td>
+  <td class="zero" style="font-size:1.1rem;font-weight:800;">-</td>
+</tr>
+<tr>
+  <td>Max</td><td>Team 7</td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td><div class="prog"><div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div><div class="prog-val zero">0%</div></div></td>
+  <td class="stars">&#9734;&#9734;&#9734;&#9734;&#9734;</td>
+  <td class="warn">0</td>
+  <td class="zero" style="font-size:1.1rem;font-weight:800;">-</td>
+</tr>
+</tbody></table></div></div>
+<div class="pnl"><div class="pnl-h">KPI Definitions & Grading</div><div class="pnl-b">
+<table><thead><tr><th>KPI Metric</th><th>Description</th><th>Weight in Grade</th></tr></thead><tbody>
+<tr><td>Completion Rate</td><td>Tasks Completed / Tasks Assigned x 100</td><td>30%</td></tr>
+<tr><td>On-Time Delivery</td><td>Percentage of tasks delivered on or before deadline</td><td>30%</td></tr>
+<tr><td>Quality Score</td><td>Tech Lead rating: 1=Poor, 2=Below Avg, 3=Average, 4=Good, 5=Excellent</td><td>25%</td></tr>
+<tr><td>Bug Ratio</td><td>Bugs found in delivered work / Tasks completed (lower is better)</td><td>15%</td></tr>
+</tbody></table>
+<div style="margin-top:.75rem;font-size:.8rem;color:var(--text-l);">
+  <strong>Grading:</strong> A = 85%+ &bull; B = 70-84% &bull; C = 55-69% &bull; D = 40-54% &bull; F = below 40%
+</div>
+</div></div>
+</div>
+<div class="tc" id="t-errors">
+<div class="pnl"><div class="pnl-h">Error & Bug Tracking by Person</div><div class="pnl-b">
+<table><thead><tr>
+  <th>Name</th><th>Team</th><th>Project</th><th>Bugs in Work</th><th>Bugs Fixed</th><th>Net Open</th><th>Bug Ratio</th><th>Errors Log</th>
+</tr></thead><tbody>
+<tr>
+  <td>Abdullah</td><td>Team 1</td><td>AGONEWorkj</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td style="text-align:left;white-space:normal;max-width:250px;font-size:.75rem;"><span class="zero">—</span></td>
+</tr>
+<tr>
+  <td>Nastaran</td><td>Team 1</td><td>AGONEWorkj</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td style="text-align:left;white-space:normal;max-width:250px;font-size:.75rem;"><span class="zero">—</span></td>
+</tr>
+<tr>
+  <td>Jawad</td><td>Team 1</td><td>AGONEWorkj</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td style="text-align:left;white-space:normal;max-width:250px;font-size:.75rem;"><span class="zero">—</span></td>
+</tr>
+<tr>
+  <td>Geena</td><td>Team 1</td><td>AGONEWorkj</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td style="text-align:left;white-space:normal;max-width:250px;font-size:.75rem;"><span class="zero">—</span></td>
+</tr>
+<tr>
+  <td>Geena</td><td>Team 2</td><td>OJE Safe</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td style="text-align:left;white-space:normal;max-width:250px;font-size:.75rem;"><span class="zero">—</span></td>
+</tr>
+<tr>
+  <td>Logesh</td><td>Team 2</td><td>OJE Safe</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td style="text-align:left;white-space:normal;max-width:250px;font-size:.75rem;"><span class="zero">—</span></td>
+</tr>
+<tr>
+  <td>Phuoc (Ricky)</td><td>Team 3</td><td>ONe Learn</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td style="text-align:left;white-space:normal;max-width:250px;font-size:.75rem;"><span class="zero">—</span></td>
+</tr>
+<tr>
+  <td>Than</td><td>Team 3</td><td>ONe Learn</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td style="text-align:left;white-space:normal;max-width:250px;font-size:.75rem;"><span class="zero">—</span></td>
+</tr>
+<tr>
+  <td>Loc</td><td>Team 3</td><td>ONe Learn</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td style="text-align:left;white-space:normal;max-width:250px;font-size:.75rem;"><span class="zero">—</span></td>
+</tr>
+<tr>
+  <td>Majed</td><td>Team 4</td><td>Ne Pulse</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td style="text-align:left;white-space:normal;max-width:250px;font-size:.75rem;"><span class="zero">—</span></td>
+</tr>
+<tr>
+  <td>Hema</td><td>Team 4</td><td>Ne Pulse</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td style="text-align:left;white-space:normal;max-width:250px;font-size:.75rem;"><span class="zero">—</span></td>
+</tr>
+<tr>
+  <td>Rahmya</td><td>Team 4</td><td>Ne Pulse</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td style="text-align:left;white-space:normal;max-width:250px;font-size:.75rem;"><span class="zero">—</span></td>
+</tr>
+<tr>
+  <td>Umeswar</td><td>Team 4</td><td>Ne Pulse</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td style="text-align:left;white-space:normal;max-width:250px;font-size:.75rem;"><span class="zero">—</span></td>
+</tr>
+<tr>
+  <td>Sarisha</td><td>Team 5</td><td>AGONE</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td style="text-align:left;white-space:normal;max-width:250px;font-size:.75rem;"><span class="zero">—</span></td>
+</tr>
+<tr>
+  <td>Kanan</td><td>Team 5</td><td>AGONE</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td style="text-align:left;white-space:normal;max-width:250px;font-size:.75rem;"><span class="zero">—</span></td>
+</tr>
+<tr>
+  <td>Sharuti</td><td>Team 5</td><td>AGONE</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td style="text-align:left;white-space:normal;max-width:250px;font-size:.75rem;"><span class="zero">—</span></td>
+</tr>
+<tr>
+  <td>Faisal</td><td>Team 6</td><td>AGONEWorkj</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td style="text-align:left;white-space:normal;max-width:250px;font-size:.75rem;"><span class="zero">—</span></td>
+</tr>
+<tr>
+  <td>Kirtinini</td><td>Team 6</td><td>AGONEWorkj</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td style="text-align:left;white-space:normal;max-width:250px;font-size:.75rem;"><span class="zero">—</span></td>
+</tr>
+<tr>
+  <td>Surya</td><td>Team 6</td><td>AGONEWorkj</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td style="text-align:left;white-space:normal;max-width:250px;font-size:.75rem;"><span class="zero">—</span></td>
+</tr>
+<tr>
+  <td>Hanis</td><td>Team 7</td><td>OJE Safe</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td style="text-align:left;white-space:normal;max-width:250px;font-size:.75rem;"><span class="zero">—</span></td>
+</tr>
+<tr>
+  <td>Fatin</td><td>Team 7</td><td>OJE Safe</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td style="text-align:left;white-space:normal;max-width:250px;font-size:.75rem;"><span class="zero">—</span></td>
+</tr>
+<tr>
+  <td>Max</td><td>Team 7</td><td>OJE Safe</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td class="zero">0</td><td class="zero">0</td>
+  <td style="text-align:left;white-space:normal;max-width:250px;font-size:.75rem;"><span class="zero">—</span></td>
+</tr>
+</tbody></table></div></div></div>
+<div class="tc" id="t-feedback">
+<div class="fb-grid">
+<div class="fb-card" style="border-left-color:#3182ce;">
+  <div class="fb-name">Abdullah</div>
+  <div class="fb-role">Tech Lead &bull; Team 1 &bull; AGONEWorkj</div>
+  <div class="fb-section"><div class="fb-label">Achievements</div><div class="fb-text empty">No achievements recorded</div></div>
+  <div class="fb-section"><div class="fb-label">Tech Lead Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Manager Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Progress Notes</div><div class="fb-text empty">No notes</div></div>
+</div>
+<div class="fb-card" style="border-left-color:#e53e3e;">
+  <div class="fb-name">Nastaran</div>
+  <div class="fb-role">Developer &bull; Team 1 &bull; AGONEWorkj</div>
+  <div class="fb-section"><div class="fb-label">Achievements</div><div class="fb-text empty">No achievements recorded</div></div>
+  <div class="fb-section"><div class="fb-label">Tech Lead Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Manager Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Progress Notes</div><div class="fb-text empty">No notes</div></div>
+</div>
+<div class="fb-card" style="border-left-color:#38a169;">
+  <div class="fb-name">Jawad</div>
+  <div class="fb-role">Developer &bull; Team 1 &bull; AGONEWorkj</div>
+  <div class="fb-section"><div class="fb-label">Achievements</div><div class="fb-text empty">No achievements recorded</div></div>
+  <div class="fb-section"><div class="fb-label">Tech Lead Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Manager Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Progress Notes</div><div class="fb-text empty">No notes</div></div>
+</div>
+<div class="fb-card" style="border-left-color:#d69e2e;">
+  <div class="fb-name">Geena</div>
+  <div class="fb-role">Developer &bull; Team 1 &bull; AGONEWorkj, OJE Safe</div>
+  <div class="fb-section"><div class="fb-label">Achievements</div><div class="fb-text empty">No achievements recorded</div></div>
+  <div class="fb-section"><div class="fb-label">Tech Lead Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Manager Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Progress Notes</div><div class="fb-text empty">No notes</div></div>
+</div>
+<div class="fb-card" style="border-left-color:#805ad5;">
+  <div class="fb-name">Geena</div>
+  <div class="fb-role">Tech Lead &bull; Team 2 &bull; AGONEWorkj, OJE Safe</div>
+  <div class="fb-section"><div class="fb-label">Achievements</div><div class="fb-text empty">No achievements recorded</div></div>
+  <div class="fb-section"><div class="fb-label">Tech Lead Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Manager Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Progress Notes</div><div class="fb-text empty">No notes</div></div>
+</div>
+<div class="fb-card" style="border-left-color:#dd6b20;">
+  <div class="fb-name">Logesh</div>
+  <div class="fb-role">Developer &bull; Team 2 &bull; OJE Safe</div>
+  <div class="fb-section"><div class="fb-label">Achievements</div><div class="fb-text empty">No achievements recorded</div></div>
+  <div class="fb-section"><div class="fb-label">Tech Lead Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Manager Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Progress Notes</div><div class="fb-text empty">No notes</div></div>
+</div>
+<div class="fb-card" style="border-left-color:#319795;">
+  <div class="fb-name">Phuoc (Ricky)</div>
+  <div class="fb-role">Tech Lead &bull; Team 3 &bull; ONe Learn</div>
+  <div class="fb-section"><div class="fb-label">Achievements</div><div class="fb-text empty">No achievements recorded</div></div>
+  <div class="fb-section"><div class="fb-label">Tech Lead Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Manager Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Progress Notes</div><div class="fb-text empty">No notes</div></div>
+</div>
+<div class="fb-card" style="border-left-color:#d53f8c;">
+  <div class="fb-name">Than</div>
+  <div class="fb-role">Developer &bull; Team 3 &bull; ONe Learn</div>
+  <div class="fb-section"><div class="fb-label">Achievements</div><div class="fb-text empty">No achievements recorded</div></div>
+  <div class="fb-section"><div class="fb-label">Tech Lead Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Manager Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Progress Notes</div><div class="fb-text empty">No notes</div></div>
+</div>
+<div class="fb-card" style="border-left-color:#667eea;">
+  <div class="fb-name">Loc</div>
+  <div class="fb-role">Developer &bull; Team 3 &bull; ONe Learn</div>
+  <div class="fb-section"><div class="fb-label">Achievements</div><div class="fb-text empty">No achievements recorded</div></div>
+  <div class="fb-section"><div class="fb-label">Tech Lead Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Manager Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Progress Notes</div><div class="fb-text empty">No notes</div></div>
+</div>
+<div class="fb-card" style="border-left-color:#3182ce;">
+  <div class="fb-name">Majed</div>
+  <div class="fb-role">Tech Lead &bull; Team 4 &bull; Ne Pulse</div>
+  <div class="fb-section"><div class="fb-label">Achievements</div><div class="fb-text empty">No achievements recorded</div></div>
+  <div class="fb-section"><div class="fb-label">Tech Lead Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Manager Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Progress Notes</div><div class="fb-text empty">No notes</div></div>
+</div>
+<div class="fb-card" style="border-left-color:#e53e3e;">
+  <div class="fb-name">Hema</div>
+  <div class="fb-role">Developer &bull; Team 4 &bull; Ne Pulse</div>
+  <div class="fb-section"><div class="fb-label">Achievements</div><div class="fb-text empty">No achievements recorded</div></div>
+  <div class="fb-section"><div class="fb-label">Tech Lead Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Manager Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Progress Notes</div><div class="fb-text empty">No notes</div></div>
+</div>
+<div class="fb-card" style="border-left-color:#38a169;">
+  <div class="fb-name">Rahmya</div>
+  <div class="fb-role">Developer &bull; Team 4 &bull; Ne Pulse</div>
+  <div class="fb-section"><div class="fb-label">Achievements</div><div class="fb-text empty">No achievements recorded</div></div>
+  <div class="fb-section"><div class="fb-label">Tech Lead Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Manager Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Progress Notes</div><div class="fb-text empty">No notes</div></div>
+</div>
+<div class="fb-card" style="border-left-color:#d69e2e;">
+  <div class="fb-name">Umeswar</div>
+  <div class="fb-role">Developer &bull; Team 4 &bull; Ne Pulse</div>
+  <div class="fb-section"><div class="fb-label">Achievements</div><div class="fb-text empty">No achievements recorded</div></div>
+  <div class="fb-section"><div class="fb-label">Tech Lead Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Manager Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Progress Notes</div><div class="fb-text empty">No notes</div></div>
+</div>
+<div class="fb-card" style="border-left-color:#805ad5;">
+  <div class="fb-name">Sarisha</div>
+  <div class="fb-role">Tech Lead &bull; Team 5 &bull; AGONE</div>
+  <div class="fb-section"><div class="fb-label">Achievements</div><div class="fb-text empty">No achievements recorded</div></div>
+  <div class="fb-section"><div class="fb-label">Tech Lead Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Manager Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Progress Notes</div><div class="fb-text empty">No notes</div></div>
+</div>
+<div class="fb-card" style="border-left-color:#dd6b20;">
+  <div class="fb-name">Kanan</div>
+  <div class="fb-role">Developer &bull; Team 5 &bull; AGONE</div>
+  <div class="fb-section"><div class="fb-label">Achievements</div><div class="fb-text empty">No achievements recorded</div></div>
+  <div class="fb-section"><div class="fb-label">Tech Lead Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Manager Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Progress Notes</div><div class="fb-text empty">No notes</div></div>
+</div>
+<div class="fb-card" style="border-left-color:#319795;">
+  <div class="fb-name">Sharuti</div>
+  <div class="fb-role">Developer &bull; Team 5 &bull; AGONE</div>
+  <div class="fb-section"><div class="fb-label">Achievements</div><div class="fb-text empty">No achievements recorded</div></div>
+  <div class="fb-section"><div class="fb-label">Tech Lead Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Manager Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Progress Notes</div><div class="fb-text empty">No notes</div></div>
+</div>
+<div class="fb-card" style="border-left-color:#d53f8c;">
+  <div class="fb-name">Faisal</div>
+  <div class="fb-role">Tech Lead &bull; Team 6 &bull; AGONEWorkj</div>
+  <div class="fb-section"><div class="fb-label">Achievements</div><div class="fb-text empty">No achievements recorded</div></div>
+  <div class="fb-section"><div class="fb-label">Tech Lead Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Manager Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Progress Notes</div><div class="fb-text empty">No notes</div></div>
+</div>
+<div class="fb-card" style="border-left-color:#667eea;">
+  <div class="fb-name">Kirtinini</div>
+  <div class="fb-role">Developer &bull; Team 6 &bull; AGONEWorkj</div>
+  <div class="fb-section"><div class="fb-label">Achievements</div><div class="fb-text empty">No achievements recorded</div></div>
+  <div class="fb-section"><div class="fb-label">Tech Lead Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Manager Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Progress Notes</div><div class="fb-text empty">No notes</div></div>
+</div>
+<div class="fb-card" style="border-left-color:#3182ce;">
+  <div class="fb-name">Surya</div>
+  <div class="fb-role">Developer &bull; Team 6 &bull; AGONEWorkj</div>
+  <div class="fb-section"><div class="fb-label">Achievements</div><div class="fb-text empty">No achievements recorded</div></div>
+  <div class="fb-section"><div class="fb-label">Tech Lead Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Manager Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Progress Notes</div><div class="fb-text empty">No notes</div></div>
+</div>
+<div class="fb-card" style="border-left-color:#e53e3e;">
+  <div class="fb-name">Hanis</div>
+  <div class="fb-role">Tech Lead &bull; Team 7 &bull; OJE Safe</div>
+  <div class="fb-section"><div class="fb-label">Achievements</div><div class="fb-text empty">No achievements recorded</div></div>
+  <div class="fb-section"><div class="fb-label">Tech Lead Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Manager Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Progress Notes</div><div class="fb-text empty">No notes</div></div>
+</div>
+<div class="fb-card" style="border-left-color:#38a169;">
+  <div class="fb-name">Fatin</div>
+  <div class="fb-role">Developer &bull; Team 7 &bull; OJE Safe</div>
+  <div class="fb-section"><div class="fb-label">Achievements</div><div class="fb-text empty">No achievements recorded</div></div>
+  <div class="fb-section"><div class="fb-label">Tech Lead Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Manager Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Progress Notes</div><div class="fb-text empty">No notes</div></div>
+</div>
+<div class="fb-card" style="border-left-color:#d69e2e;">
+  <div class="fb-name">Max</div>
+  <div class="fb-role">Developer &bull; Team 7 &bull; OJE Safe</div>
+  <div class="fb-section"><div class="fb-label">Achievements</div><div class="fb-text empty">No achievements recorded</div></div>
+  <div class="fb-section"><div class="fb-label">Tech Lead Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Manager Feedback</div><div class="fb-text empty">No feedback yet</div></div>
+  <div class="fb-section"><div class="fb-label">Progress Notes</div><div class="fb-text empty">No notes</div></div>
+</div>
+</div></div>
+<div class="tc" id="t-hours">
+<div class="pnl"><div class="pnl-h">Hours Worked & Overtime Tracking</div><div class="pnl-b">
+<table><thead><tr>
+  <th>Name</th><th>Team</th><th>Project(s)</th><th>Total Hours</th><th>Extra Hours</th><th>Overtime %</th><th>Hours Breakdown</th>
+</tr></thead><tbody>
+<tr>
+  <td>Abdullah</td><td>Team 1</td><td style="font-size:.75rem;">AGONEWorkj</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero">0%</td>
+  <td style="min-width:160px;"><div class="prog"><div class="prog-track" style="height:14px;">
+    <div class="prog-fill" style="width:0%;background:var(--accent);border-radius:4px 0 0 4px;"></div>
+    <div class="prog-fill" style="width:0%;background:var(--orange);border-radius:0 4px 4px 0;position:absolute;left:0%;"></div>
+  </div></div></td>
+</tr>
+<tr>
+  <td>Nastaran</td><td>Team 1</td><td style="font-size:.75rem;">AGONEWorkj</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero">0%</td>
+  <td style="min-width:160px;"><div class="prog"><div class="prog-track" style="height:14px;">
+    <div class="prog-fill" style="width:0%;background:var(--accent);border-radius:4px 0 0 4px;"></div>
+    <div class="prog-fill" style="width:0%;background:var(--orange);border-radius:0 4px 4px 0;position:absolute;left:0%;"></div>
+  </div></div></td>
+</tr>
+<tr>
+  <td>Jawad</td><td>Team 1</td><td style="font-size:.75rem;">AGONEWorkj</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero">0%</td>
+  <td style="min-width:160px;"><div class="prog"><div class="prog-track" style="height:14px;">
+    <div class="prog-fill" style="width:0%;background:var(--accent);border-radius:4px 0 0 4px;"></div>
+    <div class="prog-fill" style="width:0%;background:var(--orange);border-radius:0 4px 4px 0;position:absolute;left:0%;"></div>
+  </div></div></td>
+</tr>
+<tr>
+  <td>Geena</td><td>Team 1</td><td style="font-size:.75rem;">AGONEWorkj, OJE Safe</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero">0%</td>
+  <td style="min-width:160px;"><div class="prog"><div class="prog-track" style="height:14px;">
+    <div class="prog-fill" style="width:0%;background:var(--accent);border-radius:4px 0 0 4px;"></div>
+    <div class="prog-fill" style="width:0%;background:var(--orange);border-radius:0 4px 4px 0;position:absolute;left:0%;"></div>
+  </div></div></td>
+</tr>
+<tr>
+  <td>Geena</td><td>Team 2</td><td style="font-size:.75rem;">AGONEWorkj, OJE Safe</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero">0%</td>
+  <td style="min-width:160px;"><div class="prog"><div class="prog-track" style="height:14px;">
+    <div class="prog-fill" style="width:0%;background:var(--accent);border-radius:4px 0 0 4px;"></div>
+    <div class="prog-fill" style="width:0%;background:var(--orange);border-radius:0 4px 4px 0;position:absolute;left:0%;"></div>
+  </div></div></td>
+</tr>
+<tr>
+  <td>Logesh</td><td>Team 2</td><td style="font-size:.75rem;">OJE Safe</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero">0%</td>
+  <td style="min-width:160px;"><div class="prog"><div class="prog-track" style="height:14px;">
+    <div class="prog-fill" style="width:0%;background:var(--accent);border-radius:4px 0 0 4px;"></div>
+    <div class="prog-fill" style="width:0%;background:var(--orange);border-radius:0 4px 4px 0;position:absolute;left:0%;"></div>
+  </div></div></td>
+</tr>
+<tr>
+  <td>Phuoc (Ricky)</td><td>Team 3</td><td style="font-size:.75rem;">ONe Learn</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero">0%</td>
+  <td style="min-width:160px;"><div class="prog"><div class="prog-track" style="height:14px;">
+    <div class="prog-fill" style="width:0%;background:var(--accent);border-radius:4px 0 0 4px;"></div>
+    <div class="prog-fill" style="width:0%;background:var(--orange);border-radius:0 4px 4px 0;position:absolute;left:0%;"></div>
+  </div></div></td>
+</tr>
+<tr>
+  <td>Than</td><td>Team 3</td><td style="font-size:.75rem;">ONe Learn</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero">0%</td>
+  <td style="min-width:160px;"><div class="prog"><div class="prog-track" style="height:14px;">
+    <div class="prog-fill" style="width:0%;background:var(--accent);border-radius:4px 0 0 4px;"></div>
+    <div class="prog-fill" style="width:0%;background:var(--orange);border-radius:0 4px 4px 0;position:absolute;left:0%;"></div>
+  </div></div></td>
+</tr>
+<tr>
+  <td>Loc</td><td>Team 3</td><td style="font-size:.75rem;">ONe Learn</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero">0%</td>
+  <td style="min-width:160px;"><div class="prog"><div class="prog-track" style="height:14px;">
+    <div class="prog-fill" style="width:0%;background:var(--accent);border-radius:4px 0 0 4px;"></div>
+    <div class="prog-fill" style="width:0%;background:var(--orange);border-radius:0 4px 4px 0;position:absolute;left:0%;"></div>
+  </div></div></td>
+</tr>
+<tr>
+  <td>Majed</td><td>Team 4</td><td style="font-size:.75rem;">Ne Pulse</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero">0%</td>
+  <td style="min-width:160px;"><div class="prog"><div class="prog-track" style="height:14px;">
+    <div class="prog-fill" style="width:0%;background:var(--accent);border-radius:4px 0 0 4px;"></div>
+    <div class="prog-fill" style="width:0%;background:var(--orange);border-radius:0 4px 4px 0;position:absolute;left:0%;"></div>
+  </div></div></td>
+</tr>
+<tr>
+  <td>Hema</td><td>Team 4</td><td style="font-size:.75rem;">Ne Pulse</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero">0%</td>
+  <td style="min-width:160px;"><div class="prog"><div class="prog-track" style="height:14px;">
+    <div class="prog-fill" style="width:0%;background:var(--accent);border-radius:4px 0 0 4px;"></div>
+    <div class="prog-fill" style="width:0%;background:var(--orange);border-radius:0 4px 4px 0;position:absolute;left:0%;"></div>
+  </div></div></td>
+</tr>
+<tr>
+  <td>Rahmya</td><td>Team 4</td><td style="font-size:.75rem;">Ne Pulse</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero">0%</td>
+  <td style="min-width:160px;"><div class="prog"><div class="prog-track" style="height:14px;">
+    <div class="prog-fill" style="width:0%;background:var(--accent);border-radius:4px 0 0 4px;"></div>
+    <div class="prog-fill" style="width:0%;background:var(--orange);border-radius:0 4px 4px 0;position:absolute;left:0%;"></div>
+  </div></div></td>
+</tr>
+<tr>
+  <td>Umeswar</td><td>Team 4</td><td style="font-size:.75rem;">Ne Pulse</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero">0%</td>
+  <td style="min-width:160px;"><div class="prog"><div class="prog-track" style="height:14px;">
+    <div class="prog-fill" style="width:0%;background:var(--accent);border-radius:4px 0 0 4px;"></div>
+    <div class="prog-fill" style="width:0%;background:var(--orange);border-radius:0 4px 4px 0;position:absolute;left:0%;"></div>
+  </div></div></td>
+</tr>
+<tr>
+  <td>Sarisha</td><td>Team 5</td><td style="font-size:.75rem;">AGONE</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero">0%</td>
+  <td style="min-width:160px;"><div class="prog"><div class="prog-track" style="height:14px;">
+    <div class="prog-fill" style="width:0%;background:var(--accent);border-radius:4px 0 0 4px;"></div>
+    <div class="prog-fill" style="width:0%;background:var(--orange);border-radius:0 4px 4px 0;position:absolute;left:0%;"></div>
+  </div></div></td>
+</tr>
+<tr>
+  <td>Kanan</td><td>Team 5</td><td style="font-size:.75rem;">AGONE</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero">0%</td>
+  <td style="min-width:160px;"><div class="prog"><div class="prog-track" style="height:14px;">
+    <div class="prog-fill" style="width:0%;background:var(--accent);border-radius:4px 0 0 4px;"></div>
+    <div class="prog-fill" style="width:0%;background:var(--orange);border-radius:0 4px 4px 0;position:absolute;left:0%;"></div>
+  </div></div></td>
+</tr>
+<tr>
+  <td>Sharuti</td><td>Team 5</td><td style="font-size:.75rem;">AGONE</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero">0%</td>
+  <td style="min-width:160px;"><div class="prog"><div class="prog-track" style="height:14px;">
+    <div class="prog-fill" style="width:0%;background:var(--accent);border-radius:4px 0 0 4px;"></div>
+    <div class="prog-fill" style="width:0%;background:var(--orange);border-radius:0 4px 4px 0;position:absolute;left:0%;"></div>
+  </div></div></td>
+</tr>
+<tr>
+  <td>Faisal</td><td>Team 6</td><td style="font-size:.75rem;">AGONEWorkj</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero">0%</td>
+  <td style="min-width:160px;"><div class="prog"><div class="prog-track" style="height:14px;">
+    <div class="prog-fill" style="width:0%;background:var(--accent);border-radius:4px 0 0 4px;"></div>
+    <div class="prog-fill" style="width:0%;background:var(--orange);border-radius:0 4px 4px 0;position:absolute;left:0%;"></div>
+  </div></div></td>
+</tr>
+<tr>
+  <td>Kirtinini</td><td>Team 6</td><td style="font-size:.75rem;">AGONEWorkj</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero">0%</td>
+  <td style="min-width:160px;"><div class="prog"><div class="prog-track" style="height:14px;">
+    <div class="prog-fill" style="width:0%;background:var(--accent);border-radius:4px 0 0 4px;"></div>
+    <div class="prog-fill" style="width:0%;background:var(--orange);border-radius:0 4px 4px 0;position:absolute;left:0%;"></div>
+  </div></div></td>
+</tr>
+<tr>
+  <td>Surya</td><td>Team 6</td><td style="font-size:.75rem;">AGONEWorkj</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero">0%</td>
+  <td style="min-width:160px;"><div class="prog"><div class="prog-track" style="height:14px;">
+    <div class="prog-fill" style="width:0%;background:var(--accent);border-radius:4px 0 0 4px;"></div>
+    <div class="prog-fill" style="width:0%;background:var(--orange);border-radius:0 4px 4px 0;position:absolute;left:0%;"></div>
+  </div></div></td>
+</tr>
+<tr>
+  <td>Hanis</td><td>Team 7</td><td style="font-size:.75rem;">OJE Safe</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero">0%</td>
+  <td style="min-width:160px;"><div class="prog"><div class="prog-track" style="height:14px;">
+    <div class="prog-fill" style="width:0%;background:var(--accent);border-radius:4px 0 0 4px;"></div>
+    <div class="prog-fill" style="width:0%;background:var(--orange);border-radius:0 4px 4px 0;position:absolute;left:0%;"></div>
+  </div></div></td>
+</tr>
+<tr>
+  <td>Fatin</td><td>Team 7</td><td style="font-size:.75rem;">OJE Safe</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero">0%</td>
+  <td style="min-width:160px;"><div class="prog"><div class="prog-track" style="height:14px;">
+    <div class="prog-fill" style="width:0%;background:var(--accent);border-radius:4px 0 0 4px;"></div>
+    <div class="prog-fill" style="width:0%;background:var(--orange);border-radius:0 4px 4px 0;position:absolute;left:0%;"></div>
+  </div></div></td>
+</tr>
+<tr>
+  <td>Max</td><td>Team 7</td><td style="font-size:.75rem;">OJE Safe</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero" style="font-weight:700;">0</td>
+  <td class="zero">0%</td>
+  <td style="min-width:160px;"><div class="prog"><div class="prog-track" style="height:14px;">
+    <div class="prog-fill" style="width:0%;background:var(--accent);border-radius:4px 0 0 4px;"></div>
+    <div class="prog-fill" style="width:0%;background:var(--orange);border-radius:0 4px 4px 0;position:absolute;left:0%;"></div>
+  </div></div></td>
+</tr>
+</tbody><tfoot><tr>
+  <td>TOTAL</td><td></td><td></td>
+  <td style="font-weight:800;">0</td><td style="font-weight:800;">0</td>
+  <td>0%</td><td></td>
+</tr></tfoot></table></div></div></div>
+<div class="tc" id="t-multi">
+<div class="pnl"><div class="pnl-h">Members Working Across Multiple Projects</div><div class="pnl-b">
+<table><thead><tr><th>Name</th><th>Teams</th><th>Projects</th><th>Total Hours (Combined)</th></tr></thead><tbody>
+<tr><td style="font-weight:700;">Geena</td><td>Team 1, Team 2</td><td><span class="mp-badge" style="background:#3182ce">OJE Safe</span> <span class="mp-badge" style="background:#e53e3e">AGONEWorkj</span></td><td>0</td></tr>
+</tbody></table>
+</div></div>
+<div class="pnl"><div class="pnl-h">About Multi-Project Tracking</div><div class="pnl-b" style="font-size:.85rem;color:var(--text-l);">
+  <p>Members who work on more than one project appear in multiple teams. Their KPIs are tracked separately per team/project, so you can see exactly how their effort is split. The combined hours above reflect their total contribution across all projects.</p>
+</div></div>
+</div>
+
+<div style="text-align:center;padding:1.5rem;font-size:.75rem;color:var(--text-ll);">
+  Team KPI & Manpower Report &bull; January 2026 &bull; Confidential
+</div>
+
+</div>
+
+<script>
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tc').forEach(c => c.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.tab).classList.add('active');
+  });
+});
+</script>
+
+</body>
+</html>

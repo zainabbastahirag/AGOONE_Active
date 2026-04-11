@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Annual Man-Hours Dashboard — 2026</title>
+<style>
+  :root {
+    --primary: #1a365d;
+    --primary-light: #2b6cb0;
+    --accent: #3182ce;
+    --bg: #f0f4f8;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --text: #2d3748;
+    --text-light: #718096;
+    --text-lighter: #a0aec0;
+    --success: #38a169;
+    --danger: #e53e3e;
+    --warning: #d69e2e;
+    --purple: #805ad5;
+    --radius: 10px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.04);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* ── Layout ── */
+  .top-bar {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: white;
+    padding: 1.5rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow-lg);
+  }
+  .top-bar h1 { font-size: 1.35rem; font-weight: 700; }
+  .top-bar .meta { font-size: 0.8rem; opacity: 0.85; text-align: right; }
+  .top-bar .meta .year-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    padding: 0.2rem 0.75rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+  }
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 1.5rem;
+  }
+
+  /* ── KPI Cards ── */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .kpi {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    box-shadow: var(--shadow);
+    border-left: 4px solid var(--accent);
+  }
+  .kpi.green { border-left-color: var(--success); }
+  .kpi.red { border-left-color: var(--danger); }
+  .kpi.yellow { border-left-color: var(--warning); }
+  .kpi.purple { border-left-color: var(--purple); }
+  .kpi .kpi-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-light);
+    margin-bottom: 0.25rem;
+  }
+  .kpi .kpi-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1.2;
+  }
+  .kpi .kpi-sub {
+    font-size: 0.75rem;
+    color: var(--text-lighter);
+    margin-top: 0.15rem;
+  }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+  }
+  .tab {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-light);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .tab:hover { color: var(--primary); background: rgba(49,130,206,0.04); }
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ── Cards / Panels ── */
+  .panel {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 1rem 1.5rem;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--primary);
+    border-bottom: 1px solid var(--border);
+    background: #f8fafc;
+  }
+  .panel-body {
+    padding: 1.25rem 1.5rem;
+    overflow-x: auto;
+  }
+
+  /* ── Tables ── */
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th {
+    background: var(--primary);
+    color: white;
+    padding: 0.7rem 0.75rem;
+    text-align: center;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+  }
+  th:first-child { text-align: left; }
+  td {
+    padding: 0.6rem 0.75rem;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  td:first-child {
+    text-align: left;
+    font-weight: 600;
+    color: var(--primary);
+    position: sticky;
+    left: 0;
+    background: inherit;
+    z-index: 1;
+  }
+  tbody tr:hover { background: #edf2f7; }
+  tbody tr:nth-child(even) { background: #fafbfc; }
+  tbody tr:nth-child(even):hover { background: #edf2f7; }
+  tfoot td {
+    font-weight: 700;
+    background: #edf2f7;
+    border-top: 2px solid var(--primary);
+    padding: 0.75rem;
+  }
+  tfoot td:first-child { background: #edf2f7; }
+  .zero { color: var(--text-lighter); }
+  .has-val { font-weight: 600; color: var(--text); }
+  .total-col { background: #f0f4f8 !important; font-weight: 700; color: var(--primary) !important; }
+
+  /* ── Bar chart (pure CSS) ── */
+  .bar-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .bar-label {
+    width: 100px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--primary);
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .bar-track {
+    flex: 1;
+    background: #edf2f7;
+    border-radius: 6px;
+    height: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    padding-left: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: white;
+    transition: width 0.5s ease;
+    min-width: fit-content;
+  }
+  .bar-value {
+    width: 70px;
+    text-align: right;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text);
+    flex-shrink: 0;
+  }
+
+  /* ── Monthly mini-bars ── */
+  .mini-bars {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 4px;
+    align-items: end;
+    height: 120px;
+    padding: 0.5rem 0;
+  }
+  .mini-bar-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    justify-content: flex-end;
+  }
+  .mini-bar {
+    width: 100%;
+    border-radius: 4px 4px 0 0;
+    background: var(--accent);
+    min-height: 2px;
+    transition: height 0.3s;
+  }
+  .mini-bar-label {
+    font-size: 0.65rem;
+    color: var(--text-light);
+    margin-top: 4px;
+    font-weight: 600;
+  }
+  .mini-bar-val {
+    font-size: 0.65rem;
+    color: var(--text);
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+
+  /* ── Project badge colors ── */
+  .badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: white;
+  }
+
+  /* ── Print ── */
+  @media print {
+    body { background: white; }
+    .top-bar { position: static; }
+    .tabs { display: none; }
+    .tab-content { display: block !important; page-break-inside: avoid; }
+    .panel { box-shadow: none; border: 1px solid #ddd; }
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .container { padding: 0.75rem; }
+    .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    .top-bar { flex-direction: column; text-align: center; gap: 0.5rem; }
+    .top-bar .meta { text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ TOP BAR ═══════════════ -->
+<div class="top-bar">
+  <div>
+    <h1>Man-Hours Annual Dashboard</h1>
+    <div style="font-size:0.8rem; opacity:0.8; margin-top:0.15rem;">Resource Allocation &amp; P&amp;L Tracking</div>
+  </div>
+  <div class="meta">
+    <div class="year-badge">2026</div>
+    <div>Generated: Feb 06, 2026 07:14</div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ═══════════════ KPI ROW ═══════════════ -->
+  <div class="kpi-row">
+    <div class="kpi green">
+      <div class="kpi-label">Annual Total Hours</div>
+      <div class="kpi-value">0</div>
+      <div class="kpi-sub">across all projects</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Active Months</div>
+      <div class="kpi-value">0</div>
+      <div class="kpi-sub">of 12 months reported</div>
+    </div>
+    <div class="kpi yellow">
+      <div class="kpi-label">Avg Monthly Hours</div>
+      <div class="kpi-value">0</div>
+      <div class="kpi-sub">per active month</div>
+    </div>
+    <div class="kpi purple">
+      <div class="kpi-label">Projects Tracked</div>
+      <div class="kpi-value">5</div>
+      <div class="kpi-sub">Product, UI/UX, Dev, QA</div>
+    </div>
+    <div class="kpi ">
+      <div class="kpi-label">Product — Annual</div>
+      <div class="kpi-value">0</div>
+      <div class="kpi-sub">hours total</div>
+    </div>
+    <div class="kpi red">
+      <div class="kpi-label">UI/UX — Annual</div>
+      <div class="kpi-value">0</div>
+      <div class="kpi-sub">hours total</div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-label">Dev — Annual</div>
+      <div class="kpi-value">0</div>
+      <div class="kpi-sub">hours total</div>
+    </div>
+    <div class="kpi yellow">
+      <div class="kpi-label">QA — Annual</div>
+      <div class="kpi-value">0</div>
+      <div class="kpi-sub">hours total</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ MONTHLY TREND (mini-bars) ═══════════════ -->
+  <div class="panel">
+    <div class="panel-header">Monthly Hours Trend</div>
+    <div class="panel-body">
+      <div class="mini-bars">
+        <div class="mini-bar-col">
+          <div class="mini-bar-val">0</div>
+          <div class="mini-bar" style="height:2%; background:#3182ce;"></div>
+          <div class="mini-bar-label">Jan</div>
+        </div>
+        <div class="mini-bar-col">
+          <div class="mini-bar-val">0</div>
+          <div class="mini-bar" style="height:2%; background:#e53e3e;"></div>
+          <div class="mini-bar-label">Feb</div>
+        </div>
+        <div class="mini-bar-col">
+          <div class="mini-bar-val">0</div>
+          <div class="mini-bar" style="height:2%; background:#38a169;"></div>
+          <div class="mini-bar-label">Mar</div>
+        </div>
+        <div class="mini-bar-col">
+          <div class="mini-bar-val">0</div>
+          <div class="mini-bar" style="height:2%; background:#d69e2e;"></div>
+          <div class="mini-bar-label">Apr</div>
+        </div>
+        <div class="mini-bar-col">
+          <div class="mini-bar-val">0</div>
+          <div class="mini-bar" style="height:2%; background:#805ad5;"></div>
+          <div class="mini-bar-label">May</div>
+        </div>
+        <div class="mini-bar-col">
+          <div class="mini-bar-val">0</div>
+          <div class="mini-bar" style="height:2%; background:#3182ce;"></div>
+          <div class="mini-bar-label">Jun</div>
+        </div>
+        <div class="mini-bar-col">
+          <div class="mini-bar-val">0</div>
+          <div class="mini-bar" style="height:2%; background:#e53e3e;"></div>
+          <div class="mini-bar-label">Jul</div>
+        </div>
+        <div class="mini-bar-col">
+          <div class="mini-bar-val">0</div>
+          <div class="mini-bar" style="height:2%; background:#38a169;"></div>
+          <div class="mini-bar-label">Aug</div>
+        </div>
+        <div class="mini-bar-col">
+          <div class="mini-bar-val">0</div>
+          <div class="mini-bar" style="height:2%; background:#d69e2e;"></div>
+          <div class="mini-bar-label">Sep</div>
+        </div>
+        <div class="mini-bar-col">
+          <div class="mini-bar-val">0</div>
+          <div class="mini-bar" style="height:2%; background:#805ad5;"></div>
+          <div class="mini-bar-label">Oct</div>
+        </div>
+        <div class="mini-bar-col">
+          <div class="mini-bar-val">0</div>
+          <div class="mini-bar" style="height:2%; background:#3182ce;"></div>
+          <div class="mini-bar-label">Nov</div>
+        </div>
+        <div class="mini-bar-col">
+          <div class="mini-bar-val">0</div>
+          <div class="mini-bar" style="height:2%; background:#e53e3e;"></div>
+          <div class="mini-bar-label">Dec</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ TAB NAVIGATION ═══════════════ -->
+  <div class="tabs" id="mainTabs">
+    <div class="tab active" data-tab="tab-overview">Annual Overview</div>
+    <div class="tab" data-tab="tab-monthly">Month-by-Month</div>
+    <div class="tab" data-tab="tab-projects">Per Project</div>
+    <div class="tab" data-tab="tab-resources">By Resource Type</div>
+    <div class="tab" data-tab="tab-ytd">YTD Running Total</div>
+  </div>
+
+  <!-- ═══════════════ TAB 1: ANNUAL OVERVIEW ═══════════════ -->
+  <div class="tab-content active" id="tab-overview">
+
+    <!-- Project totals bar chart -->
+    <div class="panel">
+      <div class="panel-header">Annual Hours by Project</div>
+      <div class="panel-body">
+        <div class="bar-chart">
+          <div class="bar-row">
+            <div class="bar-label">AGONEWorkj</div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:1%; background:#3182ce;">&nbsp;</div>
+            </div>
+            <div class="bar-value">0h</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">OJE Safe</div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:1%; background:#e53e3e;">&nbsp;</div>
+            </div>
+            <div class="bar-value">0h</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">ONe Learn</div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:1%; background:#38a169;">&nbsp;</div>
+            </div>
+            <div class="bar-value">0h</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">Ne Pulse</div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:1%; background:#d69e2e;">&nbsp;</div>
+            </div>
+            <div class="bar-value">0h</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">AGONE</div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:1%; background:#805ad5;">&nbsp;</div>
+            </div>
+            <div class="bar-value">0h</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resource type bar chart -->
+    <div class="panel">
+      <div class="panel-header">Annual Hours by Resource Type</div>
+      <div class="panel-body">
+        <div class="bar-chart">
+          <div class="bar-row">
+            <div class="bar-label">Product</div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:1%; background:#3182ce;">&nbsp;</div>
+            </div>
+            <div class="bar-value">0h</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">UI/UX</div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:1%; background:#e53e3e;">&nbsp;</div>
+            </div>
+            <div class="bar-value">0h</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">Dev</div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:1%; background:#38a169;">&nbsp;</div>
+            </div>
+            <div class="bar-value">0h</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">QA</div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:1%; background:#d69e2e;">&nbsp;</div>
+            </div>
+            <div class="bar-value">0h</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary table: project x month -->
+    <div class="panel">
+      <div class="panel-header">Project Hours by Month</div>
+      <div class="panel-body">
+        <table>
+          <thead><tr><th>Project</th>
+<th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>May</th><th>Jun</th><th>Jul</th><th>Aug</th><th>Sep</th><th>Oct</th><th>Nov</th><th>Dec</th><th>ANNUAL</th></tr></thead><tbody>
+<tr><td>AGONEWorkj</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>OJE Safe</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>ONe Learn</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>Ne Pulse</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>AGONE</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+</tbody><tfoot><tr><td>TOTAL</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="total-col">0</td></tr></tfoot></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ TAB 2: MONTH-BY-MONTH ═══════════════ -->
+  <div class="tab-content" id="tab-monthly">
+    <div class="panel">
+      <div class="panel-header">January 2026 — Total: 0 hours</div>
+      <div class="panel-body">
+        <table>
+          <thead><tr><th>Project</th><th>Product</th><th>UI/UX</th><th>Dev</th><th>QA</th><th>Total</th></tr></thead><tbody>
+<tr><td>AGONEWorkj</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>OJE Safe</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>ONe Learn</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>Ne Pulse</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>AGONE</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+</tbody><tfoot><tr><td>TOTAL</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr></tfoot></table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">February 2026 — Total: 0 hours</div>
+      <div class="panel-body">
+        <table>
+          <thead><tr><th>Project</th><th>Product</th><th>UI/UX</th><th>Dev</th><th>QA</th><th>Total</th></tr></thead><tbody>
+<tr><td>AGONEWorkj</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>OJE Safe</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>ONe Learn</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>Ne Pulse</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>AGONE</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+</tbody><tfoot><tr><td>TOTAL</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr></tfoot></table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">March 2026 — Total: 0 hours</div>
+      <div class="panel-body">
+        <table>
+          <thead><tr><th>Project</th><th>Product</th><th>UI/UX</th><th>Dev</th><th>QA</th><th>Total</th></tr></thead><tbody>
+<tr><td>AGONEWorkj</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>OJE Safe</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>ONe Learn</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>Ne Pulse</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>AGONE</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+</tbody><tfoot><tr><td>TOTAL</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr></tfoot></table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">April 2026 — Total: 0 hours</div>
+      <div class="panel-body">
+        <table>
+          <thead><tr><th>Project</th><th>Product</th><th>UI/UX</th><th>Dev</th><th>QA</th><th>Total</th></tr></thead><tbody>
+<tr><td>AGONEWorkj</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>OJE Safe</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>ONe Learn</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>Ne Pulse</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>AGONE</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+</tbody><tfoot><tr><td>TOTAL</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr></tfoot></table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">May 2026 — Total: 0 hours</div>
+      <div class="panel-body">
+        <table>
+          <thead><tr><th>Project</th><th>Product</th><th>UI/UX</th><th>Dev</th><th>QA</th><th>Total</th></tr></thead><tbody>
+<tr><td>AGONEWorkj</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>OJE Safe</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>ONe Learn</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>Ne Pulse</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>AGONE</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+</tbody><tfoot><tr><td>TOTAL</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr></tfoot></table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">June 2026 — Total: 0 hours</div>
+      <div class="panel-body">
+        <table>
+          <thead><tr><th>Project</th><th>Product</th><th>UI/UX</th><th>Dev</th><th>QA</th><th>Total</th></tr></thead><tbody>
+<tr><td>AGONEWorkj</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>OJE Safe</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>ONe Learn</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>Ne Pulse</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>AGONE</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+</tbody><tfoot><tr><td>TOTAL</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr></tfoot></table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">July 2026 — Total: 0 hours</div>
+      <div class="panel-body">
+        <table>
+          <thead><tr><th>Project</th><th>Product</th><th>UI/UX</th><th>Dev</th><th>QA</th><th>Total</th></tr></thead><tbody>
+<tr><td>AGONEWorkj</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>OJE Safe</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>ONe Learn</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>Ne Pulse</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>AGONE</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+</tbody><tfoot><tr><td>TOTAL</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr></tfoot></table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">August 2026 — Total: 0 hours</div>
+      <div class="panel-body">
+        <table>
+          <thead><tr><th>Project</th><th>Product</th><th>UI/UX</th><th>Dev</th><th>QA</th><th>Total</th></tr></thead><tbody>
+<tr><td>AGONEWorkj</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>OJE Safe</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>ONe Learn</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>Ne Pulse</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>AGONE</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+</tbody><tfoot><tr><td>TOTAL</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr></tfoot></table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">September 2026 — Total: 0 hours</div>
+      <div class="panel-body">
+        <table>
+          <thead><tr><th>Project</th><th>Product</th><th>UI/UX</th><th>Dev</th><th>QA</th><th>Total</th></tr></thead><tbody>
+<tr><td>AGONEWorkj</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>OJE Safe</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>ONe Learn</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>Ne Pulse</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>AGONE</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+</tbody><tfoot><tr><td>TOTAL</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr></tfoot></table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">October 2026 — Total: 0 hours</div>
+      <div class="panel-body">
+        <table>
+          <thead><tr><th>Project</th><th>Product</th><th>UI/UX</th><th>Dev</th><th>QA</th><th>Total</th></tr></thead><tbody>
+<tr><td>AGONEWorkj</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>OJE Safe</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>ONe Learn</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>Ne Pulse</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>AGONE</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+</tbody><tfoot><tr><td>TOTAL</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr></tfoot></table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">November 2026 — Total: 0 hours</div>
+      <div class="panel-body">
+        <table>
+          <thead><tr><th>Project</th><th>Product</th><th>UI/UX</th><th>Dev</th><th>QA</th><th>Total</th></tr></thead><tbody>
+<tr><td>AGONEWorkj</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>OJE Safe</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>ONe Learn</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>Ne Pulse</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>AGONE</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+</tbody><tfoot><tr><td>TOTAL</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr></tfoot></table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">December 2026 — Total: 0 hours</div>
+      <div class="panel-body">
+        <table>
+          <thead><tr><th>Project</th><th>Product</th><th>UI/UX</th><th>Dev</th><th>QA</th><th>Total</th></tr></thead><tbody>
+<tr><td>AGONEWorkj</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>OJE Safe</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>ONe Learn</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>Ne Pulse</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>AGONE</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+</tbody><tfoot><tr><td>TOTAL</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr></tfoot></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ TAB 3: PER PROJECT ═══════════════ -->
+  <div class="tab-content" id="tab-projects">
+    <div class="panel">
+      <div class="panel-header" style="border-left:4px solid #3182ce;">AGONEWorkj — Annual: 0 hours</div>
+      <div class="panel-body">
+        <table>
+          <thead><tr><th>Resource</th><th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>May</th><th>Jun</th><th>Jul</th><th>Aug</th><th>Sep</th><th>Oct</th><th>Nov</th><th>Dec</th><th>ANNUAL</th></tr></thead><tbody>
+<tr><td>Product</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>UI/UX</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>Dev</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>QA</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+</tbody><tfoot><tr><td>TOTAL</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="total-col">0</td></tr></tfoot></table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header" style="border-left:4px solid #e53e3e;">OJE Safe — Annual: 0 hours</div>
+      <div class="panel-body">
+        <table>
+          <thead><tr><th>Resource</th><th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>May</th><th>Jun</th><th>Jul</th><th>Aug</th><th>Sep</th><th>Oct</th><th>Nov</th><th>Dec</th><th>ANNUAL</th></tr></thead><tbody>
+<tr><td>Product</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>UI/UX</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>Dev</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>QA</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+</tbody><tfoot><tr><td>TOTAL</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="total-col">0</td></tr></tfoot></table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header" style="border-left:4px solid #38a169;">ONe Learn — Annual: 0 hours</div>
+      <div class="panel-body">
+        <table>
+          <thead><tr><th>Resource</th><th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>May</th><th>Jun</th><th>Jul</th><th>Aug</th><th>Sep</th><th>Oct</th><th>Nov</th><th>Dec</th><th>ANNUAL</th></tr></thead><tbody>
+<tr><td>Product</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>UI/UX</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>Dev</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>QA</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+</tbody><tfoot><tr><td>TOTAL</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="total-col">0</td></tr></tfoot></table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header" style="border-left:4px solid #d69e2e;">Ne Pulse — Annual: 0 hours</div>
+      <div class="panel-body">
+        <table>
+          <thead><tr><th>Resource</th><th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>May</th><th>Jun</th><th>Jul</th><th>Aug</th><th>Sep</th><th>Oct</th><th>Nov</th><th>Dec</th><th>ANNUAL</th></tr></thead><tbody>
+<tr><td>Product</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>UI/UX</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>Dev</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>QA</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+</tbody><tfoot><tr><td>TOTAL</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="total-col">0</td></tr></tfoot></table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header" style="border-left:4px solid #805ad5;">AGONE — Annual: 0 hours</div>
+      <div class="panel-body">
+        <table>
+          <thead><tr><th>Resource</th><th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>May</th><th>Jun</th><th>Jul</th><th>Aug</th><th>Sep</th><th>Oct</th><th>Nov</th><th>Dec</th><th>ANNUAL</th></tr></thead><tbody>
+<tr><td>Product</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>UI/UX</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>Dev</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>QA</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+</tbody><tfoot><tr><td>TOTAL</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="total-col">0</td></tr></tfoot></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ TAB 4: BY RESOURCE TYPE ═══════════════ -->
+  <div class="tab-content" id="tab-resources">
+    <div class="panel">
+      <div class="panel-header" style="border-left:4px solid #3182ce;">Product — Annual: 0 hours</div>
+      <div class="panel-body">
+        <table>
+          <thead><tr><th>Project</th><th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>May</th><th>Jun</th><th>Jul</th><th>Aug</th><th>Sep</th><th>Oct</th><th>Nov</th><th>Dec</th><th>ANNUAL</th></tr></thead><tbody>
+<tr><td>AGONEWorkj</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>OJE Safe</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>ONe Learn</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>Ne Pulse</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>AGONE</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+</tbody><tfoot><tr><td>TOTAL</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="total-col">0</td></tr></tfoot></table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header" style="border-left:4px solid #e53e3e;">UI/UX — Annual: 0 hours</div>
+      <div class="panel-body">
+        <table>
+          <thead><tr><th>Project</th><th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>May</th><th>Jun</th><th>Jul</th><th>Aug</th><th>Sep</th><th>Oct</th><th>Nov</th><th>Dec</th><th>ANNUAL</th></tr></thead><tbody>
+<tr><td>AGONEWorkj</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>OJE Safe</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>ONe Learn</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>Ne Pulse</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>AGONE</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+</tbody><tfoot><tr><td>TOTAL</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="total-col">0</td></tr></tfoot></table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header" style="border-left:4px solid #38a169;">Dev — Annual: 0 hours</div>
+      <div class="panel-body">
+        <table>
+          <thead><tr><th>Project</th><th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>May</th><th>Jun</th><th>Jul</th><th>Aug</th><th>Sep</th><th>Oct</th><th>Nov</th><th>Dec</th><th>ANNUAL</th></tr></thead><tbody>
+<tr><td>AGONEWorkj</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>OJE Safe</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>ONe Learn</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>Ne Pulse</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>AGONE</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+</tbody><tfoot><tr><td>TOTAL</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="total-col">0</td></tr></tfoot></table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header" style="border-left:4px solid #d69e2e;">QA — Annual: 0 hours</div>
+      <div class="panel-body">
+        <table>
+          <thead><tr><th>Project</th><th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>May</th><th>Jun</th><th>Jul</th><th>Aug</th><th>Sep</th><th>Oct</th><th>Nov</th><th>Dec</th><th>ANNUAL</th></tr></thead><tbody>
+<tr><td>AGONEWorkj</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>OJE Safe</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>ONe Learn</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>Ne Pulse</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+<tr><td>AGONE</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="total-col">0</td></tr>
+</tbody><tfoot><tr><td>TOTAL</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="total-col">0</td></tr></tfoot></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ TAB 5: YTD RUNNING TOTAL ═══════════════ -->
+  <div class="tab-content" id="tab-ytd">
+    <div class="panel">
+      <div class="panel-header">Year-to-Date Cumulative Hours by Project</div>
+      <div class="panel-body">
+        <table>
+          <thead><tr><th>Project</th>
+<th>Jan YTD</th><th>Feb YTD</th><th>Mar YTD</th><th>Apr YTD</th><th>May YTD</th><th>Jun YTD</th><th>Jul YTD</th><th>Aug YTD</th><th>Sep YTD</th><th>Oct YTD</th><th>Nov YTD</th><th>Dec YTD</th></tr></thead><tbody>
+<tr><td>AGONEWorkj</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>OJE Safe</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>ONe Learn</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>Ne Pulse</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>AGONE</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+</tbody><tfoot><tr><td>TOTAL</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr></tfoot></table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">Year-to-Date Cumulative Hours by Resource Type</div>
+      <div class="panel-body">
+        <table>
+          <thead><tr><th>Resource Type</th>
+<th>Jan YTD</th><th>Feb YTD</th><th>Mar YTD</th><th>Apr YTD</th><th>May YTD</th><th>Jun YTD</th><th>Jul YTD</th><th>Aug YTD</th><th>Sep YTD</th><th>Oct YTD</th><th>Nov YTD</th><th>Dec YTD</th></tr></thead><tbody>
+<tr><td>Product</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>UI/UX</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>Dev</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+<tr><td>QA</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td><td class="zero">0</td></tr>
+</tbody><tfoot><tr><td>TOTAL</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr></tfoot></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ FOOTER ═══════════════ -->
+  <div style="text-align:center; padding:1.5rem; font-size:0.8rem; color:var(--text-lighter);">
+    Prepared for Product Owner &amp; P&amp;L Analysis &bull; Confidential &bull; 2026
+  </div>
+
+</div>
+
+<!-- ═══════════════ TAB JS ═══════════════ -->
+<script>
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.tab).classList.add('active');
+  });
+});
+</script>
+
+</body>
+</html>

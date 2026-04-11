@@ -1,0 +1,75 @@
+@model TeamTracker.Models.MonthlyKpi
+@{ViewData["Title"]=$"Edit KPI — {Model.Member?.Name}";}
+
+<nav class="topnav"><a href="/" class="brand">Kpi<span>Pulse</span></a><div class="right"><a href="/" class="btn-exp"><i class="bi bi-arrow-left"></i> Dashboard</a></div></nav>
+<div class="subnav">
+    <a href="/" class="back-btn"><i class="bi bi-chevron-left"></i> Back</a>
+    <div class="breadcrumb-trail"><a href="/">Dashboard</a><span class="sep">/</span><span>KPI</span><span class="sep">/</span><span>@Model.Member?.Name</span></div>
+</div>
+
+<div class="app-c" style="max-width:700px;">
+    <div style="background:var(--card);border-radius:var(--rd);box-shadow:var(--sh2);overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;padding:.85rem 1rem;">
+            <h5 style="font-weight:700;font-size:.95rem;margin:0;"><i class="bi bi-graph-up-arrow"></i> @Model.Member?.Name — @Model.Member?.Team?.Name</h5>
+            <div style="font-size:.7rem;opacity:.6;margin-top:.1rem;">@Model.MonthName @Model.Year &bull; @Model.Member?.Role</div>
+        </div>
+        <div style="padding:1rem;">
+            <form asp-action="Edit" method="post">@Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id"/><input type="hidden" asp-for="MemberId"/><input type="hidden" asp-for="Year"/><input type="hidden" asp-for="Month"/>
+                <div style="font-weight:700;font-size:.8rem;color:var(--pri);margin-bottom:.5rem;"><i class="bi bi-bar-chart"></i> Performance</div>
+                <div class="row g-2 mb-3">
+                    <div class="col-4"><label class="form-label">Assigned</label><input type="number" asp-for="TasksAssigned" class="form-control form-control-sm" min="0"/></div>
+                    <div class="col-4"><label class="form-label">Completed</label><input type="number" asp-for="TasksCompleted" class="form-control form-control-sm" min="0"/></div>
+                    <div class="col-4"><label class="form-label">On-Time %</label><input type="number" asp-for="OnTimeDeliveryPct" class="form-control form-control-sm" min="0" max="100"/></div>
+                    <div class="col-4"><label class="form-label">Bugs In Work</label><input type="number" asp-for="BugsFoundInWork" class="form-control form-control-sm" min="0"/></div>
+                    <div class="col-4"><label class="form-label">Bugs Fixed</label><input type="number" asp-for="BugsFixed" class="form-control form-control-sm" min="0"/></div>
+                    <div class="col-4"><label class="form-label">Reviews</label><input type="number" asp-for="CodeReviewsDone" class="form-control form-control-sm" min="0"/></div>
+                    <div class="col-4"><label class="form-label">Quality (1-5)</label>
+                        <select asp-for="QualityScore" class="form-select form-select-sm"><option value="0">—</option><option value="1">1 Poor</option><option value="2">2 Below</option><option value="3">3 Avg</option><option value="4">4 Good</option><option value="5">5 Excellent</option></select></div>
+                    <div class="col-4"><label class="form-label">Hours</label><input type="number" asp-for="TotalHoursWorked" class="form-control form-control-sm" step="0.5" min="0"/></div>
+                    <div class="col-4"><label class="form-label">Overtime</label><input type="number" asp-for="ExtraHours" class="form-control form-control-sm" step="0.5" min="0"/></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">
+                    <div style="font-weight:700;font-size:.8rem;color:var(--pri);"><i class="bi bi-chat-dots"></i> Feedback</div>
+                    <button type="button" class="btn-a" style="font-size:.65rem;padding:.22rem .55rem;background:linear-gradient(135deg,#4f46e5,#7c3aed);" onclick="aiWriteFeedback(@Model.Id)"><i class="bi bi-stars"></i> AI Write Feedback</button>
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-12"><label class="form-label">Achievements</label><textarea asp-for="Achievements" class="form-control form-control-sm" rows="2" placeholder="Notable accomplishments"></textarea></div>
+                    <div class="col-12"><label class="form-label">Errors / Issues</label><textarea asp-for="ErrorsLog" class="form-control form-control-sm" rows="2" placeholder="Errors or issues"></textarea></div>
+                    <div class="col-12"><label class="form-label">Tech Lead Feedback</label><textarea asp-for="TechLeadFeedback" class="form-control form-control-sm" rows="2"></textarea></div>
+                    <div class="col-12"><label class="form-label">Manager Feedback</label><textarea asp-for="ManagerFeedback" class="form-control form-control-sm" rows="2"></textarea></div>
+                    <div class="col-12"><label class="form-label">Progress Notes</label><textarea asp-for="ProgressNotes" class="form-control form-control-sm" rows="2"></textarea></div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn-a" style="flex:1;justify-content:center;padding:.5rem;"><i class="bi bi-check-lg"></i> Save KPI</button>
+                    <a href="/" class="btn-g" style="padding:.5rem .7rem;">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+async function aiWriteFeedback(kpiId) {
+    const btn = event.target.closest('button');
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Generating...';
+    btn.disabled = true;
+    try {
+        const res = await fetch('/api/ai/feedback/' + kpiId, { method: 'POST' });
+        const data = await res.json();
+        if (data.text && data.text.length > 5) {
+            const fb = document.getElementById('ManagerFeedback');
+            if (fb) fb.value = data.text;
+            btn.innerHTML = '<i class="bi bi-check-lg"></i> Done!';
+        } else {
+            btn.innerHTML = '<i class="bi bi-x-lg"></i> No API key';
+        }
+    } catch (e) {
+        btn.innerHTML = '<i class="bi bi-x-lg"></i> Error';
+    }
+    setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 3000);
+}
+</script>
+}

@@ -1,0 +1,509 @@
+{
+  "report_year": 2026,
+  "report_month": "January",
+  "tech_manager": "Zain",
+  "projects": ["AGONEWorkj", "OJE Safe", "ONe Learn", "Ne Pulse", "AGONE"],
+
+  "teams": {
+    "Team 1": {
+      "project": "AGONEWorkj",
+      "tech_lead": "Abdullah",
+      "members": {
+        "Abdullah": {
+          "role": "Tech Lead",
+          "projects_assigned": ["AGONEWorkj"],
+          "kpi": {
+            "tasks_assigned": 0,
+            "tasks_completed": 0,
+            "bugs_found_in_work": 0,
+            "bugs_fixed": 0,
+            "code_reviews_done": 0,
+            "on_time_delivery_pct": 0,
+            "quality_score": 0,
+            "extra_hours": 0,
+            "total_hours_worked": 0
+          },
+          "achievements": "",
+          "errors_log": "",
+          "tech_lead_feedback": "",
+          "manager_feedback": "",
+          "progress_notes": ""
+        },
+        "Nastaran": {
+          "role": "Developer",
+          "projects_assigned": ["AGONEWorkj"],
+          "kpi": {
+            "tasks_assigned": 0,
+            "tasks_completed": 0,
+            "bugs_found_in_work": 0,
+            "bugs_fixed": 0,
+            "code_reviews_done": 0,
+            "on_time_delivery_pct": 0,
+            "quality_score": 0,
+            "extra_hours": 0,
+            "total_hours_worked": 0
+          },
+          "achievements": "",
+          "errors_log": "",
+          "tech_lead_feedback": "",
+          "manager_feedback": "",
+          "progress_notes": ""
+        },
+        "Jawad": {
+          "role": "Developer",
+          "projects_assigned": ["AGONEWorkj"],
+          "kpi": {
+            "tasks_assigned": 0,
+            "tasks_completed": 0,
+            "bugs_found_in_work": 0,
+            "bugs_fixed": 0,
+            "code_reviews_done": 0,
+            "on_time_delivery_pct": 0,
+            "quality_score": 0,
+            "extra_hours": 0,
+            "total_hours_worked": 0
+          },
+          "achievements": "",
+          "errors_log": "",
+          "tech_lead_feedback": "",
+          "manager_feedback": "",
+          "progress_notes": ""
+        },
+        "Geena": {
+          "role": "Developer",
+          "projects_assigned": ["AGONEWorkj", "OJE Safe"],
+          "kpi": {
+            "tasks_assigned": 0,
+            "tasks_completed": 0,
+            "bugs_found_in_work": 0,
+            "bugs_fixed": 0,
+            "code_reviews_done": 0,
+            "on_time_delivery_pct": 0,
+            "quality_score": 0,
+            "extra_hours": 0,
+            "total_hours_worked": 0
+          },
+          "achievements": "",
+          "errors_log": "",
+          "tech_lead_feedback": "",
+          "manager_feedback": "",
+          "progress_notes": ""
+        }
+      }
+    },
+
+    "Team 2": {
+      "project": "OJE Safe",
+      "tech_lead": "Geena",
+      "members": {
+        "Geena": {
+          "role": "Tech Lead",
+          "projects_assigned": ["AGONEWorkj", "OJE Safe"],
+          "kpi": {
+            "tasks_assigned": 0,
+            "tasks_completed": 0,
+            "bugs_found_in_work": 0,
+            "bugs_fixed": 0,
+            "code_reviews_done": 0,
+            "on_time_delivery_pct": 0,
+            "quality_score": 0,
+            "extra_hours": 0,
+            "total_hours_worked": 0
+          },
+          "achievements": "",
+          "errors_log": "",
+          "tech_lead_feedback": "",
+          "manager_feedback": "",
+          "progress_notes": ""
+        },
+        "Logesh": {
+          "role": "Developer",
+          "projects_assigned": ["OJE Safe"],
+          "kpi": {
+            "tasks_assigned": 0,
+            "tasks_completed": 0,
+            "bugs_found_in_work": 0,
+            "bugs_fixed": 0,
+            "code_reviews_done": 0,
+            "on_time_delivery_pct": 0,
+            "quality_score": 0,
+            "extra_hours": 0,
+            "total_hours_worked": 0
+          },
+          "achievements": "",
+          "errors_log": "",
+          "tech_lead_feedback": "",
+          "manager_feedback": "",
+          "progress_notes": ""
+        }
+      }
+    },
+
+    "Team 3": {
+      "project": "ONe Learn",
+      "tech_lead": "Phuoc (Ricky)",
+      "members": {
+        "Phuoc (Ricky)": {
+          "role": "Tech Lead",
+          "projects_assigned": ["ONe Learn"],
+          "kpi": {
+            "tasks_assigned": 0,
+            "tasks_completed": 0,
+            "bugs_found_in_work": 0,
+            "bugs_fixed": 0,
+            "code_reviews_done": 0,
+            "on_time_delivery_pct": 0,
+            "quality_score": 0,
+            "extra_hours": 0,
+            "total_hours_worked": 0
+          },
+          "achievements": "",
+          "errors_log": "",
+          "tech_lead_feedback": "",
+          "manager_feedback": "",
+          "progress_notes": ""
+        },
+        "Than": {
+          "role": "Developer",
+          "projects_assigned": ["ONe Learn"],
+          "kpi": {
+            "tasks_assigned": 0,
+            "tasks_completed": 0,
+            "bugs_found_in_work": 0,
+            "bugs_fixed": 0,
+            "code_reviews_done": 0,
+            "on_time_delivery_pct": 0,
+            "quality_score": 0,
+            "extra_hours": 0,
+            "total_hours_worked": 0
+          },
+          "achievements": "",
+          "errors_log": "",
+          "tech_lead_feedback": "",
+          "manager_feedback": "",
+          "progress_notes": ""
+        },
+        "Loc": {
+          "role": "Developer",
+          "projects_assigned": ["ONe Learn"],
+          "kpi": {
+            "tasks_assigned": 0,
+            "tasks_completed": 0,
+            "bugs_found_in_work": 0,
+            "bugs_fixed": 0,
+            "code_reviews_done": 0,
+            "on_time_delivery_pct": 0,
+            "quality_score": 0,
+            "extra_hours": 0,
+            "total_hours_worked": 0
+          },
+          "achievements": "",
+          "errors_log": "",
+          "tech_lead_feedback": "",
+          "manager_feedback": "",
+          "progress_notes": ""
+        }
+      }
+    },
+
+    "Team 4": {
+      "project": "Ne Pulse",
+      "tech_lead": "Majed",
+      "members": {
+        "Majed": {
+          "role": "Tech Lead",
+          "projects_assigned": ["Ne Pulse"],
+          "kpi": {
+            "tasks_assigned": 0,
+            "tasks_completed": 0,
+            "bugs_found_in_work": 0,
+            "bugs_fixed": 0,
+            "code_reviews_done": 0,
+            "on_time_delivery_pct": 0,
+            "quality_score": 0,
+            "extra_hours": 0,
+            "total_hours_worked": 0
+          },
+          "achievements": "",
+          "errors_log": "",
+          "tech_lead_feedback": "",
+          "manager_feedback": "",
+          "progress_notes": ""
+        },
+        "Hema": {
+          "role": "Developer",
+          "projects_assigned": ["Ne Pulse"],
+          "kpi": {
+            "tasks_assigned": 0,
+            "tasks_completed": 0,
+            "bugs_found_in_work": 0,
+            "bugs_fixed": 0,
+            "code_reviews_done": 0,
+            "on_time_delivery_pct": 0,
+            "quality_score": 0,
+            "extra_hours": 0,
+            "total_hours_worked": 0
+          },
+          "achievements": "",
+          "errors_log": "",
+          "tech_lead_feedback": "",
+          "manager_feedback": "",
+          "progress_notes": ""
+        },
+        "Rahmya": {
+          "role": "Developer",
+          "projects_assigned": ["Ne Pulse"],
+          "kpi": {
+            "tasks_assigned": 0,
+            "tasks_completed": 0,
+            "bugs_found_in_work": 0,
+            "bugs_fixed": 0,
+            "code_reviews_done": 0,
+            "on_time_delivery_pct": 0,
+            "quality_score": 0,
+            "extra_hours": 0,
+            "total_hours_worked": 0
+          },
+          "achievements": "",
+          "errors_log": "",
+          "tech_lead_feedback": "",
+          "manager_feedback": "",
+          "progress_notes": ""
+        },
+        "Umeswar": {
+          "role": "Developer",
+          "projects_assigned": ["Ne Pulse"],
+          "kpi": {
+            "tasks_assigned": 0,
+            "tasks_completed": 0,
+            "bugs_found_in_work": 0,
+            "bugs_fixed": 0,
+            "code_reviews_done": 0,
+            "on_time_delivery_pct": 0,
+            "quality_score": 0,
+            "extra_hours": 0,
+            "total_hours_worked": 0
+          },
+          "achievements": "",
+          "errors_log": "",
+          "tech_lead_feedback": "",
+          "manager_feedback": "",
+          "progress_notes": ""
+        }
+      }
+    },
+
+    "Team 5": {
+      "project": "AGONE",
+      "tech_lead": "Sarisha",
+      "members": {
+        "Sarisha": {
+          "role": "Tech Lead",
+          "projects_assigned": ["AGONE"],
+          "kpi": {
+            "tasks_assigned": 0,
+            "tasks_completed": 0,
+            "bugs_found_in_work": 0,
+            "bugs_fixed": 0,
+            "code_reviews_done": 0,
+            "on_time_delivery_pct": 0,
+            "quality_score": 0,
+            "extra_hours": 0,
+            "total_hours_worked": 0
+          },
+          "achievements": "",
+          "errors_log": "",
+          "tech_lead_feedback": "",
+          "manager_feedback": "",
+          "progress_notes": ""
+        },
+        "Kanan": {
+          "role": "Developer",
+          "projects_assigned": ["AGONE"],
+          "kpi": {
+            "tasks_assigned": 0,
+            "tasks_completed": 0,
+            "bugs_found_in_work": 0,
+            "bugs_fixed": 0,
+            "code_reviews_done": 0,
+            "on_time_delivery_pct": 0,
+            "quality_score": 0,
+            "extra_hours": 0,
+            "total_hours_worked": 0
+          },
+          "achievements": "",
+          "errors_log": "",
+          "tech_lead_feedback": "",
+          "manager_feedback": "",
+          "progress_notes": ""
+        },
+        "Sharuti": {
+          "role": "Developer",
+          "projects_assigned": ["AGONE"],
+          "kpi": {
+            "tasks_assigned": 0,
+            "tasks_completed": 0,
+            "bugs_found_in_work": 0,
+            "bugs_fixed": 0,
+            "code_reviews_done": 0,
+            "on_time_delivery_pct": 0,
+            "quality_score": 0,
+            "extra_hours": 0,
+            "total_hours_worked": 0
+          },
+          "achievements": "",
+          "errors_log": "",
+          "tech_lead_feedback": "",
+          "manager_feedback": "",
+          "progress_notes": ""
+        }
+      }
+    },
+
+    "Team 6": {
+      "project": "AGONEWorkj",
+      "tech_lead": "Faisal",
+      "members": {
+        "Faisal": {
+          "role": "Tech Lead",
+          "projects_assigned": ["AGONEWorkj"],
+          "kpi": {
+            "tasks_assigned": 0,
+            "tasks_completed": 0,
+            "bugs_found_in_work": 0,
+            "bugs_fixed": 0,
+            "code_reviews_done": 0,
+            "on_time_delivery_pct": 0,
+            "quality_score": 0,
+            "extra_hours": 0,
+            "total_hours_worked": 0
+          },
+          "achievements": "",
+          "errors_log": "",
+          "tech_lead_feedback": "",
+          "manager_feedback": "",
+          "progress_notes": ""
+        },
+        "Kirtinini": {
+          "role": "Developer",
+          "projects_assigned": ["AGONEWorkj"],
+          "kpi": {
+            "tasks_assigned": 0,
+            "tasks_completed": 0,
+            "bugs_found_in_work": 0,
+            "bugs_fixed": 0,
+            "code_reviews_done": 0,
+            "on_time_delivery_pct": 0,
+            "quality_score": 0,
+            "extra_hours": 0,
+            "total_hours_worked": 0
+          },
+          "achievements": "",
+          "errors_log": "",
+          "tech_lead_feedback": "",
+          "manager_feedback": "",
+          "progress_notes": ""
+        },
+        "Surya": {
+          "role": "Developer",
+          "projects_assigned": ["AGONEWorkj"],
+          "kpi": {
+            "tasks_assigned": 0,
+            "tasks_completed": 0,
+            "bugs_found_in_work": 0,
+            "bugs_fixed": 0,
+            "code_reviews_done": 0,
+            "on_time_delivery_pct": 0,
+            "quality_score": 0,
+            "extra_hours": 0,
+            "total_hours_worked": 0
+          },
+          "achievements": "",
+          "errors_log": "",
+          "tech_lead_feedback": "",
+          "manager_feedback": "",
+          "progress_notes": ""
+        }
+      }
+    },
+
+    "Team 7": {
+      "project": "OJE Safe",
+      "tech_lead": "Hanis",
+      "members": {
+        "Hanis": {
+          "role": "Tech Lead",
+          "projects_assigned": ["OJE Safe"],
+          "kpi": {
+            "tasks_assigned": 0,
+            "tasks_completed": 0,
+            "bugs_found_in_work": 0,
+            "bugs_fixed": 0,
+            "code_reviews_done": 0,
+            "on_time_delivery_pct": 0,
+            "quality_score": 0,
+            "extra_hours": 0,
+            "total_hours_worked": 0
+          },
+          "achievements": "",
+          "errors_log": "",
+          "tech_lead_feedback": "",
+          "manager_feedback": "",
+          "progress_notes": ""
+        },
+        "Fatin": {
+          "role": "Developer",
+          "projects_assigned": ["OJE Safe"],
+          "kpi": {
+            "tasks_assigned": 0,
+            "tasks_completed": 0,
+            "bugs_found_in_work": 0,
+            "bugs_fixed": 0,
+            "code_reviews_done": 0,
+            "on_time_delivery_pct": 0,
+            "quality_score": 0,
+            "extra_hours": 0,
+            "total_hours_worked": 0
+          },
+          "achievements": "",
+          "errors_log": "",
+          "tech_lead_feedback": "",
+          "manager_feedback": "",
+          "progress_notes": ""
+        },
+        "Max": {
+          "role": "Developer",
+          "projects_assigned": ["OJE Safe"],
+          "kpi": {
+            "tasks_assigned": 0,
+            "tasks_completed": 0,
+            "bugs_found_in_work": 0,
+            "bugs_fixed": 0,
+            "code_reviews_done": 0,
+            "on_time_delivery_pct": 0,
+            "quality_score": 0,
+            "extra_hours": 0,
+            "total_hours_worked": 0
+          },
+          "achievements": "",
+          "errors_log": "",
+          "tech_lead_feedback": "",
+          "manager_feedback": "",
+          "progress_notes": ""
+        }
+      }
+    }
+  },
+
+  "kpi_definitions": {
+    "tasks_assigned": "Total tasks/tickets assigned this month",
+    "tasks_completed": "Tasks completed and closed this month",
+    "bugs_found_in_work": "Bugs/errors found in this person's delivered work",
+    "bugs_fixed": "Bugs this person resolved",
+    "code_reviews_done": "Code reviews performed for other team members",
+    "on_time_delivery_pct": "Percentage of tasks delivered on or before deadline (0-100)",
+    "quality_score": "Overall quality rating from Tech Lead (1=Poor, 2=Below Avg, 3=Average, 4=Good, 5=Excellent)",
+    "extra_hours": "Overtime / extra hours worked beyond standard schedule",
+    "total_hours_worked": "Total man-hours worked this month across all projects"
+  }
+}

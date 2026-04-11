@@ -1,0 +1,91 @@
+{
+  "year": 2026,
+  "projects": ["AGONEWorkj", "OJE Safe", "ONe Learn", "Ne Pulse", "AGONE"],
+  "resource_types": ["Product", "UI/UX", "Dev", "QA"],
+  "monthly_data": {
+    "January": {
+      "AGONEWorkj":  { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "OJE Safe":    { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "ONe Learn":   { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "Ne Pulse":    { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "AGONE":       { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 }
+    },
+    "February": {
+      "AGONEWorkj":  { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "OJE Safe":    { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "ONe Learn":   { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "Ne Pulse":    { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "AGONE":       { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 }
+    },
+    "March": {
+      "AGONEWorkj":  { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "OJE Safe":    { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "ONe Learn":   { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "Ne Pulse":    { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "AGONE":       { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 }
+    },
+    "April": {
+      "AGONEWorkj":  { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "OJE Safe":    { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "ONe Learn":   { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "Ne Pulse":    { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "AGONE":       { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 }
+    },
+    "May": {
+      "AGONEWorkj":  { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "OJE Safe":    { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "ONe Learn":   { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "Ne Pulse":    { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "AGONE":       { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 }
+    },
+    "June": {
+      "AGONEWorkj":  { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "OJE Safe":    { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "ONe Learn":   { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "Ne Pulse":    { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "AGONE":       { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 }
+    },
+    "July": {
+      "AGONEWorkj":  { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "OJE Safe":    { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "ONe Learn":   { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "Ne Pulse":    { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "AGONE":       { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 }
+    },
+    "August": {
+      "AGONEWorkj":  { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "OJE Safe":    { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "ONe Learn":   { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "Ne Pulse":    { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "AGONE":       { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 }
+    },
+    "September": {
+      "AGONEWorkj":  { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "OJE Safe":    { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "ONe Learn":   { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "Ne Pulse":    { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "AGONE":       { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 }
+    },
+    "October": {
+      "AGONEWorkj":  { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "OJE Safe":    { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "ONe Learn":   { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "Ne Pulse":    { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "AGONE":       { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 }
+    },
+    "November": {
+      "AGONEWorkj":  { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "OJE Safe":    { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "ONe Learn":   { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "Ne Pulse":    { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "AGONE":       { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 }
+    },
+    "December": {
+      "AGONEWorkj":  { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "OJE Safe":    { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "ONe Learn":   { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "Ne Pulse":    { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 },
+      "AGONE":       { "Product": 0, "UI/UX": 0, "Dev": 0, "QA": 0 }
+    }
+  }
+}

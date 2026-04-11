@@ -1,0 +1,77 @@
+@model List<TeamTracker.Models.MonthlyKpi>
+@{ ViewData["Title"] = "Monthly KPI"; }
+
+<div class="top-header">
+    <h3><i class="bi bi-graph-up-arrow"></i> Monthly KPI Scorecard — @ViewBag.MonthName</h3>
+    <div class="d-flex gap-2">
+        <form method="get" class="d-flex gap-2">
+            <select name="month" class="form-select form-select-sm" style="width:130px;">
+                @for (int m = 1; m <= 12; m++)
+                { <option value="@m" selected="@(m == (int)ViewBag.Month)">@(new DateTime(2026, m, 1).ToString("MMMM"))</option> }
+            </select>
+            <input type="number" name="year" class="form-control form-control-sm" value="@ViewBag.Year" style="width:80px;" />
+            <button class="btn btn-primary btn-sm">Go</button>
+        </form>
+        <a asp-action="Generate" asp-route-month="@ViewBag.Month" asp-route-year="@ViewBag.Year" class="btn btn-outline-success btn-sm">
+            <i class="bi bi-plus-circle"></i> Generate Records
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0 table-responsive">
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-inbox" style="font-size:2.5rem;"></i>
+                <p class="mt-2">No KPI records for this month. Click "Generate Records" to create entries for all team members.</p>
+            </div>
+        }
+        else
+        {
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Name</th><th>Team</th><th>Project</th><th>Role</th>
+                        <th class="text-center">Assigned</th><th class="text-center">Completed</th>
+                        <th class="text-center">Completion</th>
+                        <th class="text-center">Bugs In</th><th class="text-center">Fixed</th>
+                        <th class="text-center">Reviews</th><th class="text-center">On-Time</th>
+                        <th class="text-center">Quality</th><th class="text-center">Hours</th>
+                        <th class="text-center">Extra</th><th class="text-center">Grade</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var k in Model)
+                    {
+                        var gradeCls = k.Grade switch { "A" or "B" => "grade-a", "C" => "grade-c", _ => "grade-d" };
+                        <tr>
+                            <td class="fw-semibold">@(k.Member.Role.Contains("Lead") ? "★ " : "")@k.Member.Name</td>
+                            <td>@k.Member.Team.Name</td>
+                            <td><span class="badge bg-primary">@k.Member.Team.Project</span></td>
+                            <td>@k.Member.Role</td>
+                            <td class="text-center">@k.TasksAssigned</td>
+                            <td class="text-center">@k.TasksCompleted</td>
+                            <td class="text-center">
+                                <div class="progress" style="height:18px;min-width:70px;">
+                                    <div class="progress-bar @(k.CompletionPct >= 80 ? "bg-success" : k.CompletionPct >= 50 ? "bg-warning" : "bg-danger")"
+                                         style="width:@(k.CompletionPct)%">@(k.CompletionPct)%</div>
+                                </div>
+                            </td>
+                            <td class="text-center @(k.BugsFoundInWork > 3 ? "text-danger fw-bold" : "")">@k.BugsFoundInWork</td>
+                            <td class="text-center">@k.BugsFixed</td>
+                            <td class="text-center">@k.CodeReviewsDone</td>
+                            <td class="text-center">@k.OnTimeDeliveryPct%</td>
+                            <td class="text-center">@k.QualityScore/5</td>
+                            <td class="text-center">@k.TotalHoursWorked</td>
+                            <td class="text-center @(k.ExtraHours > 0 ? "text-warning fw-bold" : "")">@k.ExtraHours</td>
+                            <td class="text-center @gradeCls" style="font-size:1.1rem;">@k.Grade</td>
+                            <td><a asp-action="Edit" asp-route-id="@k.Id" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>

@@ -1,0 +1,18 @@
+## .NET
+**/bin/
+**/obj/
+*.db
+*.user
+*.suo
+.vs/
+*.DotSettings.user
+appsettings.Development.json
+appsettings.Local.json
+
+## Python
+__pycache__/
+*.pyc
+
+## OS
+.DS_Store
+Thumbs.db
