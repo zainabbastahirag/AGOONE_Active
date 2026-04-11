@@ -1,0 +1,91 @@
+@{ ViewData["Title"] = "Export to Excel"; }
+
+<div class="top-header">
+    <h3><i class="bi bi-file-earmark-excel"></i> Export to Excel</h3>
+</div>
+
+<div class="row g-4">
+    <!-- Full Report -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100" style="border-left:4px solid #38a169;">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-file-earmark-spreadsheet text-success"></i> Full Monthly Report</h5>
+                <p class="card-text text-muted small">Complete Excel file with all sheets: Daily Log, KPI Scorecard, Feedback, Team Roster, Project Summary.</p>
+                <form asp-action="FullReport" method="get" class="row g-2">
+                    <div class="col-6">
+                        <select name="month" class="form-select form-select-sm">
+                            @for (int m = 1; m <= 12; m++)
+                            { <option value="@m" selected="@(m == DateTime.Now.Month)">@(new DateTime(2026, m, 1).ToString("MMMM"))</option> }
+                        </select>
+                    </div>
+                    <div class="col-3">
+                        <input type="number" name="year" class="form-control form-control-sm" value="@DateTime.Now.Year" />
+                    </div>
+                    <div class="col-3">
+                        <button class="btn btn-success btn-sm w-100"><i class="bi bi-download"></i> Export</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily Log -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100" style="border-left:4px solid #3182ce;">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-journal-text text-primary"></i> Daily Log Export</h5>
+                <p class="card-text text-muted small">Export daily work entries for a date range. Color-coded by status.</p>
+                <form asp-action="DailyLog" method="get" class="row g-2">
+                    <div class="col-6">
+                        <label class="small text-muted">From</label>
+                        <input type="date" name="from" class="form-control form-control-sm"
+                               value="@(new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).ToString("yyyy-MM-dd"))" />
+                    </div>
+                    <div class="col-6">
+                        <label class="small text-muted">To</label>
+                        <input type="date" name="to" class="form-control form-control-sm"
+                               value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                    </div>
+                    <div class="col-12 mt-2">
+                        <button class="btn btn-primary btn-sm w-100"><i class="bi bi-download"></i> Export Daily Log</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI Report -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100" style="border-left:4px solid #805ad5;">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-graph-up-arrow text-purple"></i> KPI & Feedback Report</h5>
+                <p class="card-text text-muted small">Export KPI scorecard with grades, plus Feedback & Team Roster sheets.</p>
+                <form asp-action="MonthlyKpi" method="get" class="row g-2">
+                    <div class="col-6">
+                        <select name="month" class="form-select form-select-sm">
+                            @for (int m = 1; m <= 12; m++)
+                            { <option value="@m" selected="@(m == DateTime.Now.Month)">@(new DateTime(2026, m, 1).ToString("MMMM"))</option> }
+                        </select>
+                    </div>
+                    <div class="col-3">
+                        <input type="number" name="year" class="form-control form-control-sm" value="@DateTime.Now.Year" />
+                    </div>
+                    <div class="col-3">
+                        <button class="btn btn-outline-primary btn-sm w-100"><i class="bi bi-download"></i></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4 p-3 bg-white rounded shadow-sm">
+    <h6 class="text-primary fw-bold"><i class="bi bi-info-circle"></i> Export Tips</h6>
+    <ul class="small text-muted mb-0">
+        <li><strong>Full Report</strong> is the best option — it includes everything in one Excel file with 5 sheets.</li>
+        <li>All exports include professional formatting, color-coded headers, and frozen header rows.</li>
+        <li>KPI grades (A/B/C/D/F) are auto-calculated and color-coded in the export.</li>
+        <li>Daily Log exports color-code rows by status: green=Completed, red=Blocked, blue=In Progress, yellow=Carry Forward.</li>
+        <li>Files open directly in Excel, Google Sheets, or LibreOffice Calc.</li>
+    </ul>
+</div>

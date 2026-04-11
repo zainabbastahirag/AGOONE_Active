@@ -1,0 +1,111 @@
+is_global = true
+build_property.TargetFramework = net8.0
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = 
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property.RootNamespace = TeamTracker
+build_property.RootNamespace = TeamTracker
+build_property.ProjectDir = /workspace/TeamTracker/
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.RazorLangVersion = 8.0
+build_property.SupportLocalizedComponentNames = 
+build_property.GenerateRazorMetadataSourceChecksumAttributes = 
+build_property.MSBuildProjectDirectory = /workspace/TeamTracker
+build_property._RazorSourceGeneratorDebug = 
+
+[/workspace/TeamTracker/Views/Auth/AccessDenied.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQXV0aC9BY2Nlc3NEZW5pZWQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/workspace/TeamTracker/Views/Auth/InvalidInvite.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQXV0aC9JbnZhbGlkSW52aXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/workspace/TeamTracker/Views/Auth/Join.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQXV0aC9Kb2luLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/workspace/TeamTracker/Views/Auth/Login.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQXV0aC9Mb2dpbi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/workspace/TeamTracker/Views/Auth/Setup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQXV0aC9TZXR1cC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/workspace/TeamTracker/Views/DailyLog/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvRGFpbHlMb2cvQ3JlYXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/workspace/TeamTracker/Views/DailyLog/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvRGFpbHlMb2cvRWRpdC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/workspace/TeamTracker/Views/DailyLog/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvRGFpbHlMb2cvSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/workspace/TeamTracker/Views/Export/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvRXhwb3J0L0luZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/workspace/TeamTracker/Views/Home/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvSG9tZS9JbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/workspace/TeamTracker/Views/Invite/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvSW52aXRlL0luZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/workspace/TeamTracker/Views/Kpi/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvS3BpL0VkaXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/workspace/TeamTracker/Views/Kpi/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvS3BpL0luZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/workspace/TeamTracker/Views/Members/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvTWVtYmVycy9DcmVhdGUuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/workspace/TeamTracker/Views/Members/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvTWVtYmVycy9FZGl0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/workspace/TeamTracker/Views/Members/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvTWVtYmVycy9JbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/workspace/TeamTracker/Views/Shared/_ValidationScriptsPartial.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL19WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/workspace/TeamTracker/Views/Teams/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVGVhbXMvQ3JlYXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/workspace/TeamTracker/Views/Teams/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVGVhbXMvRWRpdC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/workspace/TeamTracker/Views/Teams/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVGVhbXMvSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/workspace/TeamTracker/Views/_ViewImports.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvX1ZpZXdJbXBvcnRzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/workspace/TeamTracker/Views/_ViewStart.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvX1ZpZXdTdGFydC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/workspace/TeamTracker/Views/Shared/_Layout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL19MYXlvdXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = b-m4n7hkbpnt

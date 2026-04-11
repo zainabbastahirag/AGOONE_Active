@@ -1,0 +1,90 @@
+@model TeamTracker.ViewModels.DailyLogIndexViewModel
+@{ ViewData["Title"] = "Daily Log"; }
+
+<div class="top-header">
+    <h3><i class="bi bi-journal-text"></i> Daily Work Log</h3>
+    <a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Add Entry</a>
+</div>
+
+<!-- Filters -->
+<div class="card mb-3">
+    <div class="card-body py-2">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-auto">
+                <label class="form-label mb-0 small">Date</label>
+                <input type="date" name="date" class="form-control form-control-sm" value="@(Model.FilterDate?.ToString("yyyy-MM-dd"))" />
+            </div>
+            <div class="col-auto">
+                <label class="form-label mb-0 small">Member</label>
+                <select name="memberId" class="form-select form-select-sm" style="min-width:160px;">
+                    <option value="">All</option>
+                    @foreach (var item in Model.Members) { <option value="@item.Value" selected="@item.Selected">@item.Text</option> }
+                </select>
+            </div>
+            <div class="col-auto">
+                <label class="form-label mb-0 small">Project</label>
+                <select name="project" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    @foreach (var item in Model.Projects) { <option value="@item.Value" selected="@item.Selected">@item.Text</option> }
+                </select>
+            </div>
+            <div class="col-auto">
+                <label class="form-label mb-0 small">Status</label>
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    @foreach (var s in TeamTracker.Models.DailyLog.StatusOptions) { <option value="@s" selected="@(s == Model.FilterStatus)">@s</option> }
+                </select>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-primary btn-sm">Filter</button>
+                <a asp-action="Index" class="btn btn-outline-secondary btn-sm">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0 table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Date</th><th>Name</th><th>Team</th><th>Project</th>
+                    <th>Task / Ticket</th><th>Description</th><th>Status</th>
+                    <th>Hours</th><th>Extra</th><th>Blockers</th><th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Logs.Any())
+                {
+                    <tr><td colspan="11" class="text-center py-4 text-muted">No entries found. <a asp-action="Create">Add the first one</a>.</td></tr>
+                }
+                @foreach (var l in Model.Logs)
+                {
+                    var bgCls = l.Status switch { "Completed" => "table-success", "Blocked" => "table-danger", "In Progress" => "table-info", "Carry Forward" => "table-warning", _ => "" };
+                    <tr class="@bgCls">
+                        <td>@l.Date.ToString("dd-MMM-yy")</td>
+                        <td class="fw-semibold">@l.Member.Name</td>
+                        <td>@l.Member.Team.Name</td>
+                        <td>@l.Project</td>
+                        <td>@l.TaskTicket</td>
+                        <td style="max-width:250px;">@l.TaskDescription</td>
+                        <td><span class="badge @(l.Status switch { "Completed" => "bg-success", "Blocked" => "bg-danger", "In Progress" => "bg-primary", "In Review" => "bg-info", "Carry Forward" => "bg-warning text-dark", _ => "bg-secondary" })">@l.Status</span></td>
+                        <td>@l.HoursWorked</td>
+                        <td>@(l.ExtraHours > 0 ? l.ExtraHours.ToString() : "")</td>
+                        <td style="max-width:180px;font-size:.78rem;">@l.Blockers</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a asp-action="Edit" asp-route-id="@l.Id" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+                                <form asp-action="Delete" asp-route-id="@l.Id" method="post" class="d-inline"
+                                      onsubmit="return confirm('Delete this entry?');">
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

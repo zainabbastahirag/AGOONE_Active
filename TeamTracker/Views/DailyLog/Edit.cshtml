@@ -1,0 +1,64 @@
+@model TeamTracker.ViewModels.DailyLogEditViewModel
+@{ ViewData["Title"] = "Edit Daily Entry"; }
+
+<div class="top-header">
+    <h3><i class="bi bi-pencil"></i> Edit Daily Entry</h3>
+    <a asp-action="Index" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+</div>
+
+<div class="card" style="max-width:800px;">
+    <div class="card-body">
+        <form asp-action="Edit" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Log.Id" />
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Date</label>
+                    <input type="date" asp-for="Log.Date" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Member</label>
+                    <select asp-for="Log.MemberId" asp-items="Model.Members" class="form-select"></select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Project</label>
+                    <select asp-for="Log.Project" asp-items="Model.Projects" class="form-select"></select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Task / Ticket #</label>
+                    <input asp-for="Log.TaskTicket" class="form-control" />
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label">Task Description</label>
+                    <input asp-for="Log.TaskDescription" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Status</label>
+                    <select asp-for="Log.Status" class="form-select">
+                        @foreach (var s in TeamTracker.Models.DailyLog.StatusOptions) { <option value="@s">@s</option> }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Hours Worked</label>
+                    <input type="number" asp-for="Log.HoursWorked" class="form-control" step="0.5" min="0" max="24" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Extra Hours</label>
+                    <input type="number" asp-for="Log.ExtraHours" class="form-control" step="0.5" min="0" max="24" />
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Blockers / Issues</label>
+                    <textarea asp-for="Log.Blockers" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Notes / Progress</label>
+                    <textarea asp-for="Log.Notes" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Save Changes</button>
+                    <a asp-action="Index" class="btn btn-light ms-2">Cancel</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

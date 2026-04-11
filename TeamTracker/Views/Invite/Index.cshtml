@@ -1,0 +1,150 @@
+@model List<TeamTracker.Models.InviteLink>
+@{ ViewData["Title"] = "Invite & Share"; var members = ViewBag.Members as List<TeamTracker.Models.AppUser>; }
+
+<div class="top-header">
+    <h3><i class="bi bi-link-45deg"></i> Invite & Share — @ViewBag.OrgName</h3>
+</div>
+
+<div class="row g-4">
+    <!-- Create Invite Link -->
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header bg-white"><i class="bi bi-plus-circle"></i> Create Invite Link</div>
+            <div class="card-body">
+                <form asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label">Role for invited users</label>
+                        <select name="role" class="form-select">
+                            <option value="Viewer">Viewer — can view dashboards and data</option>
+                            <option value="Manager">Manager — can edit data and manage members</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Max uses (0 = unlimited)</label>
+                        <input type="number" name="maxUses" class="form-control" value="0" min="0" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Expires after (days, leave empty for never)</label>
+                        <input type="number" name="expiryDays" class="form-control" placeholder="e.g. 7" min="1" />
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-link-45deg"></i> Generate Link
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Org Members -->
+        <div class="card mt-3">
+            <div class="card-header bg-white"><i class="bi bi-people"></i> Organization Members</div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead>
+                    <tbody>
+                        @if (members != null)
+                        {
+                            @foreach (var m in members)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">
+                                        @if (!string.IsNullOrEmpty(m.AvatarUrl))
+                                        {
+                                            <img src="@m.AvatarUrl" style="width:22px;height:22px;border-radius:50%;margin-right:4px;" referrerpolicy="no-referrer" />
+                                        }
+                                        @m.DisplayName
+                                    </td>
+                                    <td class="small text-muted">@m.Email</td>
+                                    <td><span class="badge @(m.OrgRole == "Owner" ? "bg-danger" : m.OrgRole == "Manager" ? "bg-primary" : "bg-secondary")">@m.OrgRole</span></td>
+                                    <td>
+                                        @if (m.OrgRole != "Owner")
+                                        {
+                                            <form asp-action="UpdateRole" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="userId" value="@m.Id" />
+                                                <select name="role" class="form-select form-select-sm d-inline" style="width:100px;" onchange="this.form.submit()">
+                                                    <option value="Manager" selected="@(m.OrgRole == "Manager")">Manager</option>
+                                                    <option value="Viewer" selected="@(m.OrgRole == "Viewer")">Viewer</option>
+                                                </select>
+                                            </form>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Links -->
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header bg-white"><i class="bi bi-share"></i> Shareable Invite Links</div>
+            <div class="card-body">
+                @if (!Model.Any())
+                {
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-link-45deg" style="font-size:2rem;"></i>
+                        <p class="mt-2">No invite links yet. Create one to share with your team.</p>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var link in Model)
+                    {
+                        var url = $"{Context.Request.Scheme}://{Context.Request.Host}/Auth/Join/{link.Code}";
+                        var isValid = link.IsValid;
+                        <div class="border rounded p-3 mb-3 @(!isValid ? "opacity-50" : "")">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <span class="badge @(link.Role == "Manager" ? "bg-primary" : "bg-secondary") me-1">@link.Role</span>
+                                    @if (!isValid)
+                                    {
+                                        <span class="badge bg-danger">Inactive</span>
+                                    }
+                                    <br/>
+                                    <small class="text-muted">Created @link.CreatedAt.ToString("dd MMM yyyy") &bull;
+                                        Used @link.TimesUsed times
+                                        @if (link.MaxUses > 0) { <text> / @link.MaxUses max</text> }
+                                        @if (link.ExpiresAt.HasValue) { <text> &bull; Expires @link.ExpiresAt.Value.ToString("dd MMM")</text> }
+                                    </small>
+                                </div>
+                                @if (isValid)
+                                {
+                                    <form asp-action="Deactivate" asp-route-id="@link.Id" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <button class="btn btn-sm btn-outline-danger"><i class="bi bi-x-circle"></i></button>
+                                    </form>
+                                }
+                            </div>
+                            @if (isValid)
+                            {
+                                <div class="input-group input-group-sm mt-2">
+                                    <input type="text" class="form-control" value="@url" readonly id="link-@link.Id" />
+                                    <button class="btn btn-outline-primary" onclick="navigator.clipboard.writeText(document.getElementById('link-@link.Id').value); this.innerHTML='<i class=\'bi bi-check\'></i> Copied!';">
+                                        <i class="bi bi-clipboard"></i> Copy
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+
+        <div class="card mt-3 border-start border-4" style="border-left-color:#6366f1 !important;">
+            <div class="card-body">
+                <h6 class="fw-bold text-primary"><i class="bi bi-info-circle"></i> How Invite Links Work</h6>
+                <ul class="small text-muted mb-0">
+                    <li><strong>Share the link</strong> via email, Teams, Slack, or WhatsApp — anyone with the link can join.</li>
+                    <li><strong>Viewer</strong> role: can see dashboards and data, but cannot edit.</li>
+                    <li><strong>Manager</strong> role: can add/edit daily logs, KPIs, members, and teams.</li>
+                    <li><strong>Owner</strong> (you): full control including managing user roles and invite links.</li>
+                    <li>You can deactivate links anytime or set usage limits.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

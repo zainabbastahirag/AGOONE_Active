@@ -1,0 +1,29 @@
+@model TeamTracker.Models.Team
+@{ ViewData["Title"] = $"Edit — {Model.Name}"; }
+
+<div class="top-header">
+    <h3><i class="bi bi-pencil"></i> Edit — @Model.Name</h3>
+    <a asp-action="Index" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+</div>
+
+<div class="card" style="max-width:600px;">
+    <div class="card-body">
+        <form asp-action="Edit" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+            <div class="mb-3">
+                <label class="form-label">Team Name</label>
+                <input asp-for="Name" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Project</label>
+                <input asp-for="Project" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Tech Lead</label>
+                <input asp-for="TechLead" class="form-control" />
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Save</button>
+        </form>
+    </div>
+</div>

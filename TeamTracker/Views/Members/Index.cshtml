@@ -1,0 +1,46 @@
+@model List<TeamTracker.Models.Member>
+@{ ViewData["Title"] = "Team Roster"; }
+
+<div class="top-header">
+    <h3><i class="bi bi-person-lines-fill"></i> Team Roster</h3>
+    <a asp-action="Create" class="btn btn-primary"><i class="bi bi-person-plus"></i> Add Member</a>
+</div>
+
+<div class="card">
+    <div class="card-body p-0 table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr><th>Name</th><th>Team</th><th>Project</th><th>Role</th><th>Projects Assigned</th><th>Multi-Project</th><th></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var m in Model)
+                {
+                    var isMulti = m.ProjectsAssigned.Contains(",");
+                    <tr>
+                        <td class="fw-semibold">@(m.Role.Contains("Lead") ? "★ " : "")@m.Name</td>
+                        <td>@m.Team.Name</td>
+                        <td><span class="badge bg-primary">@m.Team.Project</span></td>
+                        <td>@m.Role</td>
+                        <td>@m.ProjectsAssigned</td>
+                        <td>@(isMulti ? "✓ Yes" : "")</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a asp-action="Edit" asp-route-id="@m.Id" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+                                <form asp-action="Delete" asp-route-id="@m.Id" method="post" class="d-inline"
+                                      onsubmit="return confirm('Remove @m.Name?');">
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="mt-3 text-muted small">
+    <strong>@Model.Count</strong> members across <strong>@Model.Select(m => m.Team.Name).Distinct().Count()</strong> teams
+    — <strong>@Model.Count(m => m.ProjectsAssigned.Contains(","))</strong> multi-project
+</div>
