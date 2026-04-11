@@ -6,6 +6,8 @@
 *.suo
 .vs/
 *.DotSettings.user
+appsettings.Development.json
+appsettings.Local.json
 
 ## Python
 __pycache__/
