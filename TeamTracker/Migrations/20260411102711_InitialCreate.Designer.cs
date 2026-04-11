@@ -11,7 +11,7 @@ using TeamTracker.Data;
 namespace TeamTracker.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260411093619_InitialCreate")]
+    [Migration("20260411102711_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />

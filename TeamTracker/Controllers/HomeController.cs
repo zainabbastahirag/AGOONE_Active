@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TeamTracker.Data;
 using TeamTracker.Models;
+using TeamTracker.Services;
 using TeamTracker.ViewModels;
 
 namespace TeamTracker.Controllers;
@@ -12,38 +13,28 @@ namespace TeamTracker.Controllers;
 public class HomeController : Controller
 {
     private readonly AppDbContext _db;
-    private readonly UserManager<AppUser> _userManager;
+    private readonly UserManager<AppUser> _um;
 
-    public HomeController(AppDbContext db, UserManager<AppUser> um)
-    {
-        _db = db;
-        _userManager = um;
-    }
-
-    private async Task<(AppUser user, int orgId)?> GetUserOrg()
-    {
-        var user = await _userManager.GetUserAsync(User);
-        if (user?.OrganizationId == null) return null;
-        return (user, user.OrganizationId.Value);
-    }
+    public HomeController(AppDbContext db, UserManager<AppUser> um) { _db = db; _um = um; }
 
     public async Task<IActionResult> Index(int? month, int? year)
     {
-        var uo = await GetUserOrg();
-        if (uo == null) return RedirectToAction("Setup", "Auth");
-        var orgId = uo.Value.orgId;
+        var user = await _um.GetUserAsync(User);
+        if (user?.OrganizationId == null) return RedirectToAction("Setup", "Auth");
+        var oid = user.OrganizationId.Value;
 
         int m = month ?? DateTime.Now.Month;
         int y = year ?? DateTime.Now.Year;
 
         var teams = await _db.Teams.Include(t => t.Members)
-            .Where(t => t.OrganizationId == orgId).ToListAsync();
+            .Where(t => t.OrganizationId == oid).OrderBy(t => t.Name).ToListAsync();
 
         var memberIds = teams.SelectMany(t => t.Members).Select(mb => mb.Id).ToHashSet();
 
         var kpis = await _db.MonthlyKpis
             .Include(k => k.Member).ThenInclude(mb => mb.Team)
             .Where(k => k.Year == y && k.Month == m && memberIds.Contains(k.MemberId))
+            .OrderBy(k => k.Member.Team.Name).ThenBy(k => k.Member.Name)
             .ToListAsync();
 
         var recentLogs = await _db.DailyLogs
@@ -78,9 +69,21 @@ public class HomeController : Controller
         var qScores = kpis.Where(k => k.QualityScore > 0).Select(k => k.QualityScore).ToList();
         vm.AvgQuality = qScores.Count > 0 ? Math.Round(qScores.Average(), 1) : 0;
 
-        ViewBag.UserName = uo.Value.user.DisplayName;
-        ViewBag.AvatarUrl = uo.Value.user.AvatarUrl;
-        ViewBag.OrgRole = uo.Value.user.OrgRole;
+        ViewBag.CurrentUser = user;
+        ViewBag.CanEdit = user.OrgRole == AppUser.Roles.Owner || user.OrgRole == AppUser.Roles.Manager;
+        ViewBag.OrgName = (await _db.Organizations.FindAsync(oid))?.Name ?? "";
+
+        ViewBag.InviteLinks = await _db.InviteLinks
+            .Where(l => l.OrganizationId == oid)
+            .OrderByDescending(l => l.CreatedAt).ToListAsync();
+
+        ViewBag.OrgMembers = await _db.Users
+            .Where(u => u.OrganizationId == oid)
+            .OrderBy(u => u.DisplayName).ToListAsync();
+
+        // AI Insights
+        var aiEngine = new AiInsightEngine();
+        ViewBag.AiReport = aiEngine.Analyze(kpis, recentLogs, teams);
 
         return View(vm);
     }

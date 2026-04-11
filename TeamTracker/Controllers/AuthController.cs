@@ -28,7 +28,16 @@ public class AuthController : Controller
     }
 
     [HttpPost]
+    [IgnoreAntiforgeryToken]
     public IActionResult GoogleLogin(string? returnUrl = null)
+    {
+        var callbackUrl = Url.Action(nameof(GoogleCallback), "Auth", new { returnUrl });
+        var properties = _signInManager.ConfigureExternalAuthenticationProperties("Google", callbackUrl);
+        return Challenge(properties, "Google");
+    }
+
+    [HttpGet]
+    public IActionResult GoogleLoginDirect(string? returnUrl = null)
     {
         var callbackUrl = Url.Action(nameof(GoogleCallback), "Auth", new { returnUrl });
         var properties = _signInManager.ConfigureExternalAuthenticationProperties("Google", callbackUrl);
