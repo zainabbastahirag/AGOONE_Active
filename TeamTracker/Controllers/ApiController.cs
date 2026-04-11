@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TeamTracker.Data;
 using TeamTracker.Models;
+using TeamTracker.Services;
 
 namespace TeamTracker.Controllers;
 
@@ -13,8 +14,9 @@ public class ApiController : Controller
 {
     private readonly AppDbContext _db;
     private readonly UserManager<AppUser> _um;
+    private readonly GeminiAiService _ai;
 
-    public ApiController(AppDbContext db, UserManager<AppUser> um) { _db = db; _um = um; }
+    public ApiController(AppDbContext db, UserManager<AppUser> um, GeminiAiService ai) { _db = db; _um = um; _ai = ai; }
 
     private async Task<int?> OrgId()
     {
@@ -279,4 +281,54 @@ public class ApiController : Controller
         return Json(new { u.DisplayName, u.Email, u.AvatarUrl, u.OrgRole,
             OrgId = u.OrganizationId, OrgName = orgName, HasOrg = u.OrganizationId != null });
     }
+
+    // ── AI Endpoints (powered by Google Gemini — free tier) ──
+
+    [HttpGet("ai/status")]
+    public IActionResult AiStatus() => Json(new { available = _ai.IsAvailable });
+
+    [HttpPost("ai/feedback/{kpiId}")]
+    public async Task<IActionResult> AiFeedback(int kpiId)
+    {
+        var kpi = await _db.MonthlyKpis.Include(k => k.Member).ThenInclude(m => m.Team).FirstOrDefaultAsync(k => k.Id == kpiId);
+        if (kpi == null) return NotFound();
+        var text = await _ai.GenerateFeedback(kpi);
+        return Json(new { text, ai = _ai.IsAvailable });
+    }
+
+    [HttpPost("ai/summary")]
+    public async Task<IActionResult> AiTeamSummary([FromBody] MonthYearDto dto)
+    {
+        var oid = await OrgId(); if (oid == null) return Unauthorized();
+        var mIds = await _db.Members.Include(x => x.Team).Where(x => x.Team.OrganizationId == oid).Select(x => x.Id).ToListAsync();
+        var kpis = await _db.MonthlyKpis.Include(k => k.Member).ThenInclude(m => m.Team)
+            .Where(k => mIds.Contains(k.MemberId) && k.Year == dto.Year && k.Month == dto.Month).ToListAsync();
+        var teams = await _db.Teams.Where(t => t.OrganizationId == oid).ToListAsync();
+        var text = await _ai.GenerateTeamSummary(kpis, teams);
+        return Json(new { text, ai = _ai.IsAvailable });
+    }
+
+    [HttpPost("ai/recommendations")]
+    public async Task<IActionResult> AiRecommendations([FromBody] MonthYearDto dto)
+    {
+        var oid = await OrgId(); if (oid == null) return Unauthorized();
+        var mIds = await _db.Members.Include(x => x.Team).Where(x => x.Team.OrganizationId == oid).Select(x => x.Id).ToListAsync();
+        var kpis = await _db.MonthlyKpis.Include(k => k.Member).ThenInclude(m => m.Team)
+            .Where(k => mIds.Contains(k.MemberId) && k.Year == dto.Year && k.Month == dto.Month).ToListAsync();
+        var text = await _ai.GenerateRecommendations(kpis);
+        return Json(new { text, ai = _ai.IsAvailable });
+    }
+
+    [HttpPost("ai/daily-summary")]
+    public async Task<IActionResult> AiDailySummary([FromBody] DailySummaryDto dto)
+    {
+        var oid = await OrgId(); if (oid == null) return Unauthorized();
+        var date = DateTime.Parse(dto.Date);
+        var mIds = await _db.Members.Include(x => x.Team).Where(x => x.Team.OrganizationId == oid).Select(x => x.Id).ToListAsync();
+        var logs = await _db.DailyLogs.Include(d => d.Member).Where(d => mIds.Contains(d.MemberId) && d.Date.Date == date.Date).ToListAsync();
+        var text = await _ai.GenerateDailySummary(logs, date);
+        return Json(new { text, ai = _ai.IsAvailable });
+    }
+
+    public class DailySummaryDto { public string Date { get; set; } = ""; }
 }

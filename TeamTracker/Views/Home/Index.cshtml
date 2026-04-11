@@ -92,8 +92,35 @@
 @if(ai==null||ai.TeamHealthScore==0){
 <div class="es"><i class="bi bi-stars"></i><p>Generate KPI records and fill in data to unlock AI-powered insights.</p></div>
 } else {
+
+<!-- Gemini AI Banner -->
+<div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:var(--rd);padding:.6rem .85rem;margin-bottom:.7rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.4rem;">
+    <div style="display:flex;align-items:center;gap:.4rem;color:#fff;">
+        <i class="bi bi-stars" style="font-size:1.1rem;"></i>
+        <div><div style="font-weight:700;font-size:.78rem;">Gemini AI Powered</div><div style="font-size:.6rem;opacity:.7;">Free tier — 250 requests/day</div></div>
+    </div>
+    <div style="display:flex;gap:.3rem;flex-wrap:wrap;">
+        <button class="btn-a" style="background:rgba(255,255,255,.15);font-size:.65rem;padding:.25rem .55rem;" onclick="aiGenSummary()"><i class="bi bi-magic"></i> AI Summary</button>
+        <button class="btn-a" style="background:rgba(255,255,255,.15);font-size:.65rem;padding:.25rem .55rem;" onclick="aiGenRecs()"><i class="bi bi-lightbulb"></i> AI Recommendations</button>
+    </div>
+</div>
+
+<!-- AI Generated Content Area -->
+<div id="ai-generated" style="display:none;background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;border-radius:var(--rd);padding:.9rem 1rem;margin-bottom:.85rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem;">
+        <div style="display:flex;align-items:center;gap:.4rem;"><i class="bi bi-stars" style="color:var(--pri2);font-size:1rem;"></i><span style="font-weight:700;font-size:.82rem;" id="ai-gen-title">AI Generated</span></div>
+        <span style="font-size:.55rem;background:rgba(99,102,241,.3);padding:.12rem .4rem;border-radius:8px;color:var(--pri2);font-weight:600;">GEMINI AI</span>
+    </div>
+    <div id="ai-gen-content" style="font-size:.76rem;color:rgba(255,255,255,.75);line-height:1.55;"></div>
+</div>
+
+<!-- Rule-Based Executive Summary (always available) -->
 <div style="background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;border-radius:var(--rd);padding:.9rem 1rem;margin-bottom:.85rem;">
-    <div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.4rem;"><i class="bi bi-stars" style="color:var(--pri2);font-size:1rem;"></i><span style="font-weight:700;font-size:.85rem;">AI Executive Summary</span></div>
+    <div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.4rem;">
+        <i class="bi bi-cpu" style="color:var(--pri2);font-size:.9rem;"></i>
+        <span style="font-weight:700;font-size:.82rem;">Smart Summary</span>
+        <span style="font-size:.5rem;background:rgba(255,255,255,.1);padding:.1rem .3rem;border-radius:6px;color:rgba(255,255,255,.5);">LOCAL AI</span>
+    </div>
     <p style="font-size:.76rem;color:rgba(255,255,255,.7);line-height:1.55;margin:0;">@ai.ExecutiveSummary</p>
 </div>
 <div class="row g-3 mb-3">
@@ -329,5 +356,40 @@ function mNav(el){
     if(!el)return;
     document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
     el.classList.add('active');
+}
+
+// ── Gemini AI Functions ──
+async function aiCall(url, body, titleText) {
+    const box = document.getElementById('ai-generated');
+    const title = document.getElementById('ai-gen-title');
+    const content = document.getElementById('ai-gen-content');
+    box.style.display = 'block';
+    title.textContent = titleText;
+    content.innerHTML = '<div style="display:flex;align-items:center;gap:.4rem;"><div class="spinner-border spinner-border-sm" style="width:14px;height:14px;border-width:2px;color:var(--pri2);"></div> Generating with Gemini AI...</div>';
+    box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    try {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (data.text && data.text.length > 10) {
+            content.innerHTML = data.text.replace(/\n/g, '<br/>');
+        } else if (!data.ai) {
+            content.innerHTML = '<span style="color:var(--pri2);">Add your free Gemini API key in appsettings.json to enable AI.<br/>Get one free at <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:#818cf8;">aistudio.google.com</a> (no credit card needed).</span>';
+        } else {
+            content.textContent = 'No data available to generate insights.';
+        }
+    } catch (e) {
+        content.textContent = 'Error connecting to AI service.';
+    }
+}
+
+function aiGenSummary() {
+    aiCall('/api/ai/summary', { month: @Model.SelectedMonth, year: @Model.SelectedYear }, 'AI Executive Summary');
+}
+function aiGenRecs() {
+    aiCall('/api/ai/recommendations', { month: @Model.SelectedMonth, year: @Model.SelectedYear }, 'AI Recommendations');
 }
 </script>}

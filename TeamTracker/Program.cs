@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TeamTracker.Data;
 using TeamTracker.Models;
+using TeamTracker.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,6 +45,9 @@ builder.Services.AddAuthentication()
         options.ClaimActions.MapJsonKey("picture", "picture");
         options.SaveTokens = true;
     });
+
+// ── Gemini AI ──
+builder.Services.AddSingleton<GeminiAiService>();
 
 builder.Services.ConfigureApplicationCookie(options =>
 {

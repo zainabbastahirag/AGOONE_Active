@@ -29,7 +29,10 @@
                     <div class="col-4"><label class="form-label">Hours</label><input type="number" asp-for="TotalHoursWorked" class="form-control form-control-sm" step="0.5" min="0"/></div>
                     <div class="col-4"><label class="form-label">Overtime</label><input type="number" asp-for="ExtraHours" class="form-control form-control-sm" step="0.5" min="0"/></div>
                 </div>
-                <div style="font-weight:700;font-size:.8rem;color:var(--pri);margin-bottom:.5rem;"><i class="bi bi-chat-dots"></i> Feedback</div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">
+                    <div style="font-weight:700;font-size:.8rem;color:var(--pri);"><i class="bi bi-chat-dots"></i> Feedback</div>
+                    <button type="button" class="btn-a" style="font-size:.65rem;padding:.22rem .55rem;background:linear-gradient(135deg,#4f46e5,#7c3aed);" onclick="aiWriteFeedback(@Model.Id)"><i class="bi bi-stars"></i> AI Write Feedback</button>
+                </div>
                 <div class="row g-2 mb-3">
                     <div class="col-12"><label class="form-label">Achievements</label><textarea asp-for="Achievements" class="form-control form-control-sm" rows="2" placeholder="Notable accomplishments"></textarea></div>
                     <div class="col-12"><label class="form-label">Errors / Issues</label><textarea asp-for="ErrorsLog" class="form-control form-control-sm" rows="2" placeholder="Errors or issues"></textarea></div>
@@ -45,3 +48,28 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+<script>
+async function aiWriteFeedback(kpiId) {
+    const btn = event.target.closest('button');
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Generating...';
+    btn.disabled = true;
+    try {
+        const res = await fetch('/api/ai/feedback/' + kpiId, { method: 'POST' });
+        const data = await res.json();
+        if (data.text && data.text.length > 5) {
+            const fb = document.getElementById('ManagerFeedback');
+            if (fb) fb.value = data.text;
+            btn.innerHTML = '<i class="bi bi-check-lg"></i> Done!';
+        } else {
+            btn.innerHTML = '<i class="bi bi-x-lg"></i> No API key';
+        }
+    } catch (e) {
+        btn.innerHTML = '<i class="bi bi-x-lg"></i> Error';
+    }
+    setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 3000);
+}
+</script>
+}

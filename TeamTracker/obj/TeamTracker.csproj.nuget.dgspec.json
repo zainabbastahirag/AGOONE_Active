@@ -47,6 +47,10 @@
               "target": "Package",
               "version": "[0.104.*, )"
             },
+            "Google.GenAI": {
+              "target": "Package",
+              "version": "[1.*, )"
+            },
             "Microsoft.AspNetCore.Authentication.Google": {
               "target": "Package",
               "version": "[8.0.*, )"

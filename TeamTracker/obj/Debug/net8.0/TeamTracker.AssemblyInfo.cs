@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TeamTracker")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+70a65c08f7e9a1732d0c3cd97221bf7c42dea4b9")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1d5f073a597b29738b89e8889396e1e8b902a06a")]
 [assembly: System.Reflection.AssemblyProductAttribute("TeamTracker")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TeamTracker")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
